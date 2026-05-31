@@ -18,7 +18,7 @@ Assign issues by choosing the team with the strongest overlap. The github-triage
 
 Do not add labels to issues. Only assign an owner.
 
-When calling github-triage, pass one of these team values: tui, desktop_web, core, inference, windows.
+When calling github-triage, pass one of these team values: tui, web, core, inference, windows.
 
 ## Teams
 
@@ -26,9 +26,9 @@ When calling github-triage, pass one of these team values: tui, desktop_web, cor
 
 Terminal UI issues, including rendering, keybindings, scrolling, terminal compatibility, SSH behavior, crashes in the TUI, and low-level TUI performance.
 
-### Desktop / Web
+### Web
 
-Desktop application and browser-based app issues, including `opencode web`, desktop-specific UI behavior, packaging, and web view problems.
+Browser-based app issues, including web UI, packaging, and web view problems.
 
 ### Core
 

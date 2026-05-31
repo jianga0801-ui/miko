@@ -3,7 +3,7 @@ import { tool } from "@opencode-ai/plugin"
 
 const TEAM = {
   tui: ["kommander", "simonklee"],
-  desktop_web: ["Hona", "Brendonovich"],
+  web: ["Hona", "Brendonovich"],
   core: ["jlongster", "rekram1-node", "nexxeln", "kitlangton", "starptech"],
   inference: ["fwang", "MrMushrooooom", "starptech"],
   windows: ["Hona"],
