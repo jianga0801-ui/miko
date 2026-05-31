@@ -2,7 +2,7 @@ import { Effect } from "effect"
 import { ModelV2 } from "../../model"
 import { PluginV2 } from "../../plugin"
 import { ProviderV2 } from "../../provider"
-import { makeMimoFetch } from "./mimo-media"
+import { makeMimoFetch, resolveMimoWebSearchConfig } from "./mimo-media"
 
 /**
  * Resolve the MiMo OpenAI-compatible base URL from an API key + region.
@@ -91,10 +91,11 @@ export const MimoPlugin = PluginV2.define({
       "aisdk.sdk": Effect.fn(function* (evt) {
         if (evt.package !== "@ai-sdk/mimo") return
         if (evt.options.includeUsage !== false) evt.options.includeUsage = true
-        // Rewrite audio/video sentinel parts into MiMo content blocks on the way
-        // out, so multimodal input rides the same key + endpoint as chat.
+        // Rewrite audio/video sentinel parts into MiMo content blocks and inject
+        // the built-in web_search tool (when enabled) on the way out, so both
+        // ride the same key + endpoint as chat.
         const opts = evt.options as Record<string, any>
-        opts.fetch = makeMimoFetch(opts.fetch ?? globalThis.fetch)
+        opts.fetch = makeMimoFetch(opts.fetch ?? globalThis.fetch, { webSearch: resolveMimoWebSearchConfig() })
         const mod = yield* Effect.promise(() => import("@ai-sdk/openai-compatible"))
         evt.sdk = mod.createOpenAICompatible(evt.options as any)
       }),

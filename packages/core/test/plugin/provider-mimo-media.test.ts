@@ -4,6 +4,7 @@ import {
   encodeMimoMediaSentinel,
   hasMimoMediaSentinel,
   mimoBlockFromSentinel,
+  resolveMimoWebSearchConfig,
   rewriteMimoRequestBody,
 } from "@opencode-ai/core/plugin/provider/mimo-media"
 
@@ -80,5 +81,56 @@ describe("rewriteMimoRequestBody", () => {
     // Unchanged body is returned verbatim (no re-serialization).
     expect(rewriteMimoRequestBody(body)).toBe(body)
     expect(rewriteMimoRequestBody("not json")).toBe("not json")
+  })
+})
+
+describe("resolveMimoWebSearchConfig", () => {
+  test("is undefined when the toggle is off or absent", () => {
+    expect(resolveMimoWebSearchConfig({})).toBeUndefined()
+    expect(resolveMimoWebSearchConfig({ MIMO_WEB_SEARCH: "0" })).toBeUndefined()
+  })
+
+  test("builds the web_search tool with optional params", () => {
+    expect(
+      resolveMimoWebSearchConfig({
+        MIMO_WEB_SEARCH: "true",
+        MIMO_WEB_SEARCH_FORCE: "yes",
+        MIMO_WEB_SEARCH_LIMIT: "2",
+        MIMO_WEB_SEARCH_MAX_KEYWORD: "3",
+        MIMO_WEB_SEARCH_COUNTRY: "China",
+        MIMO_WEB_SEARCH_CITY: "Wuhan",
+      }),
+    ).toEqual({
+      type: "web_search",
+      max_keyword: 3,
+      limit: 2,
+      force_search: true,
+      user_location: { type: "approximate", country: "China", city: "Wuhan" },
+    })
+  })
+
+  test("minimal config is just the tool type", () => {
+    expect(resolveMimoWebSearchConfig({ MIMO_WEB_SEARCH: "1" })).toEqual({ type: "web_search" })
+  })
+})
+
+describe("rewriteMimoRequestBody web_search injection", () => {
+  const tool = { type: "web_search" as const, force_search: true }
+
+  test("adds a tools array when none exists", () => {
+    const body = JSON.stringify({ model: "mimo-v2.5-pro", messages: [{ role: "user", content: "hi" }] })
+    const out = JSON.parse(rewriteMimoRequestBody(body, { webSearch: tool }))
+    expect(out.tools).toEqual([{ type: "web_search", force_search: true }])
+  })
+
+  test("appends to existing function tools without dropping them", () => {
+    const body = JSON.stringify({ messages: [], tools: [{ type: "function", function: { name: "read" } }] })
+    const out = JSON.parse(rewriteMimoRequestBody(body, { webSearch: tool }))
+    expect(out.tools).toEqual([{ type: "function", function: { name: "read" } }, { type: "web_search", force_search: true }])
+  })
+
+  test("is idempotent when web_search is already present", () => {
+    const body = JSON.stringify({ messages: [], tools: [{ type: "web_search" }] })
+    expect(rewriteMimoRequestBody(body, { webSearch: tool })).toBe(body)
   })
 })
