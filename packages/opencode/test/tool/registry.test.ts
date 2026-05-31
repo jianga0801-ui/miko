@@ -20,6 +20,7 @@ import { BackgroundJob } from "@/background/job"
 import { Session } from "@/session/session"
 import { SessionStatus } from "@/session/status"
 import { Provider } from "@/provider/provider"
+import { Auth } from "@/auth"
 import { Git } from "@/git"
 import { LSP } from "@/lsp/lsp"
 import { Instruction } from "@/session/instruction"
@@ -58,7 +59,7 @@ const registryLayer = (opts: RegistryLayerOptions = {}) =>
       Layer.provide(Agent.defaultLayer),
       Layer.provide(Session.defaultLayer),
       Layer.provide(Layer.mergeAll(SessionStatus.defaultLayer, BackgroundJob.defaultLayer)),
-      Layer.provide(Provider.defaultLayer),
+      Layer.provide(Layer.mergeAll(Provider.defaultLayer, Auth.defaultLayer)),
       Layer.provide(Layer.mergeAll(Git.defaultLayer, RepositoryCache.defaultLayer)),
       Layer.provide(Reference.defaultLayer),
       Layer.provide(LSP.defaultLayer),

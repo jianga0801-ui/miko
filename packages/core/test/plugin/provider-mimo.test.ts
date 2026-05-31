@@ -1,8 +1,8 @@
-import { describe, expect, mock } from "bun:test"
+import { describe, expect, mock, test } from "bun:test"
 import { Effect } from "effect"
 import { Catalog } from "@opencode-ai/core/catalog"
 import { PluginV2 } from "@opencode-ai/core/plugin"
-import { MimoPlugin } from "@opencode-ai/core/plugin/provider/mimo"
+import { MimoPlugin, resolveMimoEndpoint } from "@opencode-ai/core/plugin/provider/mimo"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
 import { it, model, withEnv } from "./provider-helper"
@@ -21,6 +21,20 @@ void mock.module("@ai-sdk/openai-compatible", () => ({
     }
   },
 }))
+
+describe("resolveMimoEndpoint", () => {
+  test("routes sk- keys to the global endpoint regardless of region", () => {
+    expect(resolveMimoEndpoint("sk-key")).toBe("https://api.xiaomimimo.com/v1")
+    expect(resolveMimoEndpoint("sk-key", "sgp")).toBe("https://api.xiaomimimo.com/v1")
+  })
+
+  test("routes tp- keys by region, defaulting to cn", () => {
+    expect(resolveMimoEndpoint("tp-key", "sgp")).toBe("https://sgp.api.xiaomimimo.com/v1")
+    expect(resolveMimoEndpoint("tp-key", "ams")).toBe("https://ams.api.xiaomimimo.com/v1")
+    expect(resolveMimoEndpoint("tp-key", "cn")).toBe("https://cn.api.xiaomimimo.com/v1")
+    expect(resolveMimoEndpoint("tp-key")).toBe("https://cn.api.xiaomimimo.com/v1")
+  })
+})
 
 describe("MimoPlugin", () => {
   it.effect("registers mimo provider name and env keys on catalog transform", () =>

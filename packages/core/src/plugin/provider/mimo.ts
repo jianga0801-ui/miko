@@ -2,6 +2,24 @@ import { Effect } from "effect"
 import { ModelV2 } from "../../model"
 import { PluginV2 } from "../../plugin"
 import { ProviderV2 } from "../../provider"
+import { makeMimoFetch } from "./mimo-media"
+
+/**
+ * Resolve the MiMo OpenAI-compatible base URL from an API key + region.
+ *
+ * `sk-` keys always hit the global endpoint; `tp-` (token-plan) keys are
+ * region-routed. This is the single source of truth for MiMo endpoint routing
+ * so chat, TTS, and any other MiMo-backed feature stay aligned to the same
+ * key + region the user configured.
+ */
+export function resolveMimoEndpoint(apiKey: string, region?: string): string {
+  if (apiKey.startsWith("tp-")) {
+    if (region === "sgp") return "https://sgp.api.xiaomimimo.com/v1"
+    if (region === "ams") return "https://ams.api.xiaomimimo.com/v1"
+    return "https://cn.api.xiaomimimo.com/v1"
+  }
+  return "https://api.xiaomimimo.com/v1"
+}
 
 export const MimoPlugin = PluginV2.define({
   id: PluginV2.ID.make("mimo"),
@@ -22,20 +40,8 @@ export const MimoPlugin = PluginV2.define({
             provider.enabled = { via: "env", name: "MIMO_API_KEY" }
           }
           
-          let url = "https://api.xiaomimimo.com/v1"
-          
-          if (apiKey.startsWith("sk-")) {
-            url = "https://api.xiaomimimo.com/v1"
-          } else if (apiKey.startsWith("tp-")) {
-            if (region === "sgp") {
-              url = "https://sgp.api.xiaomimimo.com/v1"
-            } else if (region === "ams") {
-              url = "https://ams.api.xiaomimimo.com/v1"
-            } else {
-              url = "https://cn.api.xiaomimimo.com/v1"
-            }
-          }
-          
+          const url = resolveMimoEndpoint(apiKey, region)
+
           provider.endpoint = {
             type: "aisdk",
             package: "@ai-sdk/mimo",
@@ -85,6 +91,10 @@ export const MimoPlugin = PluginV2.define({
       "aisdk.sdk": Effect.fn(function* (evt) {
         if (evt.package !== "@ai-sdk/mimo") return
         if (evt.options.includeUsage !== false) evt.options.includeUsage = true
+        // Rewrite audio/video sentinel parts into MiMo content blocks on the way
+        // out, so multimodal input rides the same key + endpoint as chat.
+        const opts = evt.options as Record<string, any>
+        opts.fetch = makeMimoFetch(opts.fetch ?? globalThis.fetch)
         const mod = yield* Effect.promise(() => import("@ai-sdk/openai-compatible"))
         evt.sdk = mod.createOpenAICompatible(evt.options as any)
       }),

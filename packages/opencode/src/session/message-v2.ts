@@ -34,6 +34,7 @@ import * as ProviderError from "@/provider/error"
 import { iife } from "@/util/iife"
 import { errorMessage } from "@/util/error"
 import { isMedia } from "@/util/media"
+import { encodeMimoMediaSentinel } from "@opencode-ai/core/plugin/provider/mimo-media"
 import type { SystemError } from "bun"
 import type { Provider } from "@/provider/provider"
 import { Effect, Schema } from "effect"
@@ -221,7 +222,25 @@ export const toModelMessagesEffect = Effect.fnUntraced(function* (
           })
         // text/plain and directory files are converted into text parts, ignore them
         if (part.type === "file" && part.mime !== "text/plain" && part.mime !== "application/x-directory") {
-          if (options?.stripMedia && isMedia(part.mime)) {
+          // MiMo accepts audio/video via non-standard content blocks the AI SDK
+          // can't emit; carry them as sentinel text parts that the MiMo provider
+          // fetch rewrites on the wire. Images use the standard file->image_url path.
+          const mimoMediaKind =
+            model.providerID === "mimo"
+              ? part.mime.startsWith("audio/")
+                ? "audio"
+                : part.mime.startsWith("video/")
+                  ? "video"
+                  : undefined
+              : undefined
+          if (mimoMediaKind) {
+            userMessage.parts.push({
+              type: "text",
+              text: options?.stripMedia
+                ? `[Attached ${part.mime}: ${part.filename ?? "file"}]`
+                : encodeMimoMediaSentinel({ kind: mimoMediaKind, url: part.url, mediaType: part.mime }),
+            })
+          } else if (options?.stripMedia && isMedia(part.mime)) {
             userMessage.parts.push({
               type: "text",
               text: `[Attached ${part.mime}: ${part.filename ?? "file"}]`,

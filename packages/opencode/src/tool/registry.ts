@@ -10,6 +10,7 @@ import { TaskTool } from "./task"
 import { Database } from "@opencode-ai/core/database/database"
 import { TodoWriteTool } from "./todo"
 import { WebFetchTool } from "./webfetch"
+import { SpeakTool } from "./speak"
 import { WriteTool } from "./write"
 import { InvalidTool } from "./invalid"
 import { SkillTool } from "./skill"
@@ -21,6 +22,7 @@ import { Schema } from "effect"
 import z from "zod"
 import { Plugin } from "../plugin"
 import { Provider } from "@/provider/provider"
+import { Auth } from "../auth"
 
 import { WebSearchTool } from "./websearch"
 import { RepoCloneTool } from "./repo_clone"
@@ -110,6 +112,7 @@ export const layer: Layer.Layer<
   | Format.Service
   | Truncate.Service
   | RuntimeFlags.Service
+  | Auth.Service
   | Database.Service
 > = Layer.effect(
   Service,
@@ -129,6 +132,7 @@ export const layer: Layer.Layer<
     const lsptool = yield* LspTool
     const plan = yield* PlanExitTool
     const webfetch = yield* WebFetchTool
+    const speak = yield* SpeakTool
     const websearch = yield* WebSearchTool
     const repoClone = yield* RepoCloneTool
     const repoOverview = yield* RepoOverviewTool
@@ -239,6 +243,7 @@ export const layer: Layer.Layer<
           write: Tool.init(writetool),
           task: Tool.init(task),
           fetch: Tool.init(webfetch),
+          speak: Tool.init(speak),
           todo: Tool.init(todo),
           search: Tool.init(websearch),
           repo_clone: Tool.init(repoClone),
@@ -263,6 +268,7 @@ export const layer: Layer.Layer<
             tool.write,
             tool.task,
             tool.fetch,
+            tool.speak,
             tool.todo,
             tool.search,
             ...(flags.experimentalScout ? [tool.repo_clone, tool.repo_overview] : []),
@@ -387,7 +393,7 @@ export const defaultLayer = Layer.suspend(() =>
       Layer.provide(Agent.defaultLayer),
       Layer.provide(Session.defaultLayer),
       Layer.provide(BackgroundJob.defaultLayer),
-      Layer.provide(Provider.defaultLayer),
+      Layer.provide(Layer.mergeAll(Provider.defaultLayer, Auth.defaultLayer)),
       Layer.provide(Layer.mergeAll(Git.defaultLayer, RepositoryCache.defaultLayer)),
       Layer.provide(Reference.defaultLayer),
       Layer.provide(LSP.defaultLayer),
