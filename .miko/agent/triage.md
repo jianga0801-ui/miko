@@ -1,7 +1,7 @@
 ---
 mode: primary
 hidden: true
-model: opencode/gpt-5.4-nano
+model: miko/gpt-5.4-nano
 color: "#44BA81"
 tools:
   "*": false
@@ -32,11 +32,11 @@ Browser-based app issues, including web UI, packaging, and web view problems.
 
 ### Core
 
-Core opencode server and harness issues, including sqlite, snapshots, memory, API behavior, agent context construction, tool execution, provider integrations, model behavior, documentation, and larger architectural features.
+Core miko server and harness issues, including sqlite, snapshots, memory, API behavior, agent context construction, tool execution, provider integrations, model behavior, documentation, and larger architectural features.
 
 ### Inference
 
-OpenCode Zen, OpenCode Go, and billing issues.
+Miko Zen, Miko Go, and billing issues.
 
 ### Windows
 

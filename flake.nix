@@ -1,5 +1,5 @@
 {
-  description = "OpenCode development flake";
+  description = "Miko development flake";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -39,7 +39,7 @@
             };
           in
           rec {
-            opencode = final.callPackage ./nix/opencode.nix {
+            miko = final.callPackage ./nix/miko.nix {
               inherit node_modules;
             };
           };
@@ -53,8 +53,8 @@
           };
         in
         rec {
-          default = opencode;
-          opencode = pkgs.callPackage ./nix/opencode.nix {
+          default = miko;
+          miko = pkgs.callPackage ./nix/miko.nix {
             inherit node_modules;
           };
           # Updater derivation with fakeHash - build fails and reveals correct hash

@@ -1,6 +1,6 @@
 # Miko - Agent & Project Plan Guide
 
-欢迎来到 Miko！本仓库是 Fork 自 OpenCode 的轻量级、超强 Agent 编程助手客户端，托管于用户 `jianga0801-ui`。
+欢迎来到 Miko！本仓库是 Fork 自 Miko 的轻量级、超强 Agent 编程助手客户端，托管于用户 `jianga0801-ui`。
 本文件（`AGENTS.md`）旨在说明项目开发计划、架构愿景，并为所有在此仓库中工作的 AI Agent 制定严格的操作约束与代码风格指南。
 
 ---
@@ -67,7 +67,7 @@ Miko 旨在打造一个极速、极简、且具备极高视觉美感与极佳人
 ### 3.2 Commits 与 PR 标题
 遵循常规提交风格：`type(scope): summary`
 - 有效类型：`feat`, `fix`, `docs`, `chore`, `refactor`, `test`。
-- 常用 Scope（可选）：`core`, `opencode`, `tui`, `app`, `sdk`, `plugin`。
+- 常用 Scope（可选）：`core`, `miko`, `tui`, `app`, `sdk`, `plugin`。
 - 示例：`fix(tui): simplify thinking toggle styling`, `docs: update contributing guide`
 
 ### 3.3 编程规范 (TS/JS)
@@ -91,7 +91,7 @@ Miko 旨在打造一个极速、极简、且具备极高视觉美感与极佳人
 ### 3.4 模块导入 (Imports)
 - **禁止使用别名导入**：不要使用 `import { foo as bar }` 或 `import { resolve as pathResolve }`。
 - **禁止使用星号导入**：不要使用 `import * as Foo` 或 `import type * as Foo`。
-- **命名空间导入**：如果需要命名空间样式的值，引入该模块自身导出的命名空间名称（例如 `import { Project } from "@opencode-ai/core/project"`，然后通过 `Project.ID` 引用）。
+- **命名空间导入**：如果需要命名空间样式的值，引入该模块自身导出的命名空间名称（例如 `import { Project } from "@miko-ai/core/project"`，然后通过 `Project.ID` 引用）。
 
 ### 3.5 变量与控制流
 - 优先使用 `const`。使用三元运算符或早期返回来代替变量的重新赋值（reassignment）。
@@ -134,5 +134,5 @@ const table = sqliteTable("session", {
 
 - **严禁 Mock**：在编写测试时，尽可能避免使用 mock。
 - **避免逻辑复制**：测试应当测试实际的输入与输出，不要将业务逻辑复制到测试代码中。
-- **测试路径规范**：不能从仓库根目录直接运行测试（有 `do-not-run-tests-from-root` 的保护限制）。必须进入对应的包目录（如 `packages/opencode`）下运行。
+- **测试路径规范**：不能从仓库根目录直接运行测试（有 `do-not-run-tests-from-root` 的保护限制）。必须进入对应的包目录（如 `packages/miko`）下运行。
 - **类型检查**：必须进入对应的包目录下运行 `bun typecheck`，严禁直接运行 `tsc`。

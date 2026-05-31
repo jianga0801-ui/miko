@@ -2,12 +2,12 @@
 
 ## Sources
 
-- PR #9947: https://github.com/anomalyco/opencode/pull/9947
+- PR #9947: https://github.com/anomalyco/miko/pull/9947
 
 ## Do Not Translate (Locale Additions)
 
-- `OpenCode` (preserve casing in prose; keep `opencode` only in commands, package names, paths, or code)
-- `OpenCode CLI`
+- `Miko` (preserve casing in prose; keep `miko` only in commands, package names, paths, or code)
+- `Miko CLI`
 - `CLI`, `TUI`, `MCP`, `OAuth`
 - Commands, flags, file paths, and code literals (keep exactly as written)
 

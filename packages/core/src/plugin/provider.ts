@@ -21,7 +21,7 @@ import { MistralPlugin } from "./provider/mistral"
 import { NvidiaPlugin } from "./provider/nvidia"
 import { OpenAIPlugin } from "./provider/openai"
 import { OpenAICompatiblePlugin } from "./provider/openai-compatible"
-import { OpencodePlugin } from "./provider/opencode"
+import { MikoPlugin } from "./provider/miko"
 import { OpenRouterPlugin } from "./provider/openrouter"
 import { PerplexityPlugin } from "./provider/perplexity"
 import { SapAICorePlugin } from "./provider/sap-ai-core"
@@ -54,7 +54,7 @@ export const ProviderPlugins = [
   MistralPlugin,
   MimoPlugin,
   NvidiaPlugin,
-  OpencodePlugin,
+  MikoPlugin,
   OpenAICompatiblePlugin,
   OpenAIPlugin,
   OpenRouterPlugin,

@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Turn the current TypeScript/Bun OpenCode fork into Miko: a WSL-first, terminal-centric MiMo coding agent with a stable MVP, clear branding, MiMo provider support, and later voice/multimodal polish.
+**Goal:** Turn the current TypeScript/Bun Miko fork into Miko: a WSL-first, terminal-centric MiMo coding agent with a stable MVP, clear branding, MiMo provider support, and later voice/multimodal polish.
 
-**Architecture:** Keep the existing monorepo and runtime boundaries. Treat `packages/opencode` as the CLI/TUI/server shell, `packages/core` as shared config/provider/project state, `packages/llm` as the native LLM protocol layer, and `packages/app`/`packages/ui`/`packages/desktop` as visual surfaces. Do not rewrite the fork as Go; the current repository is a TypeScript/Bun codebase.
+**Architecture:** Keep the existing monorepo and runtime boundaries. Treat `packages/miko` as the CLI/TUI/server shell, `packages/core` as shared config/provider/project state, `packages/llm` as the native LLM protocol layer, and `packages/app`/`packages/ui`/`packages/desktop` as visual surfaces. Do not rewrite the fork as Go; the current repository is a TypeScript/Bun codebase.
 
-**Tech Stack:** Bun 1.3.14, TypeScript, Effect, AI SDK, `@opencode-ai/llm`, OpenTUI, Solid/Vite, Electron, Turbo, SQLite/Drizzle.
+**Tech Stack:** Bun 1.3.14, TypeScript, Effect, AI SDK, `@miko-ai/llm`, OpenTUI, Solid/Vite, Electron, Turbo, SQLite/Drizzle.
 
 ---
 
@@ -16,18 +16,18 @@
 
 - Repository path: `/home/linuu/Code/miko` in WSL, exposed to Windows as `\\wsl.localhost\Ubuntu-26.04\home\linuu\Code\miko`.
 - Git branch: `dev`, tracking `origin/dev`.
-- Git remote currently points to `https://github.com/sst/opencode.git`, not `jianga0801-ui/miko`.
+- Git remote currently points to `https://github.com/sst/miko.git`, not `jianga0801-ui/miko`.
 - WSL git status currently shows `AGENTS.md` modified and `docs/` untracked.
 - Windows PowerShell over the UNC path can show noisy file-type changes for symlink-like assets. Prefer WSL git commands for this repo.
 - `bun.lock` exists, but `bun` is not installed in the WSL environment and `node_modules` is missing.
 - Root `package.json` intentionally blocks root tests with `test: echo 'do not run tests from root' && exit 1`.
-- Existing `docs/implementation_plan.md` describes a Go-based `sst/opencode` fork. That does not match the current codebase.
+- Existing `docs/implementation_plan.md` describes a Go-based `sst/miko` fork. That does not match the current codebase.
 
 ### Package Map
 
 | Area | Main Paths | Responsibility |
 | --- | --- | --- |
-| CLI/TUI/server runtime | `packages/opencode/src`, `packages/opencode/package.json` | Primary executable, commands, server, session loop, tools, project bootstrapping |
+| CLI/TUI/server runtime | `packages/miko/src`, `packages/miko/package.json` | Primary executable, commands, server, session loop, tools, project bootstrapping |
 | Shared core | `packages/core/src`, `packages/core/package.json` | Provider config, model metadata, global paths, project/account/database abstractions |
 | LLM protocol layer | `packages/llm/src`, `packages/llm/package.json` | Native provider protocols, request/event schemas, route executor |
 | Web app shell | `packages/app/src`, `packages/app/package.json` | Solid/Vite app UI used by web and desktop surfaces |
@@ -39,17 +39,17 @@
 
 ### Current LLM Integration Shape
 
-- Default LLM execution still flows through AI SDK in `packages/opencode/src/session/llm.ts`.
-- Adapter boundary is documented in `packages/opencode/src/session/llm/AGENTS.md`.
-- AI SDK stream events are normalized in `packages/opencode/src/session/llm/ai-sdk.ts`.
-- Native opt-in request lowering lives in `packages/opencode/src/session/llm/native-request.ts` and `packages/opencode/src/session/llm/native-runtime.ts`.
+- Default LLM execution still flows through AI SDK in `packages/miko/src/session/llm.ts`.
+- Adapter boundary is documented in `packages/miko/src/session/llm/AGENTS.md`.
+- AI SDK stream events are normalized in `packages/miko/src/session/llm/ai-sdk.ts`.
+- Native opt-in request lowering lives in `packages/miko/src/session/llm/native-request.ts` and `packages/miko/src/session/llm/native-runtime.ts`.
 - OpenAI-compatible native support already exists in `packages/llm/src/providers/openai-compatible.ts` and `packages/llm/src/protocols/openai-compatible-chat.ts`.
-- Reasoning continuation already has a useful seam in `packages/opencode/src/provider/transform.ts`: interleaved reasoning can be sent back through `providerOptions.openaiCompatible.reasoning_content`.
+- Reasoning continuation already has a useful seam in `packages/miko/src/provider/transform.ts`: interleaved reasoning can be sent back through `providerOptions.openaiCompatible.reasoning_content`.
 
 ## Strategic Decisions
 
 1. Build the TypeScript fork that is actually present. Do not use the Go file layout from `docs/implementation_plan.md`.
-2. Start with user-visible Miko branding and MiMo as a first-class provider. Keep internal `@opencode-ai/*` workspace package names for the first MVP to avoid a large import churn.
+2. Start with user-visible Miko branding and MiMo as a first-class provider. Keep internal `@miko-ai/*` workspace package names for the first MVP to avoid a large import churn.
 3. Do not delete existing providers until MiMo MVP passes. First set Miko defaults and allow `enabled_providers`/`disabled_providers` to restrict behavior. Pruning providers is a later release-hardening phase.
 4. Treat `reasoning_content` continuity as part of MiMo MVP, not an enhancement.
 5. Keep MCP, plugins, skills, commands, permissions, project/worktree support, and file tools intact unless a failing test proves they block Miko.
@@ -58,7 +58,7 @@
 
 - `miko --version`, `miko --help`, and the main TUI identify as Miko.
 - A fresh WSL install can run `bun install`, package typechecks, and targeted tests.
-- A `miko.json` or `.miko/` project config can select MiMo without requiring OpenCode branding.
+- A `miko.json` or `.miko/` project config can select MiMo without requiring Miko branding.
 - MiMo supports single-turn chat, multi-turn reasoning continuation, tool calling, and OpenAI-compatible streaming.
 - README and docs match the TypeScript/Bun implementation.
 - Release scripts and installer do not publish or install under the wrong owner or command name.
@@ -92,7 +92,7 @@ Expected current result:
 ```txt
 bash: bun: command not found
 ## dev...origin/dev
-origin https://github.com/sst/opencode.git
+origin https://github.com/sst/miko.git
 ```
 
 - [x] **Step 2: Install Bun in WSL**
@@ -121,7 +121,7 @@ Expected: install succeeds and `node_modules ready` is printed.
 
 - [x] **Step 4: Confirm remote target before changing it**
 
-Current remote is upstream OpenCode. Before changing `.git/config`, confirm whether the target repo already exists.
+Current remote is upstream Miko. Before changing `.git/config`, confirm whether the target repo already exists.
 
 Run:
 
@@ -156,7 +156,7 @@ bun test test/provider/openai-compatible-chat.test.ts test/route.test.ts
 ```
 
 ```bash
-cd /home/linuu/Code/miko/packages/opencode
+cd /home/linuu/Code/miko/packages/miko
 bun typecheck
 bun test test/provider/transform.test.ts test/config/config.test.ts test/cli/error.test.ts
 ```
@@ -189,7 +189,7 @@ Required content:
 ```md
 # Miko TypeScript Fork Implementation Plan
 
-Miko is a TypeScript/Bun fork of OpenCode. The runtime is centered on `packages/opencode`, shared provider/config state lives in `packages/core`, native LLM protocols live in `packages/llm`, and app surfaces live in `packages/app`, `packages/ui`, and `packages/desktop`.
+Miko is a TypeScript/Bun fork of Miko. The runtime is centered on `packages/miko`, shared provider/config state lives in `packages/core`, native LLM protocols live in `packages/llm`, and app surfaces live in `packages/app`, `packages/ui`, and `packages/desktop`.
 
 The previous Go-oriented plan is obsolete for this repository.
 ```
@@ -210,16 +210,16 @@ Change the README heading and first paragraph to Miko. Keep a short attribution 
 ```md
 # Miko
 
-Miko is a WSL-first, terminal-centric AI coding agent forked from OpenCode and focused on Xiaomi MiMo model support.
+Miko is a WSL-first, terminal-centric AI coding agent forked from Miko and focused on Xiaomi MiMo model support.
 
-This project is not affiliated with the OpenCode team.
+This project is not affiliated with the Miko team.
 ```
 
 Verification:
 
 ```bash
 cd /home/linuu/Code/miko
-rg -n "opencode.ai|anomalyco/opencode|sst/opencode|opencode-ai@latest" README.md README.zh.md
+rg -n "miko.dev|anomalyco/miko|sst/miko|miko-ai@latest" README.md README.zh.md
 ```
 
 Expected: only attribution or migration notes remain.
@@ -250,32 +250,32 @@ git commit -m "docs: align miko plan with typescript fork"
 
 **Files:**
 - Modify: `package.json`
-- Modify: `packages/opencode/package.json`
-- Modify: `packages/opencode/src/index.ts`
-- Modify: `packages/opencode/src/cli/ui.ts`
-- Modify: `packages/opencode/src/cli/logo.ts`
-- Create: `packages/opencode/bin/miko`
-- Keep initially: `packages/opencode/bin/opencode`
+- Modify: `packages/miko/package.json`
+- Modify: `packages/miko/src/index.ts`
+- Modify: `packages/miko/src/cli/ui.ts`
+- Modify: `packages/miko/src/cli/logo.ts`
+- Create: `packages/miko/bin/miko`
+- Keep initially: `packages/miko/bin/miko`
 - Modify: `install`
-- Test: `packages/opencode/test/cli/*.test.ts`
+- Test: `packages/miko/test/cli/*.test.ts`
 
-- [ ] **Step 1: Add primary `miko` bin without removing `opencode` yet**
+- [ ] **Step 1: Add primary `miko` bin without removing `miko` yet**
 
-In `packages/opencode/package.json`, set:
+In `packages/miko/package.json`, set:
 
 ```json
 "bin": {
   "miko": "./bin/miko",
-  "opencode": "./bin/opencode"
+  "miko": "./bin/miko"
 }
 ```
 
-Create `packages/opencode/bin/miko` with the same launcher behavior as `packages/opencode/bin/opencode`, changing only the file name and command label if the script contains one.
+Create `packages/miko/bin/miko` with the same launcher behavior as `packages/miko/bin/miko`, changing only the file name and command label if the script contains one.
 
 Verification:
 
 ```bash
-cd /home/linuu/Code/miko/packages/opencode
+cd /home/linuu/Code/miko/packages/miko
 bun test test/cli/account.test.ts test/cli/error.test.ts
 ```
 
@@ -283,10 +283,10 @@ Expected: CLI tests still pass.
 
 - [ ] **Step 2: Change yargs script name**
 
-In `packages/opencode/src/index.ts`, change:
+In `packages/miko/src/index.ts`, change:
 
 ```ts
-.scriptName("opencode")
+.scriptName("miko")
 ```
 
 to:
@@ -300,19 +300,19 @@ Also update `show()` so help output detection uses `miko `.
 Verification:
 
 ```bash
-cd /home/linuu/Code/miko/packages/opencode
+cd /home/linuu/Code/miko/packages/miko
 bun --conditions=browser src/index.ts --help | head -40
 ```
 
-Expected: help output starts with `miko`, not `opencode`.
+Expected: help output starts with `miko`, not `miko`.
 
 - [ ] **Step 3: Update installer command and install directory**
 
 In `install`, change:
 
 ```sh
-APP=opencode
-INSTALL_DIR=$HOME/.opencode/bin
+APP=miko
+INSTALL_DIR=$HOME/.miko/bin
 ```
 
 to:
@@ -329,19 +329,19 @@ Verification:
 ```bash
 cd /home/linuu/Code/miko
 bash -n install
-rg -n "APP=opencode|\\.opencode/bin|which opencode|opencode --version" install
+rg -n "APP=miko|\\.miko/bin|which miko|miko --version" install
 ```
 
-Expected: no active installer paths still use `opencode`; compatibility notes may remain only if explicitly documented.
+Expected: no active installer paths still use `miko`; compatibility notes may remain only if explicitly documented.
 
 - [ ] **Step 4: Rebrand visible CLI logo and messages**
 
-Update `packages/opencode/src/cli/ui.ts` and `packages/opencode/src/cli/logo.ts` so startup/help branding says `Miko`.
+Update `packages/miko/src/cli/ui.ts` and `packages/miko/src/cli/logo.ts` so startup/help branding says `Miko`.
 
 Verification:
 
 ```bash
-cd /home/linuu/Code/miko/packages/opencode
+cd /home/linuu/Code/miko/packages/miko
 bun typecheck
 ```
 
@@ -350,7 +350,7 @@ Expected: typecheck passes.
 Commit:
 
 ```bash
-git add package.json packages/opencode/package.json packages/opencode/bin/miko packages/opencode/src/index.ts packages/opencode/src/cli/ui.ts packages/opencode/src/cli/logo.ts install
+git add package.json packages/miko/package.json packages/miko/bin/miko packages/miko/src/index.ts packages/miko/src/cli/ui.ts packages/miko/src/cli/logo.ts install
 git commit -m "feat(cli): add miko command branding"
 ```
 
@@ -363,10 +363,10 @@ git commit -m "feat(cli): add miko command branding"
 **Files:**
 - Modify: `packages/core/src/global.ts`
 - Modify: `packages/core/src/flag/flag.ts`
-- Modify: `packages/opencode/src/config/paths.ts`
-- Modify: `packages/opencode/src/config/config.ts`
+- Modify: `packages/miko/src/config/paths.ts`
+- Modify: `packages/miko/src/config/config.ts`
 - Test: `packages/core/test/global.test.ts`
-- Test: `packages/opencode/test/config/config.test.ts`
+- Test: `packages/miko/test/config/config.test.ts`
 
 - [ ] **Step 1: Add Miko app paths**
 
@@ -376,7 +376,7 @@ In `packages/core/src/global.ts`, change the app constant:
 const app = "miko"
 ```
 
-Then add compatibility only where needed through explicit legacy lookup in config paths, not by keeping the global app as `opencode`.
+Then add compatibility only where needed through explicit legacy lookup in config paths, not by keeping the global app as `miko`.
 
 Verification:
 
@@ -387,9 +387,9 @@ bun test test/global.test.ts
 
 Expected: path expectations are updated to `miko`.
 
-- [ ] **Step 2: Add `MIKO_*` flags while keeping legacy `OPENCODE_*` fallback**
+- [ ] **Step 2: Add `MIKO_*` flags while keeping legacy `MIKO_*` fallback**
 
-In `packages/core/src/flag/flag.ts`, for each renamed user-facing variable, read Miko first and OpenCode second. Example:
+In `packages/core/src/flag/flag.ts`, for each renamed user-facing variable, read Miko first and Miko second. Example:
 
 ```ts
 const env = (primary: string, legacy: string) => process.env[primary] ?? process.env[legacy]
@@ -408,27 +408,27 @@ Expected: typecheck passes.
 
 - [ ] **Step 3: Support `.miko` and `miko.json` project config**
 
-In `packages/opencode/src/config/paths.ts`, search both current and legacy names:
+In `packages/miko/src/config/paths.ts`, search both current and legacy names:
 
 ```ts
 targets: [`${name}.jsonc`, `${name}.json`]
 ```
 
-Callers should pass `miko` as the primary config name after the CLI rename. Directory lookup should prefer `.miko` before `.opencode`.
+Callers should pass `miko` as the primary config name after the CLI rename. Directory lookup should prefer `.miko` before `.miko`.
 
 Verification:
 
 ```bash
-cd /home/linuu/Code/miko/packages/opencode
+cd /home/linuu/Code/miko/packages/miko
 bun test test/config/config.test.ts
 ```
 
-Expected: tests cover `miko.json`, `.miko`, and legacy `.opencode` fallback.
+Expected: tests cover `miko.json`, `.miko`, and legacy `.miko` fallback.
 
 Commit:
 
 ```bash
-git add packages/core/src/global.ts packages/core/src/flag/flag.ts packages/opencode/src/config/paths.ts packages/opencode/src/config/config.ts packages/core/test/global.test.ts packages/opencode/test/config/config.test.ts
+git add packages/core/src/global.ts packages/core/src/flag/flag.ts packages/miko/src/config/paths.ts packages/miko/src/config/config.ts packages/core/test/global.test.ts packages/miko/test/config/config.test.ts
 git commit -m "feat(config): add miko config namespace"
 ```
 
@@ -442,10 +442,10 @@ git commit -m "feat(config): add miko config namespace"
 - Create: `packages/core/src/plugin/provider/mimo.ts`
 - Modify: `packages/core/src/plugin/provider.ts`
 - Modify: `packages/core/src/provider.ts`
-- Modify: `packages/opencode/src/provider/provider.ts`
-- Modify: `packages/opencode/src/provider/transform.ts`
+- Modify: `packages/miko/src/provider/provider.ts`
+- Modify: `packages/miko/src/provider/transform.ts`
 - Test: `packages/core/test/plugin/provider-mimo.test.ts`
-- Test: `packages/opencode/test/provider/transform.test.ts`
+- Test: `packages/miko/test/provider/transform.test.ts`
 - Test: `packages/llm/test/provider/openai-compatible-chat.test.ts`
 
 - [ ] **Step 1: Register provider ID**
@@ -502,7 +502,7 @@ Expected: MiMo and OpenAI-compatible tests pass.
 
 - [ ] **Step 4: Preserve `reasoning_content` across turns**
 
-Extend `packages/opencode/test/provider/transform.test.ts` with a MiMo-style assistant message containing a reasoning part and a text part. Expected transformed message:
+Extend `packages/miko/test/provider/transform.test.ts` with a MiMo-style assistant message containing a reasoning part and a text part. Expected transformed message:
 
 ```ts
 {
@@ -521,7 +521,7 @@ If the existing interleaved transform already passes this test, do not change im
 Verification:
 
 ```bash
-cd /home/linuu/Code/miko/packages/opencode
+cd /home/linuu/Code/miko/packages/miko
 bun test test/provider/transform.test.ts
 ```
 
@@ -541,7 +541,7 @@ Expected: existing OpenAI-compatible chat behavior remains green.
 Commit:
 
 ```bash
-git add packages/core/src/plugin/provider/mimo.ts packages/core/src/plugin/provider.ts packages/core/src/provider.ts packages/opencode/src/provider/provider.ts packages/opencode/src/provider/transform.ts packages/core/test/plugin/provider-mimo.test.ts packages/opencode/test/provider/transform.test.ts
+git add packages/core/src/plugin/provider/mimo.ts packages/core/src/plugin/provider.ts packages/core/src/provider.ts packages/miko/src/provider/provider.ts packages/miko/src/provider/transform.ts packages/core/test/plugin/provider-mimo.test.ts packages/miko/test/provider/transform.test.ts
 git commit -m "feat(core): add mimo provider"
 ```
 
@@ -552,12 +552,12 @@ git commit -m "feat(core): add mimo provider"
 **Goal:** Make Miko usable out of the box with MiMo while preserving advanced config escape hatches.
 
 **Files:**
-- Modify: `packages/opencode/src/config/config.ts`
+- Modify: `packages/miko/src/config/config.ts`
 - Modify: `packages/app/src/components/dialog-select-provider.tsx`
 - Modify: `packages/app/src/components/dialog-select-model.tsx`
 - Modify: `packages/app/src/i18n/en.ts`
 - Modify: `packages/app/src/i18n/zh.ts`
-- Test: `packages/opencode/test/config/config.test.ts`
+- Test: `packages/miko/test/config/config.test.ts`
 - Test: `packages/app/src/components/dialog-select-provider.tsx` related tests if present
 
 - [ ] **Step 1: Add documented config example**
@@ -607,7 +607,7 @@ Add config tests that prove `enabled_providers: ["mimo"]` hides other providers 
 Verification:
 
 ```bash
-cd /home/linuu/Code/miko/packages/opencode
+cd /home/linuu/Code/miko/packages/miko
 bun test test/config/config.test.ts
 ```
 
@@ -616,7 +616,7 @@ Expected: provider restriction tests pass.
 Commit:
 
 ```bash
-git add README.md docs/implementation_plan.md packages/opencode/src/config/config.ts packages/app/src/components/dialog-select-provider.tsx packages/app/src/components/dialog-select-model.tsx packages/app/src/i18n/en.ts packages/app/src/i18n/zh.ts packages/opencode/test/config/config.test.ts
+git add README.md docs/implementation_plan.md packages/miko/src/config/config.ts packages/app/src/components/dialog-select-provider.tsx packages/app/src/components/dialog-select-model.tsx packages/app/src/i18n/en.ts packages/app/src/i18n/zh.ts packages/miko/test/config/config.test.ts
 git commit -m "feat(app): make mimo the default provider path"
 ```
 
@@ -627,14 +627,14 @@ git commit -m "feat(app): make mimo the default provider path"
 **Goal:** Make Windows host plus WSL usage predictable and explicit.
 
 **Files:**
-- Modify: `packages/opencode/src/file/ripgrep.ts`
-- Modify: `packages/opencode/src/shell/shell.ts`
-- Modify: `packages/opencode/src/pty/pty.bun.ts`
-- Modify: `packages/opencode/src/util/filesystem.ts`
+- Modify: `packages/miko/src/file/ripgrep.ts`
+- Modify: `packages/miko/src/shell/shell.ts`
+- Modify: `packages/miko/src/pty/pty.bun.ts`
+- Modify: `packages/miko/src/util/filesystem.ts`
 - Modify: `README.zh.md`
-- Test: `packages/opencode/test/file/ripgrep.test.ts`
-- Test: `packages/opencode/test/pty/pty-shell.test.ts`
-- Test: `packages/opencode/test/filesystem/filesystem.test.ts`
+- Test: `packages/miko/test/file/ripgrep.test.ts`
+- Test: `packages/miko/test/pty/pty-shell.test.ts`
+- Test: `packages/miko/test/filesystem/filesystem.test.ts`
 
 - [ ] **Step 1: Document supported launch modes**
 
@@ -660,7 +660,7 @@ Add tests for WSL paths and Windows UNC paths in the specific modules that norma
 Verification:
 
 ```bash
-cd /home/linuu/Code/miko/packages/opencode
+cd /home/linuu/Code/miko/packages/miko
 bun test test/file/ripgrep.test.ts test/pty/pty-shell.test.ts test/filesystem/filesystem.test.ts
 ```
 
@@ -673,7 +673,7 @@ Only change code required by failing tests. Avoid broad shell abstraction rewrit
 Verification:
 
 ```bash
-cd /home/linuu/Code/miko/packages/opencode
+cd /home/linuu/Code/miko/packages/miko
 bun test test/file/ripgrep.test.ts test/pty/pty-shell.test.ts test/filesystem/filesystem.test.ts
 bun typecheck
 ```
@@ -683,8 +683,8 @@ Expected: path tests and typecheck pass.
 Commit:
 
 ```bash
-git add README.md README.zh.md packages/opencode/src/file/ripgrep.ts packages/opencode/src/shell/shell.ts packages/opencode/src/pty/pty.bun.ts packages/opencode/src/util/filesystem.ts packages/opencode/test/file/ripgrep.test.ts packages/opencode/test/pty/pty-shell.test.ts packages/opencode/test/filesystem/filesystem.test.ts
-git commit -m "fix(opencode): harden wsl path handling"
+git add README.md README.zh.md packages/miko/src/file/ripgrep.ts packages/miko/src/shell/shell.ts packages/miko/src/pty/pty.bun.ts packages/miko/src/util/filesystem.ts packages/miko/test/file/ripgrep.test.ts packages/miko/test/pty/pty-shell.test.ts packages/miko/test/filesystem/filesystem.test.ts
+git commit -m "fix(miko): harden wsl path handling"
 ```
 
 ---
@@ -694,15 +694,15 @@ git commit -m "fix(opencode): harden wsl path handling"
 **Goal:** Add TTS and media understanding after text/tool MiMo is stable.
 
 **Files:**
-- Create: `packages/opencode/src/tool/speak.ts`
-- Create: `packages/opencode/src/tool/speak.txt`
-- Modify: `packages/opencode/src/tool/registry.ts`
-- Modify: `packages/opencode/src/util/media.ts`
+- Create: `packages/miko/src/tool/speak.ts`
+- Create: `packages/miko/src/tool/speak.txt`
+- Modify: `packages/miko/src/tool/registry.ts`
+- Modify: `packages/miko/src/util/media.ts`
 - Modify: `packages/llm/src/schema/messages.ts`
 - Modify: `packages/llm/src/protocols/openai-compatible-chat.ts`
 - Modify: `packages/app/src/components/prompt-input.tsx`
 - Modify: `packages/ui/src/components/*` only for reusable audio/media UI
-- Test: `packages/opencode/test/tool/*.test.ts`
+- Test: `packages/miko/test/tool/*.test.ts`
 - Test: `packages/llm/test/provider/openai-compatible-chat.test.ts`
 - Test: `packages/app/src/utils/runtime-adapters.test.ts`
 
@@ -726,7 +726,7 @@ Implement `speak` so it writes an audio file path and returns a structured resul
 Verification:
 
 ```bash
-cd /home/linuu/Code/miko/packages/opencode
+cd /home/linuu/Code/miko/packages/miko
 bun test test/tool/speak.test.ts
 ```
 
@@ -739,7 +739,7 @@ Use Linux playback commands only when present. If neither `paplay` nor `aplay` e
 Verification:
 
 ```bash
-cd /home/linuu/Code/miko/packages/opencode
+cd /home/linuu/Code/miko/packages/miko
 bun test test/tool/speak.test.ts
 ```
 
@@ -748,8 +748,8 @@ Expected: tests cover both playback-command-present and playback-command-missing
 Commit:
 
 ```bash
-git add packages/opencode/src/tool/speak.ts packages/opencode/src/tool/speak.txt packages/opencode/src/tool/registry.ts packages/opencode/src/util/media.ts packages/llm/src/schema/messages.ts packages/llm/src/protocols/openai-compatible-chat.ts packages/app/src/components/prompt-input.tsx packages/opencode/test/tool/speak.test.ts packages/llm/test/provider/openai-compatible-chat.test.ts packages/app/src/utils/runtime-adapters.test.ts
-git commit -m "feat(opencode): add mimo voice and media support"
+git add packages/miko/src/tool/speak.ts packages/miko/src/tool/speak.txt packages/miko/src/tool/registry.ts packages/miko/src/util/media.ts packages/llm/src/schema/messages.ts packages/llm/src/protocols/openai-compatible-chat.ts packages/app/src/components/prompt-input.tsx packages/miko/test/tool/speak.test.ts packages/llm/test/provider/openai-compatible-chat.test.ts packages/app/src/utils/runtime-adapters.test.ts
+git commit -m "feat(miko): add mimo voice and media support"
 ```
 
 ---
@@ -759,8 +759,8 @@ git commit -m "feat(opencode): add mimo voice and media support"
 **Goal:** Make Miko feel intentionally designed without destabilizing workflows.
 
 **Files:**
-- Modify: `packages/opencode/src/cli/logo.ts`
-- Modify: `packages/opencode/src/cli/ui.ts`
+- Modify: `packages/miko/src/cli/logo.ts`
+- Modify: `packages/miko/src/cli/ui.ts`
 - Modify: `packages/app/src/index.css`
 - Modify: `packages/app/src/components/titlebar.tsx`
 - Modify: `packages/app/src/components/status-popover.tsx`
@@ -807,7 +807,7 @@ Expected: unit tests and build pass.
 Commit:
 
 ```bash
-git add packages/opencode/src/cli/logo.ts packages/opencode/src/cli/ui.ts packages/app/src/index.css packages/app/src/components/titlebar.tsx packages/app/src/components/status-popover.tsx packages/ui/src/theme packages/app/src/theme-preload.test.ts packages/app/src/components/titlebar-history.test.ts packages/app/src/components/titlebar-session-events.test.ts
+git add packages/miko/src/cli/logo.ts packages/miko/src/cli/ui.ts packages/app/src/index.css packages/app/src/components/titlebar.tsx packages/app/src/components/status-popover.tsx packages/ui/src/theme packages/app/src/theme-preload.test.ts packages/app/src/components/titlebar-history.test.ts packages/app/src/components/titlebar-session-events.test.ts
 git commit -m "feat(ui): apply miko visual identity"
 ```
 
@@ -815,7 +815,7 @@ git commit -m "feat(ui): apply miko visual identity"
 
 ## Phase 9: Installer, Desktop, SDK, And Release Readiness
 
-**Goal:** Ensure the project can be installed, packaged, and published under Miko without leaking OpenCode release targets.
+**Goal:** Ensure the project can be installed, packaged, and published under Miko without leaking Miko release targets.
 
 **Files:**
 - Modify: `install`
@@ -875,7 +875,7 @@ Run:
 
 ```bash
 cd /home/linuu/Code/miko
-rg -n "anomalyco/opencode|sst/opencode|opencode.ai|opencode-desktop|opencode-ai|OPENCODE_INSTALL_DIR|\\.opencode/bin" install packages/desktop github script packages/sdk README.md README.zh.md
+rg -n "anomalyco/miko|sst/miko|miko.dev|miko-desktop|miko-ai|MIKO_INSTALL_DIR|\\.miko/bin" install packages/desktop github script packages/sdk README.md README.zh.md
 ```
 
 Expected: remaining matches are compatibility notes or internal package names intentionally deferred past MVP.
@@ -895,13 +895,13 @@ git commit -m "chore: prepare miko release metadata"
 
 **Files:**
 - Modify: `packages/core/src/plugin/provider.ts`
-- Modify: `packages/opencode/src/provider/provider.ts`
-- Modify: `packages/opencode/package.json`
+- Modify: `packages/miko/src/provider/provider.ts`
+- Modify: `packages/miko/package.json`
 - Modify: `packages/core/package.json`
 - Modify: `package.json`
 - Modify: `bun.lock`
 - Test: provider tests under `packages/core/test/plugin`
-- Test: provider tests under `packages/opencode/test/provider`
+- Test: provider tests under `packages/miko/test/provider`
 
 - [ ] **Step 1: Decide policy**
 
@@ -934,7 +934,7 @@ bun typecheck
 ```
 
 ```bash
-cd /home/linuu/Code/miko/packages/opencode
+cd /home/linuu/Code/miko/packages/miko
 bun test test/provider/provider.test.ts test/provider/transform.test.ts
 bun typecheck
 ```
@@ -944,7 +944,7 @@ Expected: supported provider tests pass; removed provider tests are gone.
 Commit:
 
 ```bash
-git add packages/core/src/plugin/provider.ts packages/opencode/src/provider/provider.ts packages/opencode/package.json packages/core/package.json package.json bun.lock packages/core/test/plugin packages/opencode/test/provider
+git add packages/core/src/plugin/provider.ts packages/miko/src/provider/provider.ts packages/miko/package.json packages/core/package.json package.json bun.lock packages/core/test/plugin packages/miko/test/provider
 git commit -m "refactor(core): slim provider surface for miko"
 ```
 
@@ -967,7 +967,7 @@ bun test
 ```
 
 ```bash
-cd /home/linuu/Code/miko/packages/opencode
+cd /home/linuu/Code/miko/packages/miko
 bun typecheck
 bun test --timeout 30000
 ```
@@ -995,7 +995,7 @@ Release grep:
 
 ```bash
 cd /home/linuu/Code/miko
-rg -n "anomalyco/opencode|sst/opencode|opencode.ai|opencode-desktop|OPENCODE_INSTALL_DIR|\\.opencode/bin" README.md README.zh.md docs install packages github script
+rg -n "anomalyco/miko|sst/miko|miko.dev|miko-desktop|MIKO_INSTALL_DIR|\\.miko/bin" README.md README.zh.md docs install packages github script
 ```
 
 Expected: every remaining match is either a documented compatibility note or an intentionally deferred internal package namespace.

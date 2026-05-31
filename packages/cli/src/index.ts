@@ -6,10 +6,10 @@ import * as Effect from "effect/Effect"
 import * as Layer from "effect/Layer"
 import * as Command from "effect/unstable/cli/Command"
 import { DebugCommand } from "./debug"
-import { LocationServiceMap } from "@opencode-ai/core/location-layer"
+import { LocationServiceMap } from "@miko-ai/core/location-layer"
 
-const cli = Command.make("opencode", {}, () => Effect.void).pipe(
-  Command.withDescription("OpenCode command line interface"),
+const cli = Command.make("miko", {}, () => Effect.void).pipe(
+  Command.withDescription("Miko command line interface"),
   Command.withSubcommands([DebugCommand]),
 )
 

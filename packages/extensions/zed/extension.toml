@@ -1,36 +1,36 @@
-id = "opencode"
-name = "OpenCode"
+id = "miko"
+name = "Miko"
 description = "The open source coding agent."
 version = "1.15.13"
 schema_version = 1
 authors = ["Anomaly"]
-repository = "https://github.com/anomalyco/opencode"
+repository = "https://github.com/anomalyco/miko"
 
-[agent_servers.opencode]
-name = "OpenCode"
-icon = "./icons/opencode.svg"
+[agent_servers.miko]
+name = "Miko"
+icon = "./icons/miko.svg"
 
-[agent_servers.opencode.targets.darwin-aarch64]
-archive = "https://github.com/anomalyco/opencode/releases/download/v1.15.13/opencode-darwin-arm64.zip"
-cmd = "./opencode"
+[agent_servers.miko.targets.darwin-aarch64]
+archive = "https://github.com/anomalyco/miko/releases/download/v1.15.13/miko-darwin-arm64.zip"
+cmd = "./miko"
 args = ["acp"]
 
-[agent_servers.opencode.targets.darwin-x86_64]
-archive = "https://github.com/anomalyco/opencode/releases/download/v1.15.13/opencode-darwin-x64.zip"
-cmd = "./opencode"
+[agent_servers.miko.targets.darwin-x86_64]
+archive = "https://github.com/anomalyco/miko/releases/download/v1.15.13/miko-darwin-x64.zip"
+cmd = "./miko"
 args = ["acp"]
 
-[agent_servers.opencode.targets.linux-aarch64]
-archive = "https://github.com/anomalyco/opencode/releases/download/v1.15.13/opencode-linux-arm64.tar.gz"
-cmd = "./opencode"
+[agent_servers.miko.targets.linux-aarch64]
+archive = "https://github.com/anomalyco/miko/releases/download/v1.15.13/miko-linux-arm64.tar.gz"
+cmd = "./miko"
 args = ["acp"]
 
-[agent_servers.opencode.targets.linux-x86_64]
-archive = "https://github.com/anomalyco/opencode/releases/download/v1.15.13/opencode-linux-x64.tar.gz"
-cmd = "./opencode"
+[agent_servers.miko.targets.linux-x86_64]
+archive = "https://github.com/anomalyco/miko/releases/download/v1.15.13/miko-linux-x64.tar.gz"
+cmd = "./miko"
 args = ["acp"]
 
-[agent_servers.opencode.targets.windows-x86_64]
-archive = "https://github.com/anomalyco/opencode/releases/download/v1.15.13/opencode-windows-x64.zip"
-cmd = "./opencode.exe"
+[agent_servers.miko.targets.windows-x86_64]
+archive = "https://github.com/anomalyco/miko/releases/download/v1.15.13/miko-windows-x64.zip"
+cmd = "./miko.exe"
 args = ["acp"]

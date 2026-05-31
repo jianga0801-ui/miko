@@ -15,7 +15,7 @@
 
 ---
 
-**Miko** is a lightweight, high-performance, and visually stunning terminal-centric (TUI/CLI) AI programming assistant. Forked from OpenCode, Miko is designed to be your ultimate local AI coding companion with a focus on speed, aesthetics, and rich developer experience.
+**Miko** is a lightweight, high-performance, and visually stunning terminal-centric (TUI/CLI) AI programming assistant. Forked from Miko, Miko is designed to be your ultimate local AI coding companion with a focus on speed, aesthetics, and rich developer experience.
 
 ### Core Features
 

@@ -8,7 +8,7 @@ import {
   mimoBlockFromSentinel,
   resolveMimoWebSearchConfig,
   rewriteMimoRequestBody,
-} from "@opencode-ai/core/plugin/provider/mimo-media"
+} from "@miko-ai/core/plugin/provider/mimo-media"
 
 describe("mimo-media sentinel", () => {
   test("roundtrips an audio sentinel", () => {

@@ -1,11 +1,11 @@
 import { describe, expect } from "bun:test"
 import { Effect, Schema } from "effect"
-import { Catalog } from "@opencode-ai/core/catalog"
-import { Config } from "@opencode-ai/core/config"
-import { ConfigProviderPlugin } from "@opencode-ai/core/config/plugin/provider"
-import { ModelV2 } from "@opencode-ai/core/model"
-import { PluginV2 } from "@opencode-ai/core/plugin"
-import { ProviderV2 } from "@opencode-ai/core/provider"
+import { Catalog } from "@miko-ai/core/catalog"
+import { Config } from "@miko-ai/core/config"
+import { ConfigProviderPlugin } from "@miko-ai/core/config/plugin/provider"
+import { ModelV2 } from "@miko-ai/core/model"
+import { PluginV2 } from "@miko-ai/core/plugin"
+import { ProviderV2 } from "@miko-ai/core/provider"
 import { it } from "../plugin/provider-helper"
 
 function options(headers: Record<string, string>, variant?: string) {

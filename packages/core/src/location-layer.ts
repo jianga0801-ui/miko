@@ -14,7 +14,7 @@ import { ModelsDev } from "./models-dev"
 import { AppFileSystem } from "./filesystem"
 import { Global } from "./global"
 
-export class LocationServiceMap extends LayerMap.Service<LocationServiceMap>()("@opencode/example/LocationServiceMap", {
+export class LocationServiceMap extends LayerMap.Service<LocationServiceMap>()("@miko/example/LocationServiceMap", {
   lookup: (ref: Location.Ref) => {
     const location = Location.layer(ref)
     return Layer.mergeAll(

@@ -1,10 +1,10 @@
 import { describe, expect, mock, test } from "bun:test"
 import { Effect } from "effect"
-import { Catalog } from "@opencode-ai/core/catalog"
-import { PluginV2 } from "@opencode-ai/core/plugin"
-import { MimoPlugin, resolveMimoEndpoint } from "@opencode-ai/core/plugin/provider/mimo"
-import { ProviderV2 } from "@opencode-ai/core/provider"
-import { ModelV2 } from "@opencode-ai/core/model"
+import { Catalog } from "@miko-ai/core/catalog"
+import { PluginV2 } from "@miko-ai/core/plugin"
+import { MimoPlugin, resolveMimoEndpoint } from "@miko-ai/core/plugin/provider/mimo"
+import { ProviderV2 } from "@miko-ai/core/provider"
+import { ModelV2 } from "@miko-ai/core/model"
 import { it, model, withEnv } from "./provider-helper"
 
 const mimoOptions: Record<string, any>[] = []

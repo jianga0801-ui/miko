@@ -1,18 +1,18 @@
 export * from "./client.js"
 export * from "./server.js"
 
-import { createOpencodeClient } from "./client.js"
-import { createOpencodeServer } from "./server.js"
+import { createMikoClient } from "./client.js"
+import { createMikoServer } from "./server.js"
 import type { ServerOptions } from "./server.js"
 
 export * as data from "./data.js"
 
-export async function createOpencode(options?: ServerOptions) {
-  const server = await createOpencodeServer({
+export async function createMiko(options?: ServerOptions) {
+  const server = await createMikoServer({
     ...options,
   })
 
-  const client = createOpencodeClient({
+  const client = createMikoClient({
     baseUrl: server.url,
   })
 

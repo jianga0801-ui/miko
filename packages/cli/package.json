@@ -1,12 +1,12 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@opencode-ai/cli",
+  "name": "@miko-ai/cli",
   "version": "1.15.13",
   "private": true,
   "type": "module",
   "license": "MIT",
   "bin": {
-    "opencode": "./src/index.ts"
+    "miko": "./src/index.ts"
   },
   "scripts": {
     "dev": "bun run src/index.ts",
@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@effect/platform-node": "catalog:",
-    "@opencode-ai/core": "workspace:*",
+    "@miko-ai/core": "workspace:*",
     "effect": "catalog:"
   },
   "devDependencies": {

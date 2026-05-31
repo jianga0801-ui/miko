@@ -15,7 +15,7 @@
 
 ---
 
-**Miko** 是一个轻量级、超强性能且具备极高视觉美感与极佳人机交互体验的 Terminal-centric (TUI/CLI) AI 编程助手。本仓库 Fork 自 OpenCode，致力于打造成每个开发者最得心应手的本地 AI 编程伴侣。
+**Miko** 是一个轻量级、超强性能且具备极高视觉美感与极佳人机交互体验的 Terminal-centric (TUI/CLI) AI 编程助手。本仓库 Fork 自 Miko，致力于打造成每个开发者最得心应手的本地 AI 编程伴侣。
 
 ### 核心特性
 
