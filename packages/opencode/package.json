@@ -18,6 +18,7 @@
     "dev:temporary": "bun run --conditions=browser ./src/temporary.ts"
   },
   "bin": {
+    "miko": "./bin/miko",
     "opencode": "./bin/opencode"
   },
   "exports": {
