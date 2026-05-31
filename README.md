@@ -44,12 +44,9 @@ bun run dev
 
 #### Running Subcomponents
 
-Miko includes additional interface layers (web app, desktop app, and management console) which can be run using the following scripts:
+Miko includes additional interface layers (web app and management console) which can be run using the following scripts:
 
 ```bash
-# Run the Desktop App (BETA)
-bun run dev:desktop
-
 # Run the Web App interface
 bun run dev:web
 

@@ -44,12 +44,9 @@ bun run dev
 
 #### 启动其他组件
 
-Miko 还包含桌面端、网页端和控制台，可运行对应的脚本启动：
+Miko 还包含网页端和控制台，可运行对应的脚本启动：
 
 ```bash
-# 启动桌面端应用 (BETA)
-bun run dev:desktop
-
 # 启动网页端界面
 bun run dev:web
 
