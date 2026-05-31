@@ -1,128 +1,79 @@
 <p align="center">
-  <a href="https://opencode.ai">
-    <picture>
-      <source srcset="packages/console/app/src/asset/logo-ornate-dark.svg" media="(prefers-color-scheme: dark)">
-      <source srcset="packages/console/app/src/asset/logo-ornate-light.svg" media="(prefers-color-scheme: light)">
-      <img src="packages/console/app/src/asset/logo-ornate-light.svg" alt="OpenCode logo">
-    </picture>
-  </a>
+  <picture>
+    <source srcset="packages/console/app/src/asset/logo-ornate-dark.svg" media="(prefers-color-scheme: dark)">
+    <source srcset="packages/console/app/src/asset/logo-ornate-light.svg" media="(prefers-color-scheme: light)">
+    <img src="packages/console/app/src/asset/logo-ornate-light.svg" alt="Miko logo" width="200">
+  </picture>
 </p>
-<p align="center">开源的 AI Coding Agent。</p>
-<p align="center">
-  <a href="https://opencode.ai/discord"><img alt="Discord" src="https://img.shields.io/discord/1391832426048651334?style=flat-square&label=discord" /></a>
-  <a href="https://www.npmjs.com/package/opencode-ai"><img alt="npm" src="https://img.shields.io/npm/v/opencode-ai?style=flat-square" /></a>
-  <a href="https://github.com/anomalyco/opencode/actions/workflows/publish.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/anomalyco/opencode/publish.yml?style=flat-square&branch=dev" /></a>
-</p>
+<h1 align="center">Miko</h1>
+<p align="center">一款极速、美观且支持语音交互的终端 (TUI) AI 编程助手。</p>
 
 <p align="center">
   <a href="README.md">English</a> |
-  <a href="README.zh.md">简体中文</a> |
-  <a href="README.zht.md">繁體中文</a> |
-  <a href="README.ko.md">한국어</a> |
-  <a href="README.de.md">Deutsch</a> |
-  <a href="README.es.md">Español</a> |
-  <a href="README.fr.md">Français</a> |
-  <a href="README.it.md">Italiano</a> |
-  <a href="README.da.md">Dansk</a> |
-  <a href="README.ja.md">日本語</a> |
-  <a href="README.pl.md">Polski</a> |
-  <a href="README.ru.md">Русский</a> |
-  <a href="README.bs.md">Bosanski</a> |
-  <a href="README.ar.md">العربية</a> |
-  <a href="README.no.md">Norsk</a> |
-  <a href="README.br.md">Português (Brasil)</a> |
-  <a href="README.th.md">ไทย</a> |
-  <a href="README.tr.md">Türkçe</a> |
-  <a href="README.uk.md">Українська</a> |
-  <a href="README.bn.md">বাংলা</a> |
-  <a href="README.gr.md">Ελληνικά</a> |
-  <a href="README.vi.md">Tiếng Việt</a>
+  <a href="README.zh.md">简体中文</a>
 </p>
 
-[![OpenCode Terminal UI](packages/web/src/assets/lander/screenshot.png)](https://opencode.ai)
+---
+
+**Miko** 是一个轻量级、超强性能且具备极高视觉美感与极佳人机交互体验的 Terminal-centric (TUI/CLI) AI 编程助手。本仓库 Fork 自 OpenCode，致力于打造成每个开发者最得心应手的本地 AI 编程伴侣。
+
+### 核心特性
+
+- **美学至上 (TUI/UI)**：基于现代开发者审美设计，使用和谐色调与微动画，拒绝平庸，提供极致的终端视觉体验。
+- **TTS & 语音交互**：深度集成文本转语音（TTS）与语音输入/识别，实现无缝的人机语音协作。
+- **WSL 深度融合**：优化 Windows 宿主机与 WSL 开发环境的跨端协作，确保 Agent 在宿主机与 WSL 容器间安全、高效地执行命令。
+- **生态扩展支持**：保留并强化原生 MCP（Model Context Protocol）、Plugins（插件体系）与 Skills（技能库）支持。
+
+### 快速开始
+
+#### 本地安装与运行
+
+要从源码运行 Miko：
+
+```bash
+# 克隆仓库
+git clone https://github.com/jianga0801-ui/miko.git
+cd miko
+
+# 使用 Bun 安装依赖
+bun install
+
+# 启动本地开发版 TUI 终端
+bun run dev
+```
+
+#### 启动其他组件
+
+Miko 还包含桌面端、网页端和控制台，可运行对应的脚本启动：
+
+```bash
+# 启动桌面端应用 (BETA)
+bun run dev:desktop
+
+# 启动网页端界面
+bun run dev:web
+
+# 启动管理控制台
+bun run dev:console
+```
+
+### 内置 Agents
+
+Miko 内置两种 Agent，可在终端中通过 `Tab` 键快速切换：
+
+- **build** - 默认模式，具备完整读写权限，适合核心开发工作。
+- **plan** - 只读模式，适合未知代码库分析与探索。
+  - 默认拒绝修改文件。
+  - 运行命令前会询问。
+  - 便于安全地规划改动。
+
+另外还包含一个 **general** 子 Agent，用于复杂搜索和多步任务，可在消息中输入 `@general` 显式调用。
+
+### 文档与贡献指南
+
+- 关于开发设计约束与代码风格规范，请阅读 [AGENTS.md](./AGENTS.md)。
+- 如有兴趣贡献代码，请阅读 [贡献指南](./CONTRIBUTING.md)。
 
 ---
 
-### 安装
-
-```bash
-# 直接安装 (YOLO)
-curl -fsSL https://opencode.ai/install | bash
-
-# 软件包管理器
-npm i -g opencode-ai@latest        # 也可使用 bun/pnpm/yarn
-scoop install opencode             # Windows
-choco install opencode             # Windows
-brew install anomalyco/tap/opencode # macOS 和 Linux（推荐，始终保持最新）
-brew install opencode              # macOS 和 Linux（官方 brew formula，更新频率较低）
-sudo pacman -S opencode            # Arch Linux (Stable)
-paru -S opencode-bin               # Arch Linux (Latest from AUR)
-mise use -g opencode               # 任意系统
-nix run nixpkgs#opencode           # 或用 github:anomalyco/opencode 获取最新 dev 分支
-```
-
-> [!TIP]
-> 安装前请先移除 0.1.x 之前的旧版本。
-
-### 桌面应用程序 (BETA)
-
-OpenCode 也提供桌面版应用。可直接从 [发布页 (releases page)](https://github.com/anomalyco/opencode/releases) 或 [opencode.ai/download](https://opencode.ai/download) 下载。
-
-| 平台                  | 下载文件                           |
-| --------------------- | ---------------------------------- |
-| macOS (Apple Silicon) | `opencode-desktop-mac-arm64.dmg`   |
-| macOS (Intel)         | `opencode-desktop-mac-x64.dmg`     |
-| Windows               | `opencode-desktop-windows-x64.exe` |
-| Linux                 | `.deb`、`.rpm` 或 AppImage         |
-
-```bash
-# macOS (Homebrew Cask)
-brew install --cask opencode-desktop
-# Windows (Scoop)
-scoop bucket add extras; scoop install extras/opencode-desktop
-```
-
-#### 安装目录
-
-安装脚本按照以下优先级决定安装路径：
-
-1. `$OPENCODE_INSTALL_DIR` - 自定义安装目录
-2. `$XDG_BIN_DIR` - 符合 XDG 基础目录规范的路径
-3. `$HOME/bin` - 如果存在或可创建的用户二进制目录
-4. `$HOME/.opencode/bin` - 默认备用路径
-
-```bash
-# 示例
-OPENCODE_INSTALL_DIR=/usr/local/bin curl -fsSL https://opencode.ai/install | bash
-XDG_BIN_DIR=$HOME/.local/bin curl -fsSL https://opencode.ai/install | bash
-```
-
-### Agents
-
-OpenCode 内置两种 Agent，可用 `Tab` 键快速切换：
-
-- **build** - 默认模式，具备完整权限，适合开发工作
-- **plan** - 只读模式，适合代码分析与探索
-  - 默认拒绝修改文件
-  - 运行 bash 命令前会询问
-  - 便于探索未知代码库或规划改动
-
-另外还包含一个 **general** 子 Agent，用于复杂搜索和多步任务，内部使用，也可在消息中输入 `@general` 调用。
-
-了解更多 [Agents](https://opencode.ai/docs/agents) 相关信息。
-
-### 文档
-
-更多配置说明请查看我们的 [**官方文档**](https://opencode.ai/docs)。
-
-### 参与贡献
-
-如有兴趣贡献代码，请在提交 PR 前阅读 [贡献指南 (Contributing Docs)](./CONTRIBUTING.md)。
-
-### 基于 OpenCode 进行开发
-
-如果你在项目名中使用了 “opencode”（如 “opencode-dashboard” 或 “opencode-mobile”），请在 README 里注明该项目不是 OpenCode 团队官方开发，且不存在隶属关系。
-
----
-
-**加入我们的社区** [飞书](https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=738j8655-cd59-4633-a30a-1124e0096789&qr_code=true) | [X.com](https://x.com/opencode)
+**Miko 完全开源，献给所有热爱在命令行中创造的开发者。**
