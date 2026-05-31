@@ -3,6 +3,8 @@ import {
   decodeMimoMediaSentinel,
   encodeMimoMediaSentinel,
   hasMimoMediaSentinel,
+  isWebSearchUnsupported,
+  makeMimoFetch,
   mimoBlockFromSentinel,
   resolveMimoWebSearchConfig,
   rewriteMimoRequestBody,
@@ -132,5 +134,59 @@ describe("rewriteMimoRequestBody web_search injection", () => {
   test("is idempotent when web_search is already present", () => {
     const body = JSON.stringify({ messages: [], tools: [{ type: "web_search" }] })
     expect(rewriteMimoRequestBody(body, { webSearch: tool })).toBe(body)
+  })
+})
+
+describe("isWebSearchUnsupported", () => {
+  test("only true for error responses that name web search", () => {
+    expect(isWebSearchUnsupported(200, "web_search whatever")).toBe(false)
+    expect(isWebSearchUnsupported(400, "the web_search tool is not allowed")).toBe(true)
+    expect(isWebSearchUnsupported(400, "invalid model")).toBe(false)
+    expect(isWebSearchUnsupported(500, "web search unavailable")).toBe(true)
+  })
+})
+
+describe("makeMimoFetch web_search degradation", () => {
+  const webSearch = { type: "web_search" as const }
+  const baseBody = JSON.stringify({ model: "mimo-v2.5-pro", messages: [{ role: "user", content: "hi" }] })
+
+  function mockFetch(responses: Array<{ status: number; body: string }>) {
+    const calls: Array<{ body: string }> = []
+    const fn = (async (_input: any, init?: any) => {
+      calls.push({ body: init?.body })
+      const r = responses[Math.min(calls.length - 1, responses.length - 1)]
+      return new Response(r.body, { status: r.status })
+    }) as unknown as typeof fetch
+    return { fn, calls }
+  }
+
+  test("retries without web_search when the server rejects it", async () => {
+    const { fn, calls } = mockFetch([
+      { status: 400, body: JSON.stringify({ error: "web_search not enabled for this key" }) },
+      { status: 200, body: "ok" },
+    ])
+    const res = await makeMimoFetch(fn, { webSearch })("https://cn.api.xiaomimimo.com/v1/chat/completions", {
+      method: "POST",
+      body: baseBody,
+    } as any)
+    expect(res.status).toBe(200)
+    expect(calls).toHaveLength(2)
+    expect(JSON.parse(calls[0].body).tools).toEqual([{ type: "web_search" }])
+    expect(JSON.parse(calls[1].body).tools).toBeUndefined()
+  })
+
+  test("does not retry on unrelated errors", async () => {
+    const { fn, calls } = mockFetch([{ status: 400, body: JSON.stringify({ error: "bad model" }) }])
+    const res = await makeMimoFetch(fn, { webSearch })("url", { method: "POST", body: baseBody } as any)
+    expect(res.status).toBe(400)
+    expect(calls).toHaveLength(1)
+  })
+
+  test("passes success through untouched, with web_search injected", async () => {
+    const { fn, calls } = mockFetch([{ status: 200, body: "ok" }])
+    const res = await makeMimoFetch(fn, { webSearch })("url", { method: "POST", body: baseBody } as any)
+    expect(res.status).toBe(200)
+    expect(calls).toHaveLength(1)
+    expect(JSON.parse(calls[0].body).tools).toEqual([{ type: "web_search" }])
   })
 })

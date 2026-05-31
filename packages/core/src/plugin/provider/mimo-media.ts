@@ -183,19 +183,45 @@ export function hasMimoMediaSentinel(bodyText: unknown): bodyText is string {
 }
 
 /**
+ * Heuristic: did the server reject the request *because* of the injected
+ * web_search tool? Only an error response that names web search counts, so we
+ * never mask unrelated 4xx/5xx failures.
+ */
+export function isWebSearchUnsupported(status: number, body: string): boolean {
+  if (status < 400) return false
+  return /web[_\s-]?search/i.test(body)
+}
+
+/**
  * Wrap a `fetch` so outgoing MiMo chat requests have their sentinel media parts
- * rewritten into MiMo audio/video blocks. Non-matching requests pass through
- * untouched.
+ * rewritten into MiMo audio/video blocks and (when enabled) the built-in
+ * web_search tool injected. Non-matching requests pass through untouched.
+ *
+ * Graceful degradation: if web_search was injected and the server rejects the
+ * request because of it, retry once *without* web_search (media rewriting is
+ * preserved) so the conversation continues instead of failing.
  */
 export function makeMimoFetch(
   baseFetch: typeof fetch = globalThis.fetch,
   options?: { webSearch?: MimoWebSearchTool },
 ): typeof fetch {
   const webSearch = options?.webSearch
-  return ((input: any, init?: any) => {
-    if (init && typeof init.body === "string" && (webSearch || hasMimoMediaSentinel(init.body))) {
-      return baseFetch(input, { ...init, body: rewriteMimoRequestBody(init.body, { webSearch }) })
+  return (async (input: any, init?: any) => {
+    if (!init || typeof init.body !== "string" || !(webSearch || hasMimoMediaSentinel(init.body))) {
+      return baseFetch(input, init)
     }
-    return baseFetch(input, init)
+
+    const body = rewriteMimoRequestBody(init.body, { webSearch })
+    const response = await baseFetch(input, { ...init, body })
+
+    // Only consider degrading when we actually injected web_search.
+    if (!webSearch || response.status < 400 || body === init.body) return response
+
+    const probe = response.clone()
+    const text = await probe.text().catch(() => "")
+    if (!isWebSearchUnsupported(response.status, text)) return response
+
+    // Retry without web_search; keep any media rewriting from the original body.
+    return baseFetch(input, { ...init, body: rewriteMimoRequestBody(init.body, {}) })
   }) as typeof fetch
 }
