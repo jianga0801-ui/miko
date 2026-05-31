@@ -79,6 +79,7 @@ import {
 
 import type { EventSource } from "./context/sdk"
 import { DialogVariant } from "./component/dialog-variant"
+import { DialogMimoSetup, isMimoSetupNeeded } from "./component/dialog-mimo-setup"
 
 const appGlobalBindingCommands = [
   "session.list",
@@ -546,6 +547,18 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
         // only trigger when we transition into an empty-provider state
         if (!isEmpty || wasEmpty) return
         dialog.replace(() => <DialogProviderList />)
+      },
+    ),
+  )
+
+  createEffect(
+    on(
+      () => sync.status === "complete",
+      (isComplete, wasComplete) => {
+        if (!isComplete || wasComplete) return
+        if (isMimoSetupNeeded(sync.data.provider)) {
+          dialog.replace(() => <DialogMimoSetup />)
+        }
       },
     ),
   )
