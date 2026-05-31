@@ -8,6 +8,7 @@ import type { Provider } from "@/provider/provider"
 import { SessionID, MessageID, PartID } from "../../src/session/schema"
 import { Question } from "../../src/question"
 import { ProviderV2 } from "@opencode-ai/core/provider"
+import { encodeMimoMediaSentinel } from "@opencode-ai/core/plugin/provider/mimo-media"
 
 const sessionID = SessionID.make("session")
 const providerID = ProviderV2.ID.make("test")
@@ -313,6 +314,36 @@ describe("session.message-v2.toModelMessage", () => {
           },
           { type: "text", text: "What did we do so far?" },
           { type: "text", text: "The following tool was executed by the user" },
+        ],
+      },
+    ])
+  })
+
+  test("routes MiMo audio/video to sentinel text parts and keeps images as files", async () => {
+    const messageID = "m-user"
+    const mimoModel: Provider.Model = { ...model, providerID: ProviderV2.ID.make("mimo") }
+
+    const input: SessionLegacy.WithParts[] = [
+      {
+        info: userInfo(messageID),
+        parts: [
+          { ...basePart(messageID, "p1"), type: "text", text: "describe" },
+          { ...basePart(messageID, "p2"), type: "file", mime: "audio/wav", filename: "a.wav", url: "https://x/a.wav" },
+          { ...basePart(messageID, "p3"), type: "file", mime: "video/mp4", filename: "v.mp4", url: "https://x/v.mp4" },
+          { ...basePart(messageID, "p4"), type: "file", mime: "image/png", filename: "i.png", url: "https://x/i.png" },
+        ] as SessionLegacy.Part[],
+      },
+    ]
+
+    expect(await MessageV2.toModelMessages(input, mimoModel)).toStrictEqual([
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "describe" },
+          { type: "text", text: encodeMimoMediaSentinel({ kind: "audio", url: "https://x/a.wav", mediaType: "audio/wav" }) },
+          { type: "text", text: encodeMimoMediaSentinel({ kind: "video", url: "https://x/v.mp4", mediaType: "video/mp4" }) },
+          // Images keep the standard file -> image_url path.
+          { type: "file", mediaType: "image/png", filename: "i.png", data: "https://x/i.png" },
         ],
       },
     ])
