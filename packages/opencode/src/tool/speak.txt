@@ -1,0 +1,11 @@
+- Converts text to spoken audio (text-to-speech) using the user's configured Xiaomi MiMo account
+- Takes text and optional voice/instructions/model/format as input
+- Calls the MiMo chat-completions endpoint (model mimo-v2.5-tts) with the same API key and region the user set up for MiMo chat, decodes the returned audio, writes it to a file, and returns its path
+- When a Linux audio player is available, the audio is also played through the terminal
+
+Usage notes:
+  - Requires a configured MiMo API key (set up via the MiMo onboarding, `MIMO_API_KEY`, or `provider.mimo.options.apiKey`). There is no separate TTS key — the API endpoint and key always align with the user's MiMo configuration.
+  - Use this when the user explicitly asks to hear something spoken aloud or to generate a voice/audio file
+  - Voices: mimo_default (default), 冰糖, 茉莉, 苏打, 白桦, Mia, Chloe, Milo, Dean
+  - Format is wav (default) or pcm16 (raw 24 kHz mono). Keep the text reasonably short — this is for narration and confirmations, not long documents
+  - Playback is best-effort: if no audio player is present the saved file path is still returned

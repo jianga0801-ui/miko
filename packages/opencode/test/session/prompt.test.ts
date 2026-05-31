@@ -18,6 +18,7 @@ import { MCP } from "../../src/mcp"
 import { Permission } from "../../src/permission"
 import { Plugin } from "../../src/plugin"
 import { Provider as ProviderSvc } from "@/provider/provider"
+import { Auth } from "@/auth"
 import { Env } from "../../src/env"
 import { Git } from "../../src/git"
 import { Image } from "../../src/image/image"
@@ -177,6 +178,7 @@ function makePrompt(input?: { processor?: "blocking" }) {
     Plugin.defaultLayer,
     Config.defaultLayer,
     ProviderSvc.defaultLayer,
+    Auth.defaultLayer,
     lsp,
     mcp,
     AppFileSystem.defaultLayer,
