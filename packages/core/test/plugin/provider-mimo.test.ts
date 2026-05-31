@@ -28,11 +28,11 @@ describe("resolveMimoEndpoint", () => {
     expect(resolveMimoEndpoint("sk-key", "sgp")).toBe("https://api.xiaomimimo.com/v1")
   })
 
-  test("routes tp- keys by region, defaulting to cn", () => {
-    expect(resolveMimoEndpoint("tp-key", "sgp")).toBe("https://sgp.api.xiaomimimo.com/v1")
-    expect(resolveMimoEndpoint("tp-key", "ams")).toBe("https://ams.api.xiaomimimo.com/v1")
-    expect(resolveMimoEndpoint("tp-key", "cn")).toBe("https://cn.api.xiaomimimo.com/v1")
-    expect(resolveMimoEndpoint("tp-key")).toBe("https://cn.api.xiaomimimo.com/v1")
+  test("routes tp- keys to token-plan hosts by region, defaulting to cn", () => {
+    expect(resolveMimoEndpoint("tp-key", "sgp")).toBe("https://token-plan-sgp.xiaomimimo.com/v1")
+    expect(resolveMimoEndpoint("tp-key", "ams")).toBe("https://token-plan-ams.xiaomimimo.com/v1")
+    expect(resolveMimoEndpoint("tp-key", "cn")).toBe("https://token-plan-cn.xiaomimimo.com/v1")
+    expect(resolveMimoEndpoint("tp-key")).toBe("https://token-plan-cn.xiaomimimo.com/v1")
   })
 })
 
@@ -80,7 +80,7 @@ describe("MimoPlugin", () => {
         yield* transform((catalog) => {})
         
         const mimoProv = yield* catalog.provider.get(ProviderV2.ID.mimo)
-        expect((mimoProv.endpoint as any).url).toBe("https://sgp.api.xiaomimimo.com/v1")
+        expect((mimoProv.endpoint as any).url).toBe("https://token-plan-sgp.xiaomimimo.com/v1")
       }),
     ),
   )
@@ -95,7 +95,7 @@ describe("MimoPlugin", () => {
         yield* transform((catalog) => {})
         
         const mimoProv = yield* catalog.provider.get(ProviderV2.ID.mimo)
-        expect((mimoProv.endpoint as any).url).toBe("https://cn.api.xiaomimimo.com/v1")
+        expect((mimoProv.endpoint as any).url).toBe("https://token-plan-cn.xiaomimimo.com/v1")
       }),
     ),
   )

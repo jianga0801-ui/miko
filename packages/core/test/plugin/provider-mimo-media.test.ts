@@ -165,7 +165,7 @@ describe("makeMimoFetch web_search degradation", () => {
       { status: 400, body: JSON.stringify({ error: "web_search not enabled for this key" }) },
       { status: 200, body: "ok" },
     ])
-    const res = await makeMimoFetch(fn, { webSearch })("https://cn.api.xiaomimimo.com/v1/chat/completions", {
+    const res = await makeMimoFetch(fn, { webSearch })("https://token-plan-cn.xiaomimimo.com/v1/chat/completions", {
       method: "POST",
       body: baseBody,
     } as any)

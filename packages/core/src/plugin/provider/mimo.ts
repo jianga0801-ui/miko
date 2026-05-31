@@ -7,16 +7,19 @@ import { makeMimoFetch, resolveMimoWebSearchConfig } from "./mimo-media"
 /**
  * Resolve the MiMo OpenAI-compatible base URL from an API key + region.
  *
- * `sk-` keys always hit the global endpoint; `tp-` (token-plan) keys are
- * region-routed. This is the single source of truth for MiMo endpoint routing
- * so chat, TTS, and any other MiMo-backed feature stay aligned to the same
- * key + region the user configured.
+ * `sk-` (balance / pay-as-you-go) keys hit the global endpoint; `tp-`
+ * (Token Plan) keys are region-routed to the dedicated token-plan hosts.
+ * These hostnames are verified against the live platform — the `tp-` host is
+ * `token-plan-<region>.xiaomimimo.com`, NOT `<region>.api.xiaomimimo.com`
+ * (those subdomains do not exist). This is the single source of truth for MiMo
+ * endpoint routing so chat, TTS, and any other MiMo-backed feature stay aligned
+ * to the same key + region the user configured.
  */
 export function resolveMimoEndpoint(apiKey: string, region?: string): string {
   if (apiKey.startsWith("tp-")) {
-    if (region === "sgp") return "https://sgp.api.xiaomimimo.com/v1"
-    if (region === "ams") return "https://ams.api.xiaomimimo.com/v1"
-    return "https://cn.api.xiaomimimo.com/v1"
+    if (region === "sgp") return "https://token-plan-sgp.xiaomimimo.com/v1"
+    if (region === "ams") return "https://token-plan-ams.xiaomimimo.com/v1"
+    return "https://token-plan-cn.xiaomimimo.com/v1"
   }
   return "https://api.xiaomimimo.com/v1"
 }

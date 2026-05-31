@@ -19,23 +19,23 @@ export const MIMO_KEY_OPTIONS: MimoKeyOption[] = [
   {
     type: "tp-cn",
     label: "China (tp-)",
-    description: "China region endpoint",
+    description: "China region Token Plan endpoint",
     keyPrefix: "tp-",
-    endpoint: "https://cn.api.xiaomimimo.com/v1",
+    endpoint: "https://token-plan-cn.xiaomimimo.com/v1",
   },
   {
     type: "tp-sgp",
     label: "Singapore (tp-)",
-    description: "Singapore region endpoint",
+    description: "Singapore region Token Plan endpoint",
     keyPrefix: "tp-",
-    endpoint: "https://sgp.api.xiaomimimo.com/v1",
+    endpoint: "https://token-plan-sgp.xiaomimimo.com/v1",
   },
   {
     type: "tp-ams",
     label: "Amsterdam (tp-)",
-    description: "Amsterdam region endpoint",
+    description: "Amsterdam region Token Plan endpoint",
     keyPrefix: "tp-",
-    endpoint: "https://ams.api.xiaomimimo.com/v1",
+    endpoint: "https://token-plan-ams.xiaomimimo.com/v1",
   },
 ]
 

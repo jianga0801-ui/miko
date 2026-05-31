@@ -14,7 +14,7 @@ describe("speak.resolveMimoCredentials", () => {
     expect(creds!.apiKey).toBe("tp-auth-key")
     expect(creds!.region).toBe("sgp")
     // Routed to the same region endpoint the MiMo chat provider would use.
-    expect(creds!.baseURL).toBe("https://sgp.api.xiaomimimo.com/v1")
+    expect(creds!.baseURL).toBe("https://token-plan-sgp.xiaomimimo.com/v1")
   })
 
   test("falls back to project config when no auth key exists", () => {
@@ -26,7 +26,7 @@ describe("speak.resolveMimoCredentials", () => {
     })
     expect(creds!.apiKey).toBe("tp-config-key")
     expect(creds!.region).toBe("ams")
-    expect(creds!.baseURL).toBe("https://ams.api.xiaomimimo.com/v1")
+    expect(creds!.baseURL).toBe("https://token-plan-ams.xiaomimimo.com/v1")
   })
 
   test("falls back to environment variables last", () => {
