@@ -54,6 +54,14 @@ bun run dev:web
 bun run dev:console
 ```
 
+### WSL 深度融合指南
+
+Miko 针对 Windows Subsystem for Linux (WSL) 进行了深度优化。在 WSL 环境中使用 Miko 时，请遵循以下指南：
+
+- **在 WSL 内部运行**：建议直接在 WSL 终端（如 Ubuntu shell）内部运行 Miko 命令和测试（此处已安装 Node 和 Bun），而不是在 Windows 宿主机上通过 UNC 路径（如 `\\wsl.localhost\...`）使用 CMD/PowerShell 运行。
+- **路径大小写与 UNC 路径**：避免在 Windows PowerShell 中针对 WSL UNC 路径执行 git status 或文件命令，因为 Windows 的大小写不敏感特性可能会导致 git 或测试表现异常。
+- **以 Windows 为编辑器，以 WSL 为运行环境**：推荐使用 VS Code 等 Windows 宿主机 IDE 作为前端/编辑器，同时将所有命令执行、终端任务和 AI Agent 运行都保留在原生的 WSL 容器内。
+
 ### 内置 Agents
 
 Miko 内置两种 Agent，可在终端中通过 `Tab` 键快速切换：

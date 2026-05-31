@@ -101,6 +101,8 @@ export const dict = {
   "dialog.provider.group.popular": "Popular",
   "dialog.provider.group.other": "Other",
   "dialog.provider.tag.recommended": "Recommended",
+  "dialog.provider.mimo.note": "Connect using MiMo API key to access Xiaomi MiMo models",
+  "dialog.provider.mimo.tagline": "Xiaomi MiMo intelligence provider",
   "dialog.provider.opencode.note": "Curated models including Claude, GPT, Gemini and more",
   "dialog.provider.opencode.tagline": "Reliable optimized models",
   "dialog.provider.opencodeGo.tagline": "Low cost subscription for everyone",

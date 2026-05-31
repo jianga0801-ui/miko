@@ -452,7 +452,17 @@ export const layer = Layer.effect(
         const file = globalConfigFile()
         if (!existsSync(file)) {
           yield* fs
-            .writeWithDirs(file, JSON.stringify({ $schema: "https://github.com/jianga0801-ui/miko/raw/dev/config.json" }, null, 2))
+            .writeWithDirs(
+              file,
+              JSON.stringify(
+                {
+                  $schema: "https://github.com/jianga0801-ui/miko/raw/dev/config.json",
+                  model: "mimo/mimo-v2.5-pro",
+                },
+                null,
+                2,
+              ),
+            )
             .pipe(Effect.catch(() => Effect.void))
         }
       }

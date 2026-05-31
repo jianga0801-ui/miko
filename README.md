@@ -54,6 +54,14 @@ bun run dev:web
 bun run dev:console
 ```
 
+### WSL Integration Guidance
+
+Miko is optimized for Windows Subsystem for Linux (WSL). When using Miko in a WSL environment, keep the following guidelines in mind:
+
+- **Run inside WSL**: Run Miko commands and tests directly inside the WSL terminal (e.g., Ubuntu shell) where Node and Bun are installed, rather than using Windows CMD/PowerShell over UNC paths (`\\wsl.localhost\...`).
+- **Path Casing and UNC Paths**: Avoid running git status or file operations from Windows PowerShell against the WSL UNC path, as case-insensitivity on Windows can cause git or tests to behave unexpectedly.
+- **Windows Host as Editor**: We recommend using VS Code or other Windows IDEs as the frontend/editor surface, while keeping all execution, terminal commands, and AI agent runs inside the native WSL container.
+
 ### Agents
 
 Miko includes two built-in agents you can switch between with the `Tab` key in the TUI:

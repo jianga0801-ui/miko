@@ -1789,6 +1789,8 @@ export const layer = Layer.effect(
       if (!provider) return undefined
 
       let priority = [
+        "mimo-v2.5-flash",
+        "mimo-v2.5-nano",
         "claude-haiku-4-5",
         "claude-haiku-4.5",
         "3-5-haiku",
@@ -1882,7 +1884,7 @@ export const defaultLayer = Layer.suspend(() =>
   ),
 )
 
-const priority = ["gpt-5", "claude-sonnet-4", "big-pickle", "gemini-3-pro"]
+const priority = ["mimo-v2.5-pro", "mimo", "gpt-5", "claude-sonnet-4", "big-pickle", "gemini-3-pro"]
 export function sort<T extends { id: string }>(models: T[]) {
   return sortBy(
     models,

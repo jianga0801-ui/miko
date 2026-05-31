@@ -20,6 +20,7 @@ export const DialogSelectProvider: Component = () => {
   const otherGroup = () => language.t("dialog.provider.group.other")
   const customLabel = () => language.t("settings.providers.tag.custom")
   const note = (id: string) => {
+    if (id === "mimo") return language.t("dialog.provider.mimo.note")
     if (id === "anthropic") return language.t("dialog.provider.anthropic.note")
     if (id === "openai") return language.t("dialog.provider.openai.note")
     if (id.startsWith("github-copilot")) return language.t("dialog.provider.copilot.note")
@@ -68,10 +69,16 @@ export const DialogSelectProvider: Component = () => {
             <Show when={i.id === "opencode"}>
               <div class="text-14-regular text-text-weak">{language.t("dialog.provider.opencode.tagline")}</div>
             </Show>
+            <Show when={i.id === "mimo"}>
+              <div class="text-14-regular text-text-weak">{language.t("dialog.provider.mimo.tagline")}</div>
+            </Show>
             <Show when={i.id === CUSTOM_ID}>
               <Tag>{language.t("settings.providers.tag.custom")}</Tag>
             </Show>
             <Show when={i.id === "opencode"}>
+              <Tag>{language.t("dialog.provider.tag.recommended")}</Tag>
+            </Show>
+            <Show when={i.id === "mimo"}>
               <Tag>{language.t("dialog.provider.tag.recommended")}</Tag>
             </Show>
             <Show when={note(i.id)}>{(value) => <div class="text-14-regular text-text-weak">{value()}</div>}</Show>
