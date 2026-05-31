@@ -1,7 +1,12 @@
 import { describe, expect, test } from "bun:test"
 import { Effect } from "effect"
 import { parseResponse } from "../../src/tool/mcp-websearch"
-import { selectWebSearchProvider, webSearchModelName, webSearchProviderLabel } from "../../src/tool/websearch"
+import {
+  formatTavilyResponse,
+  selectWebSearchProvider,
+  webSearchModelName,
+  webSearchProviderLabel,
+} from "../../src/tool/websearch"
 
 import { webSearchEnabled } from "../../src/tool/registry"
 import { it } from "../lib/effect"
@@ -37,17 +42,46 @@ describe("websearch provider", () => {
     expect(selectWebSearchProvider(SESSION_ID, { exa: false, parallel: true })).toBe("parallel")
   })
 
+  test("prefers Tavily when its key flag is set", () => {
+    // Tavily wins over the exa/parallel hash and even over other flags.
+    expect(selectWebSearchProvider(SESSION_ID, { tavily: true })).toBe("tavily")
+    expect(selectWebSearchProvider(SESSION_ID, { exa: true, parallel: true, tavily: true })).toBe("tavily")
+  })
+
   test("is only enabled for opencode or explicit websearch provider flags", () => {
     expect(webSearchEnabled(ProviderV2.ID.opencode, { exa: false, parallel: false })).toBe(true)
     expect(webSearchEnabled(ProviderV2.ID.openai, { exa: false, parallel: false })).toBe(false)
     expect(webSearchEnabled(ProviderV2.ID.openai, { exa: true, parallel: false })).toBe(true)
     expect(webSearchEnabled(ProviderV2.ID.openai, { exa: false, parallel: true })).toBe(true)
+    expect(webSearchEnabled(ProviderV2.ID.mimo, { tavily: true })).toBe(true)
+    expect(webSearchEnabled(ProviderV2.ID.mimo, {})).toBe(false)
   })
 
   test("uses branded labels", () => {
     expect(webSearchProviderLabel("parallel")).toBe("Parallel Web Search")
     expect(webSearchProviderLabel("exa")).toBe("Exa Web Search")
+    expect(webSearchProviderLabel("tavily")).toBe("Tavily Web Search")
     expect(webSearchProviderLabel(undefined)).toBe("Web Search")
+  })
+
+  test("formats a Tavily response into answer + numbered results", () => {
+    const body = JSON.stringify({
+      answer: "Paris is the capital of France.",
+      results: [
+        { title: "France", url: "https://example.com/fr", content: "France is a country." },
+        { title: "Paris", url: "https://example.com/paris", content: "Paris is its capital." },
+      ],
+    })
+    const out = formatTavilyResponse(body)
+    expect(out).toContain("Answer: Paris is the capital of France.")
+    expect(out).toContain("[1] France\nhttps://example.com/fr\nFrance is a country.")
+    expect(out).toContain("[2] Paris")
+  })
+
+  test("formatTavilyResponse truncates to the character budget and tolerates junk", () => {
+    expect(formatTavilyResponse("not json")).toBe("not json")
+    const long = JSON.stringify({ results: [{ title: "x".repeat(100), url: "u", content: "c" }] })
+    expect(formatTavilyResponse(long, 20).length).toBe(20)
   })
 
   test("uses the provider API model id for Parallel analytics", () => {

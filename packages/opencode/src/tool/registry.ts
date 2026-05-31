@@ -60,8 +60,11 @@ import { ProviderV2 } from "@opencode-ai/core/provider"
 
 const log = Log.create({ service: "tool.registry" })
 
-export function webSearchEnabled(providerID: ProviderV2.ID, flags = { exa: false, parallel: false }) {
-  return providerID === ProviderV2.ID.opencode || flags.exa || flags.parallel
+export function webSearchEnabled(
+  providerID: ProviderV2.ID,
+  flags: { exa?: boolean; parallel?: boolean; tavily?: boolean } = {},
+) {
+  return providerID === ProviderV2.ID.opencode || !!flags.exa || !!flags.parallel || !!flags.tavily
 }
 
 type TaskDef = Tool.InferDef<typeof TaskTool>
@@ -329,7 +332,11 @@ export const layer: Layer.Layer<
     const tools: Interface["tools"] = Effect.fn("ToolRegistry.tools")(function* (input) {
       const filtered = (yield* all()).filter((tool) => {
         if (tool.id === WebSearchTool.id) {
-          return webSearchEnabled(input.providerID, { exa: flags.enableExa, parallel: flags.enableParallel })
+          return webSearchEnabled(input.providerID, {
+            exa: flags.enableExa,
+            parallel: flags.enableParallel,
+            tavily: Boolean(process.env.TAVILY_API_KEY),
+          })
         }
 
         const usePatch =

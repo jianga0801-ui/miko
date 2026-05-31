@@ -1,5 +1,5 @@
 import { Effect, Schema } from "effect"
-import { HttpClient } from "effect/unstable/http"
+import { HttpClient, HttpClientRequest } from "effect/unstable/http"
 import * as Tool from "./tool"
 import * as McpWebSearch from "./mcp-websearch"
 import DESCRIPTION from "./websearch.txt"
@@ -24,12 +24,21 @@ export const Parameters = Schema.Struct({
   }),
 })
 
-const WebSearchProviderSchema = Schema.Literals(["exa", "parallel"])
+const WebSearchProviderSchema = Schema.Literals(["exa", "parallel", "tavily"])
 export type WebSearchProvider = Schema.Schema.Type<typeof WebSearchProviderSchema>
 
-export function selectWebSearchProvider(sessionID: string, flags = { exa: false, parallel: false }): WebSearchProvider {
+export interface WebSearchFlags {
+  exa?: boolean
+  parallel?: boolean
+  tavily?: boolean
+}
+
+export function selectWebSearchProvider(sessionID: string, flags: WebSearchFlags = {}): WebSearchProvider {
   const override = process.env.OPENCODE_WEBSEARCH_PROVIDER
-  if (override === "exa" || override === "parallel") return override
+  if (override === "exa" || override === "parallel" || override === "tavily") return override
+  // An explicitly configured Tavily key takes precedence — it's the deliberate
+  // backend choice for providers (like MiMo) without a usable built-in search.
+  if (flags.tavily) return "tavily"
   if (flags.parallel) return "parallel"
   if (flags.exa) return "exa"
 
@@ -39,6 +48,7 @@ export function selectWebSearchProvider(sessionID: string, flags = { exa: false,
 export function webSearchProviderLabel(provider: unknown) {
   if (provider === "parallel") return "Parallel Web Search"
   if (provider === "exa") return "Exa Web Search"
+  if (provider === "tavily") return "Tavily Web Search"
   return "Web Search"
 }
 
@@ -57,12 +67,68 @@ function parallelAuthHeaders() {
   return { ...headers, Authorization: `Bearer ${process.env.PARALLEL_API_KEY}` }
 }
 
+const TAVILY_URL = "https://api.tavily.com/search"
+
+/**
+ * Format a Tavily `/search` response into an LLM-friendly text block: the
+ * optional synthesized answer followed by numbered title/url/snippet entries.
+ */
+export function formatTavilyResponse(body: string, maxCharacters?: number): string {
+  let data: any
+  try {
+    data = JSON.parse(body)
+  } catch {
+    return body
+  }
+  const parts: string[] = []
+  if (typeof data?.answer === "string" && data.answer.trim()) parts.push(`Answer: ${data.answer.trim()}`)
+  const results = Array.isArray(data?.results) ? data.results : []
+  results.forEach((r: any, i: number) => {
+    const title = typeof r?.title === "string" ? r.title : "(untitled)"
+    const url = typeof r?.url === "string" ? r.url : ""
+    const content = typeof r?.content === "string" ? r.content : ""
+    parts.push([`[${i + 1}] ${title}`, url, content].filter(Boolean).join("\n"))
+  })
+  const out = parts.join("\n\n") || "No search results found."
+  const limit = maxCharacters ?? 10000
+  return out.length > limit ? out.slice(0, limit) : out
+}
+
+function callTavily(http: HttpClient.HttpClient, params: Schema.Schema.Type<typeof Parameters>) {
+  return Effect.gen(function* () {
+    const request = yield* HttpClientRequest.post(TAVILY_URL).pipe(
+      HttpClientRequest.setHeaders({ Authorization: `Bearer ${process.env.TAVILY_API_KEY ?? ""}` }),
+      HttpClientRequest.bodyJson({
+        query: params.query,
+        max_results: params.numResults ?? 8,
+        search_depth: params.type === "deep" ? "advanced" : "basic",
+        include_answer: true,
+        topic: "general",
+      }),
+    )
+    const response = yield* HttpClient.filterStatusOk(http)
+      .execute(request)
+      .pipe(
+        Effect.timeoutOrElse({
+          duration: "25 seconds",
+          orElse: () => Effect.die(new Error("tavily request timed out")),
+        }),
+      )
+    const body = yield* response.text
+    return formatTavilyResponse(body, params.contextMaxCharacters)
+  })
+}
+
 function callProvider(
   http: HttpClient.HttpClient,
   provider: WebSearchProvider,
   params: Schema.Schema.Type<typeof Parameters>,
   ctx: Tool.Context,
 ) {
+  if (provider === "tavily") {
+    return callTavily(http, params)
+  }
+
   if (provider === "parallel") {
     return McpWebSearch.call(
       http,
@@ -112,6 +178,7 @@ export const WebSearchTool = Tool.define(
           const provider = selectWebSearchProvider(ctx.sessionID, {
             exa: flags.enableExa,
             parallel: flags.enableParallel,
+            tavily: Boolean(process.env.TAVILY_API_KEY),
           })
           const title = webSearchProviderLabel(provider)
           yield* ctx.metadata({ title: `${title} "${params.query}"`, metadata: { provider } })
