@@ -4,8 +4,8 @@
     "darkBg": "#000c18",
     "darkPanel": "#060621",
     "darkElement": "#181f2f",
-    "darkText": "#6688cc",
-    "darkTextMuted": "#384887",
+    "darkText": "#eef5ff",
+    "darkTextMuted": "#9fb3dd",
     "darkPrimary": "#ddbb88",
     "darkSecondary": "#ffeebb",
     "darkAccent": "#f280d0",
@@ -105,11 +105,11 @@
       "light": "lightRed"
     },
     "diffContext": {
-      "dark": "#384887",
+      "dark": "darkTextMuted",
       "light": "#8ca6a6"
     },
     "diffHunkHeader": {
-      "dark": "#384887",
+      "dark": "darkTextMuted",
       "light": "#8ca6a6"
     },
     "diffHighlightAdded": {
@@ -133,7 +133,7 @@
       "light": "lightPanel"
     },
     "diffLineNumber": {
-      "dark": "#406385",
+      "dark": "#86a0c8",
       "light": "#a0abac"
     },
     "diffAddedLineNumberBg": {

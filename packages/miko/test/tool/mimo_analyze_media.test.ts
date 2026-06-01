@@ -30,6 +30,15 @@ describe("mimo_analyze_media helpers", () => {
     ])
   })
 
+  test("caps collected media at the requested item count", () => {
+    expect(
+      collectMedia([user([file("image/png", "a.png"), file("image/png", "b.png")])], {
+        scope: "latest",
+        maxItems: 1,
+      }),
+    ).toEqual([{ kind: "image", mime: "image/png", filename: "a.png", url: "data:image/png;base64,AA" }])
+  })
+
   test("builds official MiMo content blocks", () => {
     expect(mediaBlock({ kind: "image", mime: "image/png", url: "https://x/i.png" })).toEqual({
       type: "image_url",

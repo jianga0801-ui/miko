@@ -147,6 +147,8 @@ export const Definitions = {
 
   prompt_submit: keybind("none", "Submit prompt"),
   prompt_editor_context_clear: keybind("none", "Clear editor context"),
+  prompt_voice_start: keybind("none", "Start voice prompt recording"),
+  prompt_voice_stop: keybind("none", "Stop voice prompt recording"),
   prompt_skills: keybind("none", "Open skill selector"),
   prompt_stash: keybind("none", "Stash prompt"),
   prompt_stash_pop: keybind("none", "Pop stashed prompt"),
@@ -341,6 +343,8 @@ export const CommandMap = {
   display_thinking: "session.toggle.thinking",
   prompt_submit: "prompt.submit",
   prompt_editor_context_clear: "prompt.editor_context.clear",
+  prompt_voice_start: "prompt.voice.start",
+  prompt_voice_stop: "prompt.voice.stop",
   prompt_skills: "prompt.skills",
   prompt_stash: "prompt.stash",
   prompt_stash_pop: "prompt.stash.pop",

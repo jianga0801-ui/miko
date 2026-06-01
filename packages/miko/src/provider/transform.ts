@@ -423,7 +423,7 @@ function unsupportedParts(msgs: ModelMessage[], model: Provider.Model): ModelMes
       const name = filename ? `"${filename}"` : modality
       return {
         type: "text" as const,
-        text: `MEDIA INPUT REQUIRED: ${name} is ${modality} input, and this model cannot inspect ${modality} directly. If the mimo_analyze_media tool is available, call it to analyze the attachment before answering. Do not ask the user to describe it unless the tool is unavailable or fails.`,
+        text: `MEDIA INPUT REQUIRED: ${name} is ${modality} input, and this model cannot inspect ${modality} directly. If the mimo_analyze_media tool is available, call it with a short prompt matching the user's question before answering. Do not ask the user to describe it unless the tool is unavailable or fails.`,
       }
     })
 

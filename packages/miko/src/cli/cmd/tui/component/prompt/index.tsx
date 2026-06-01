@@ -29,6 +29,7 @@ import { createStore, produce, unwrap } from "solid-js/store"
 import { usePromptHistory, type PromptInfo } from "./history"
 import { computePromptTraits } from "./traits"
 import { assign, expandPastedTextPlaceholders } from "./part"
+import { promptAttachmentKind, promptAttachmentLabel } from "./attachment"
 import { usePromptStash } from "./stash"
 import { DialogStash } from "../dialog-stash"
 import { type AutocompleteRef, Autocomplete } from "./autocomplete"
@@ -62,6 +63,7 @@ import { Flag } from "@miko-ai/core/flag/flag"
 import { type WorkspaceStatus } from "../workspace-label"
 import { MIKO_BASE_MODE, useBindings, useCommandShortcut, useLeaderActive, useMikoKeymap } from "../../keymap"
 import { useTuiConfig } from "../../context/tui-config"
+import { startVoiceInput } from "../../util/voice-input"
 
 export type PromptProps = {
   sessionID?: string
@@ -199,6 +201,8 @@ export function Prompt(props: PromptProps) {
   const [workspaceCreatingDots, setWorkspaceCreatingDots] = createSignal(3)
   const [warpNotice, setWarpNotice] = createSignal<string>()
   const [cursorVersion, setCursorVersion] = createSignal(0)
+  const [voiceRecording, setVoiceRecording] = createSignal(false)
+  const [voiceError, setVoiceError] = createSignal<string>()
   const currentProviderLabel = createMemo(() => local.model.parsed().provider)
   const hasRightContent = createMemo(() => Boolean(props.right))
 
@@ -379,6 +383,13 @@ export function Prompt(props: PromptProps) {
     extmarkToPartIndex: new Map(),
     interrupt: 0,
   })
+  let voiceProcess: { file: string; proc: ReturnType<typeof Bun.spawn> } | undefined
+  let voicePressed = false
+  let voiceStopping = false
+  onCleanup(() => {
+    voiceProcess?.proc.kill("SIGINT")
+    voiceProcess = undefined
+  })
 
   createEffect(
     on(
@@ -500,6 +511,26 @@ export function Prompt(props: PromptProps) {
             setStore("interrupt", 0)
           }
           dialog.clear()
+        },
+      },
+      {
+        title: "Start voice prompt",
+        desc: "Start recording a voice note",
+        name: "prompt.voice.start",
+        category: "Prompt",
+        hidden: true,
+        run: async () => {
+          await startVoicePrompt()
+        },
+      },
+      {
+        title: "Stop voice prompt",
+        desc: "Stop recording and attach the voice note",
+        name: "prompt.voice.stop",
+        category: "Prompt",
+        hidden: true,
+        run: async () => {
+          await stopVoicePrompt()
         },
       },
       {
@@ -648,6 +679,8 @@ export function Prompt(props: PromptProps) {
     bindings: tuiConfig.keybinds.gather("prompt.palette", [
       "prompt.submit",
       "prompt.editor",
+      "prompt.voice.start",
+      "prompt.voice.stop",
       "prompt.editor_context.clear",
       "prompt.stash",
       "prompt.stash.pop",
@@ -1241,6 +1274,66 @@ export function Prompt(props: PromptProps) {
   }
   const exit = useExit()
 
+  async function startVoicePrompt() {
+    dialog.clear()
+    if (voicePressed || voiceStopping) return
+
+    voicePressed = true
+    setVoiceError(undefined)
+
+    try {
+      const current = await startVoiceInput()
+      if (!voicePressed) {
+        current.proc.kill("SIGINT")
+        await current.proc.exited.catch(() => undefined)
+        return
+      }
+
+      voiceProcess = current
+      setVoiceRecording(true)
+      void current.proc.exited.then((code) => {
+        if (voiceProcess !== current) return
+        voiceProcess = undefined
+        setVoiceRecording(false)
+        if (code !== 0 && voicePressed) setVoiceError("Voice recorder stopped unexpectedly. Check microphone access.")
+      })
+    } catch (error) {
+      if (voicePressed) setVoiceError(errorMessage(error))
+      voicePressed = false
+      setVoiceRecording(false)
+    }
+  }
+
+  async function stopVoicePrompt() {
+    dialog.clear()
+    voicePressed = false
+    if (!voiceProcess || voiceStopping) {
+      setVoiceRecording(false)
+      return
+    }
+
+    voiceStopping = true
+    const current = voiceProcess
+    voiceProcess = undefined
+    current.proc.kill("SIGINT")
+    await current.proc.exited.catch(() => undefined)
+
+    try {
+      const content = await Bun.file(current.file).arrayBuffer()
+      await pasteAttachment({
+        filename: path.basename(current.file),
+        filepath: current.file,
+        mime: "audio/wav",
+        content: Buffer.from(content).toString("base64"),
+      })
+    } catch (error) {
+      setVoiceError(errorMessage(error))
+    } finally {
+      voiceStopping = false
+      setVoiceRecording(false)
+    }
+  }
+
   function pasteText(text: string, virtualText: string) {
     const currentOffset = input.visualCursor.offset
     const extmarkStart = currentOffset
@@ -1300,7 +1393,7 @@ export function Prompt(props: PromptProps) {
             return
           }
         }
-        if (mime.startsWith("image/") || mime === "application/pdf") {
+        if (promptAttachmentKind(mime)) {
           const content = await Filesystem.readArrayBuffer(filepath)
             .then((buffer) => Buffer.from(buffer).toString("base64"))
             .catch(() => {})
@@ -1338,13 +1431,12 @@ export function Prompt(props: PromptProps) {
   async function pasteAttachment(file: { filename?: string; filepath?: string; content: string; mime: string }) {
     const currentOffset = input.visualCursor.offset
     const extmarkStart = currentOffset
-    const pdf = file.mime === "application/pdf"
+    const kind = promptAttachmentKind(file.mime)
     const count = store.prompt.parts.filter((x) => {
       if (x.type !== "file") return false
-      if (pdf) return x.mime === "application/pdf"
-      return x.mime.startsWith("image/")
+      return promptAttachmentKind(x.mime) === kind
     }).length
-    const virtualText = pdf ? `[PDF ${count + 1}]` : `[Image ${count + 1}]`
+    const virtualText = promptAttachmentLabel(file.mime, count)
     const extmarkEnd = extmarkStart + virtualText.length
     const textToInsert = virtualText + " "
 
@@ -1643,6 +1735,18 @@ export function Prompt(props: PromptProps) {
         </box>
         <box width="100%" flexDirection="row" justifyContent="space-between">
           <Switch>
+            <Match when={voiceRecording()}>
+              <box paddingLeft={3} flexDirection="row" gap={1}>
+                <text fg={theme.error}>● REC</text>
+              </box>
+            </Match>
+            <Match when={voiceError()}>
+              {(message) => (
+                <box paddingLeft={3}>
+                  <text fg={theme.error}>{message()}</text>
+                </box>
+              )}
+            </Match>
             <Match when={status().type !== "idle"}>
               <box
                 flexDirection="row"

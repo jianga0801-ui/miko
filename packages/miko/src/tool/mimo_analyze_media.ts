@@ -11,6 +11,9 @@ import type { SessionLegacy } from "@miko-ai/core/session/legacy"
 
 const DEFAULT_MODEL = process.env.MIMO_MULTIMODAL_MODEL || "mimo-v2.5"
 const MAX_MEDIA = 6
+const DEFAULT_MAX_ITEMS = 1
+const DEFAULT_MAX_OUTPUT_TOKENS = 256
+const MAX_OUTPUT_TOKENS = 1024
 
 type MediaKind = "image" | "audio" | "video"
 
@@ -89,7 +92,7 @@ function currentProviderID(extra: Record<string, unknown> | undefined) {
 export const Parameters = Schema.Struct({
   prompt: Schema.optional(Schema.String).annotate({
     description:
-      "What to understand from the media. Defaults to describing the media and extracting visible or audible details relevant to the user's request.",
+      "What to understand from the media. Keep this short and specific to the user's question.",
   }),
   scope: Schema.Literals(["latest", "all"])
     .pipe(Schema.optional, Schema.withDecodingDefault(Effect.succeed("latest" as const)))
@@ -99,7 +102,11 @@ export const Parameters = Schema.Struct({
     }),
   maxItems: Schema.optional(Schema.Number).annotate({
     description: `Maximum number of media attachments to analyze, capped at ${MAX_MEDIA}.`,
-    default: MAX_MEDIA,
+    default: DEFAULT_MAX_ITEMS,
+  }),
+  maxOutputTokens: Schema.optional(Schema.Number).annotate({
+    description: `Maximum output tokens for the MiMo multimodal request, capped at ${MAX_OUTPUT_TOKENS}.`,
+    default: DEFAULT_MAX_OUTPUT_TOKENS,
   }),
   model: Schema.optional(Schema.String).annotate({
     description: `MiMo multimodal model id. Defaults to ${DEFAULT_MODEL}.`,
@@ -149,7 +156,7 @@ export const MimoAnalyzeMediaTool = Tool.define(
                 : process.env.MIMO_REGION
           const media = collectMedia(ctx.messages, {
             scope: params.scope ?? "latest",
-            maxItems: Math.min(Math.max(Math.floor(params.maxItems ?? MAX_MEDIA), 1), MAX_MEDIA),
+            maxItems: Math.min(Math.max(Math.floor(params.maxItems ?? DEFAULT_MAX_ITEMS), 1), MAX_MEDIA),
           })
           if (media.length === 0) {
             throw new Error("mimo_analyze_media: no image, audio, or video attachments found in the conversation.")
@@ -165,7 +172,11 @@ export const MimoAnalyzeMediaTool = Tool.define(
 
           const prompt =
             params.prompt?.trim() ||
-            "Understand the attached media. Extract visible text, objects, UI details, spoken content, scene changes, and any details needed to answer the user's request. Be factual and concise."
+            "Identify the attached media and extract only the details needed to answer the user's question."
+          const maxOutputTokens = Math.min(
+            Math.max(Math.floor(params.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS), 32),
+            MAX_OUTPUT_TOKENS,
+          )
           const request = yield* HttpClientRequest.post(url).pipe(
             HttpClientRequest.setHeaders({
               "api-key": apiKey,
@@ -177,11 +188,19 @@ export const MimoAnalyzeMediaTool = Tool.define(
                 {
                   role: "user",
                   content: [
-                    { type: "text", text: prompt },
+                    {
+                      type: "text",
+                      text: [
+                        prompt,
+                        "Be concise. Return the direct observation only; avoid extra commentary.",
+                      ].join("\n"),
+                    },
                     ...media.map(mediaBlock),
                   ] satisfies MimoContent[],
                 },
               ],
+              temperature: 0,
+              max_tokens: maxOutputTokens,
               stream: false,
             }),
           )
@@ -208,6 +227,7 @@ export const MimoAnalyzeMediaTool = Tool.define(
             output,
             metadata: {
               model: params.model ?? DEFAULT_MODEL,
+              maxOutputTokens,
               media: media.map((item) => ({ kind: item.kind, mime: item.mime, filename: item.filename })),
             },
           }
