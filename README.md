@@ -1,34 +1,39 @@
-<p align="center">
-  <picture>
-    <source srcset="packages/console/app/src/asset/logo-ornate-dark.svg" media="(prefers-color-scheme: dark)">
-    <source srcset="packages/console/app/src/asset/logo-ornate-light.svg" media="(prefers-color-scheme: light)">
-    <img src="packages/console/app/src/asset/logo-ornate-light.svg" alt="Miko logo" width="200">
-  </picture>
-</p>
-<h1 align="center">Miko</h1>
-<p align="center">A lightning-fast, beautiful, and voice-enabled TUI AI Coding Agent.</p>
+# Miko
 
-<p align="center">
-  <a href="README.md">English</a> |
-  <a href="README.zh.md">简体中文</a>
-</p>
+Miko is a terminal-first AI coding agent for developers who want a fast local
+workflow, a polished TUI, strong model support, and real extensibility without a
+heavy desktop stack.
 
----
+Miko is maintained at [jianga0801-ui/miko](https://github.com/jianga0801-ui/miko)
+and is based on the OpenCode codebase from
+[sst/opencode](https://github.com/sst/opencode). It keeps the parts that make
+OpenCode powerful - TUI, MCP, providers, tools, sessions, and plugins - and
+pushes the fork toward a cleaner local-first Miko distribution with bundled
+skills, cross-platform release binaries, and Windows/WSL ergonomics.
 
-**Miko** is a lightweight, high-performance, and visually stunning terminal-centric (TUI/CLI) AI programming assistant. Forked from Miko, Miko is designed to be your ultimate local AI coding companion with a focus on speed, aesthetics, and rich developer experience.
+## Why Miko
 
-### Core Features
+- **Open the archive and run it**: release binaries are self-contained for the
+  core CLI/TUI runtime. End users do not install Bun, Node.js, or `node_modules`.
+- **Terminal-native workflow**: Miko starts in the project directory, reads the
+  repository, edits files, runs commands, and keeps the loop inside the terminal.
+- **Model-aware runtime**: model limits, modalities, tool support, reasoning,
+  variants, and provider options are normalized before requests are sent.
+- **Cache-hit optimized agent loop**: prompt caching is on by default where the
+  provider supports inline cache hints, reducing repeated tool/system context
+  cost in long tool-use turns.
+- **Built-in skills and slash commands**: project workflows such as review,
+  planning, design polish, document generation, translation, changelog, and
+  cleanup are available without extra setup.
+- **WSL-friendly**: the project is designed around Windows as the editor surface
+  and WSL/Linux as the execution surface, with safer path and process behavior.
+- **Extensible by design**: MCP prompts, local command templates, plugins,
+  provider hooks, workspace adapters, keymaps, and TUI slash commands are all
+  first-class extension points.
 
-- **TUI & Aesthetic First**: Designed with modern developer aesthetics, harmonic color palettes, and micro-interactions for a premium CLI experience.
-- **Voice & TTS Integration**: Deeply integrates text-to-speech (TTS) and voice recognition for seamless voice-guided assistance.
-- **WSL Deep Integration**: Optimized cross-boundary execution between Windows hosts and WSL containers, ensuring secure and high-speed command execution.
-- **Native Extensibility**: Built-in support for MCP (Model Context Protocol), custom plugins, and reusable skills.
+## Install
 
-### Getting Started
-
-#### Portable Install
-
-For normal use, install the self-contained release binary:
+Linux and macOS:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jianga0801-ui/miko/dev/install | bash
@@ -42,53 +47,193 @@ irm https://raw.githubusercontent.com/jianga0801-ui/miko/dev/install.ps1 | iex
 miko --version
 ```
 
-The release binary is self-contained for the core CLI/TUI runtime. It does not
-require Bun, Node.js, or `node_modules` on the user's machine.
+Manual downloads are available from
+[GitHub Releases](https://github.com/jianga0801-ui/miko/releases). Each release
+ships Linux, macOS, Windows, glibc/musl, x64/arm64, baseline builds, and
+`checksums.txt`.
 
-See [docs/install.md](./docs/install.md) for manual installs and version-pinned
-installs.
+See [docs/install.md](./docs/install.md) for version-pinned and manual installs.
 
-#### Source Development
-
-To run Miko locally from source:
-
-```bash
-# Clone the repository
-git clone https://github.com/jianga0801-ui/miko.git
-cd miko
-
-# Install dependencies using Bun
-bun install
-
-# Run the development TUI CLI
-bun run dev
-```
-
-### WSL Integration Guidance
-
-Miko is optimized for Windows Subsystem for Linux (WSL). When using Miko in a WSL environment, keep the following guidelines in mind:
-
-- **Run inside WSL**: Run Miko commands and tests directly inside the WSL terminal (e.g., Ubuntu shell) where Node and Bun are installed, rather than using Windows CMD/PowerShell over UNC paths (`\\wsl.localhost\...`).
-- **Path Casing and UNC Paths**: Avoid running git status or file operations from Windows PowerShell against the WSL UNC path, as case-insensitivity on Windows can cause git or tests to behave unexpectedly.
-- **Windows Host as Editor**: We recommend using VS Code or other Windows IDEs as the frontend/editor surface, while keeping all execution, terminal commands, and AI agent runs inside the native WSL container.
+## What Is Built In
 
 ### Agents
 
-Miko includes two built-in agents you can switch between with the `Tab` key in the TUI:
+Miko ships with specialized agents instead of one generic prompt:
 
-- **build** - Default, full-access agent for development work.
-- **plan** - Read-only agent for analysis and code exploration.
-  - Denies file edits by default.
-  - Asks permission before running bash commands.
-  - Ideal for exploring unfamiliar codebases or planning changes.
+| Agent | Role |
+| --- | --- |
+| `miko` | Read-only orchestrator that routes work to focused subagents. |
+| `coder` | Implementation specialist for source edits, builds, tests, and fixes. |
+| `explore` | Read-only codebase explorer for tracing files and logic. |
+| `researcher` | External research agent for docs, APIs, package data, and web sources. |
+| `reviewer` | Code and plan reviewer with severity and confidence thresholds. |
+| `scribe` | Documentation, changelog, release note, PR, and user-facing prose writer. |
+| `.miko/agent/triage` | GitHub issue triage agent for ownership routing. |
+| `.miko/agent/duplicate-pr` | GitHub PR duplicate detector. |
 
-Also included is a **general** subagent for complex searches and multistep tasks. This is used internally and can be invoked using `@general` in messages.
+### Skills
 
-### Documentation & Contribution
+Built-in skills can be loaded by agents and are also exposed as command-style
+workflows when appropriate:
 
-- Read our design system and development constraints in [AGENTS.md](./AGENTS.md).
-- To contribute, please check our [CONTRIBUTING.md](./CONTRIBUTING.md).
+| Skill | Purpose | Source |
+| --- | --- | --- |
+| `code-philosophy` | Internal logic and data-flow standards. | Miko builtin, this repository. |
+| `frontend-philosophy` | UI and visual quality standards. | Miko builtin, this repository. |
+| `code-review` | Four-layer review process: correctness, security, performance, maintainability. | Miko builtin, this repository. |
+| `plan-protocol` | Implementation-plan format, citations, and progress tracking. | Miko builtin, this repository. |
+| `plan-review` | Quality checks for implementation plans. | Miko builtin, this repository. |
+| `impeccable` | Production-grade frontend design, critique, polish, adaptation, animation, and live variant workflows. | Bundled Miko design skill, upstream URL not declared in the bundled source. |
+| `kami` | Professional document, landing page, one-pager, resume, report, PDF, and slide typesetting. | [tw93/kami](https://github.com/tw93/kami). |
+| `effect` | Effect v4 / effect-smol coding guidance for this repo. | Local project skill; API reference source is [Effect-TS/effect-smol](https://github.com/Effect-TS/effect-smol). |
 
----
+Kami's diagram guidance also credits
+[cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design)
+as inspiration for editorial inline-SVG diagram patterns.
 
-**Miko is fully open-source and dedicated to every developer who loves crafting in the terminal.**
+### Slash Commands
+
+Miko commands are Markdown-backed prompt templates. They can come from built-ins,
+project files, MCP prompts, or skills.
+
+Built-in commands:
+
+| Command | What it does |
+| --- | --- |
+| `/init` | Guided `AGENTS.md` setup for a repository. |
+| `/review` | Delegates code review to the reviewer agent. |
+
+Project commands in `.miko/command`:
+
+| Command | What it does |
+| --- | --- |
+| `/ai-deps` | Reports safe AI SDK dependency upgrades. |
+| `/changelog` | Builds `UPCOMING_CHANGELOG.md` from structured release input. |
+| `/commit` | Creates and pushes a conventional commit from current diffs. |
+| `/goal` | Runs a high-thoroughness goal execution protocol. |
+| `/issues` | Searches GitHub issues for related reports. |
+| `/learn` | Extracts durable repo learnings into scoped `AGENTS.md` files. |
+| `/plan` | Researches and saves a cited implementation plan. |
+| `/rmslop` | Removes AI-generated code/documentation slop from a branch. |
+| `/spellcheck` | Checks changed Markdown for spelling and grammar. |
+| `/translate` | Translates changed English docs and UI copy while preserving code terms. |
+| `/yolo` | Direct execution mode with verification and no planning detour. |
+
+MCP prompt names and skill names are also added to the command list when they do
+not conflict with existing commands.
+
+## Model and Provider Runtime
+
+Miko combines two model layers:
+
+- `models.dev` catalog data for provider/model metadata, refreshed with a local
+  disk cache and an in-process cache.
+- Runtime provider adapters that normalize authentication, endpoint selection,
+  request options, streaming events, and model capabilities.
+
+Supported provider families include Miko, Anthropic, OpenAI, Google, Google
+Vertex, GitHub Copilot, Amazon Bedrock, Azure, OpenRouter, Mistral, xAI,
+Cloudflare, Alibaba, Cerebras, Cohere, DeepInfra, Groq, Perplexity, TogetherAI,
+Vercel, Venice, GitLab, and generic OpenAI-compatible endpoints.
+
+Miko tracks capabilities instead of treating every model as plain text:
+
+- context, input, and output limits
+- text, image, audio, video, and PDF input/output modalities
+- tool-call support
+- reasoning support and reasoning variants
+- temperature support
+- provider-specific endpoint type
+- cost, cache read/write cost, and status metadata
+
+Provider-specific optimizations include:
+
+- OpenAI Responses support, with optional WebSocket reuse for lower-latency
+  streamed sessions.
+- Anthropic headers for interleaved thinking and fine-grained tool streaming.
+- GitHub Copilot model discovery that maps remote capabilities into Miko
+  variants, reasoning options, vision flags, and endpoint selection.
+- Bedrock region and cross-region model prefix handling.
+- OpenAI-compatible profiles for DeepSeek, Groq, TogetherAI, Cerebras,
+  Fireworks, DeepInfra, Baseten, OpenRouter, and xAI.
+
+## Cache-Hit and Context Optimizations
+
+Miko optimizes repeated agent turns at several layers:
+
+- **Prompt cache auto-placement**: for providers that respect inline cache
+  markers, Miko places cache breakpoints at the last tool definition, last
+  system part, and latest user message. This targets the stable prefix used
+  repeatedly during a single tool-heavy turn.
+- **Manual cache hints preserved**: explicit `cache` markers on tools, system
+  parts, or messages are not overwritten.
+- **Provider-aware behavior**: inline markers are applied to Anthropic Messages
+  and Bedrock Converse paths, while providers with implicit caching or
+  out-of-band cache systems are left alone.
+- **Usage accounting**: usage events keep non-cached input tokens, cache-read
+  tokens, cache-write tokens, reasoning tokens, visible output tokens, and raw
+  provider metadata separately.
+- **Model catalog cache**: `models.dev` metadata is cached on disk, guarded by a
+  cross-process file lock, and refreshed in the background.
+- **Local search fallback**: release builds no longer depend on downloading
+  `ripgrep` at runtime; if a system `rg` is unavailable, Miko falls back to the
+  built-in file search path.
+
+## Extensibility
+
+Miko can be extended without patching core code:
+
+- **MCP**: MCP prompts become slash commands; MCP tools become available through
+  the agent runtime.
+- **Commands**: add Markdown files under `command/` or `.miko/command/`.
+- **Skills**: add `SKILL.md` directories under the configured skills paths.
+- **Plugins**: register tools, provider hooks, model hooks, keymap layers,
+  TUI routes, slash commands, workspace adapters, and context injectors.
+- **Providers**: use bundled AI SDK providers or define OpenAI-compatible
+  endpoints and provider-specific options.
+
+## Source Development
+
+End users should use the release installers above. Source development requires
+Bun:
+
+```bash
+git clone https://github.com/jianga0801-ui/miko.git
+cd miko
+bun install
+bun run dev
+```
+
+Run package checks from package directories. Do not run the root test script; it
+intentionally exits.
+
+```bash
+cd packages/miko
+bun typecheck
+```
+
+## Release
+
+The release workflow builds self-contained archives and uploads checksums:
+
+```bash
+script/release 0.0.1
+```
+
+The same workflow also runs when a `v*` tag is pushed.
+
+## Fork and Source Attribution
+
+| Component | Repository |
+| --- | --- |
+| Current Miko repository | [jianga0801-ui/miko](https://github.com/jianga0801-ui/miko) |
+| Primary upstream codebase | [sst/opencode](https://github.com/sst/opencode) |
+| Historical package metadata still visible in some files | [anomalyco/miko](https://github.com/anomalyco/miko) |
+| Model catalog | [models.dev](https://models.dev) |
+| Kami bundled skill | [tw93/kami](https://github.com/tw93/kami) |
+| Effect reference used by local `effect` skill | [Effect-TS/effect-smol](https://github.com/Effect-TS/effect-smol) |
+| Kami diagram inspiration | [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design) |
+
+Miko keeps attribution explicit so users can understand which parts are local
+Miko work, which parts come from upstream OpenCode, and which bundled skills
+carry their own origin.
