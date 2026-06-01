@@ -10,6 +10,7 @@ import { createSolidTransformPlugin } from "@opentui/solid/bun-plugin"
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const dir = path.resolve(__dirname, "..")
+const appDir = path.join(import.meta.dirname, "../../app")
 
 process.chdir(dir)
 
@@ -23,7 +24,7 @@ const baselineFlag = process.argv.includes("--baseline")
 const skipInstall = process.argv.includes("--skip-install")
 const sourcemapsFlag = process.argv.includes("--sourcemaps")
 const plugin = createSolidTransformPlugin()
-const skipEmbedWebUi = process.argv.includes("--skip-embed-web-ui")
+const skipEmbedWebUi = process.argv.includes("--skip-embed-web-ui") || !fs.existsSync(path.join(appDir, "package.json"))
 const archiveFlag = Script.release || process.argv.includes("--archive")
 
 const resetDir = (target: string) => {
@@ -38,7 +39,6 @@ const resetDir = (target: string) => {
 
 const createEmbeddedWebUIBundle = async () => {
   console.log(`Building Web UI to embed in the binary`)
-  const appDir = path.join(import.meta.dirname, "../../app")
   const dist = path.join(appDir, "dist")
   await $`MIKO_CHANNEL=${Script.channel} bun run --cwd ${appDir} build`
   const files = (await Array.fromAsync(new Bun.Glob("**/*").scan({ cwd: dist })))
