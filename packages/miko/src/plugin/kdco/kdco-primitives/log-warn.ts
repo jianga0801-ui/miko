@@ -34,9 +34,9 @@ export function logWarn(
 	service: string,
 	message: string,
 ): void {
-	// Guard: No client available, use console fallback (Law 1: Early Exit)
+	// Guard: No client available (Law 1: Early Exit)
 	if (!client) {
-		console.warn(`[${service}] ${message}`)
+		// Do not write to console.warn as it corrupts TUI layout and screen rendering
 		return
 	}
 
