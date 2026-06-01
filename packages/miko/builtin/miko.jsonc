@@ -14,7 +14,8 @@
     "gh_grep": { "type": "remote", "url": "https://mcp.grep.app", "timeout": 15000 }
   },
   "permission": {
-    "webfetch": "deny",
+    // NOTE: webfetch is intentionally NOT denied globally — built-in tools like
+    // mimo_analyze_media require the webfetch permission (MiMo media API).
     "task": "deny",
     "worktree_*": "deny",
     "context7_*": "deny",
