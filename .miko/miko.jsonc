@@ -7,4 +7,27 @@
     "github-triage": false,
     "github-pr-search": false,
   },
+
+  // ── KDCO workspace harness (bundled in-repo) ───────────────────────────────
+  // npm plugin: markdown table formatter. The 4 local plugins in ./plugins/*.ts
+  // (workspace-plugin, background-agents, notify, worktree) are auto-discovered.
+  "plugin": ["@franlol/opencode-md-table-formatter@0.0.6"],
+
+  // External research MCP servers (used only by the `researcher` agent).
+  "mcp": {
+    "context7": { "type": "remote", "url": "https://mcp.context7.com/mcp", "timeout": 15000 },
+    "gh_grep": { "type": "remote", "url": "https://mcp.grep.app", "timeout": 15000 },
+  },
+
+  // Global permission sandbox (agents re-allow what they need via frontmatter):
+  // webfetch denied globally (researcher re-allows); native task denied (delegation
+  // replaces it; plan/build re-allow); worktree tools + research MCP tools denied
+  // globally and re-allowed only where appropriate.
+  "permission": {
+    "webfetch": "deny",
+    "task": "deny",
+    "worktree_*": "deny",
+    "context7_*": "deny",
+    "gh_grep_*": "deny",
+  },
 }
