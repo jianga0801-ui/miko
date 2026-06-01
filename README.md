@@ -1,5 +1,7 @@
 # Miko
 
+**[简体中文](README.zh.md) | English**
+
 Miko is a terminal-first AI coding agent for developers who want a fast local
 workflow, a polished TUI, strong model support, and real extensibility without a
 heavy desktop stack.
@@ -9,10 +11,11 @@ and is based on the OpenCode codebase from
 [sst/opencode](https://github.com/sst/opencode). It keeps the parts that make
 OpenCode powerful - TUI, MCP, providers, tools, sessions, and plugins - and
 pushes the fork toward a cleaner local-first Miko distribution with bundled
-skills, cross-platform release binaries, and Windows/WSL ergonomics.
+skills, cross-platform release binaries, and Windows ergonomics.
 
 ## Why Miko
 
+- **Specially Optimized for Xiaomi Mimo**: First-class deep optimizations for the Xiaomi Mimo large model, maximizing cache hits, fully utilizing multimodal inputs (audio, video, image), and guaranteeing premium code generation quality.
 - **Open the archive and run it**: release binaries are self-contained for the
   core CLI/TUI runtime. End users do not install Bun, Node.js, or `node_modules`.
 - **Terminal-native workflow**: Miko starts in the project directory, reads the
@@ -25,11 +28,18 @@ skills, cross-platform release binaries, and Windows/WSL ergonomics.
 - **Built-in skills and slash commands**: project workflows such as review,
   planning, design polish, document generation, translation, changelog, and
   cleanup are available without extra setup.
-- **WSL-friendly**: the project is designed around Windows as the editor surface
-  and WSL/Linux as the execution surface, with safer path and process behavior.
 - **Extensible by design**: MCP prompts, local command templates, plugins,
   provider hooks, workspace adapters, keymaps, and TUI slash commands are all
   first-class extension points.
+
+## Xiaomi Mimo Model Deep Optimization 🚀
+
+Miko is meticulously tailored and optimized for the **Xiaomi Mimo** large model, delivering unmatched performance and a state-of-the-art coding experience:
+
+- **Cache-Hit Optimization**: Advanced prompt-caching strategies designed specifically for Mimo's context window. It dramatically reduces token overhead and latency during long, tool-heavy development loops by keeping system prompts, tool definitions, and repo context cached.
+- **Full Multimodal Understanding**: Fully unleashes Mimo's multimodal capabilities, seamlessly processing and understanding rich inputs including images, audio, and video for visual coding, UI review, and multimodal debugging.
+- **Elite Reply Quality**: Finetuned formatting prompts, system context structures, and response generation rules tailored to Mimo to ensure highly accurate, clean, structured, and production-grade code output.
+- **Built-in Tavily Search**: Deeply integrated Tavily search capabilities (requires a Tavily API Key) to empower the agent to fetch up-to-date documentation, API specs, and web resources for highly precise answers.
 
 ## Install
 
@@ -58,7 +68,7 @@ See [docs/install.md](./docs/install.md) for version-pinned and manual installs.
 
 ### Agents
 
-Miko ships with specialized agents instead of one generic prompt:
+Miko ships with specialized agents instead of one generic prompt. The specialized built-in agents and workspaces in Miko are inspired by and refer to [opencode-workspace](https://github.com/kdcokenny/opencode-workspace):
 
 | Agent | Role |
 | --- | --- |
@@ -83,7 +93,7 @@ workflows when appropriate:
 | `code-review` | Four-layer review process: correctness, security, performance, maintainability. | Miko builtin, this repository. |
 | `plan-protocol` | Implementation-plan format, citations, and progress tracking. | Miko builtin, this repository. |
 | `plan-review` | Quality checks for implementation plans. | Miko builtin, this repository. |
-| `impeccable` | Production-grade frontend design, critique, polish, adaptation, animation, and live variant workflows. | Bundled Miko design skill, upstream URL not declared in the bundled source. |
+| `impeccable` | Production-grade frontend design, critique, polish, adaptation, animation, and live variant workflows. | [pbakaus/impeccable](https://github.com/pbakaus/impeccable). |
 | `kami` | Professional document, landing page, one-pager, resume, report, PDF, and slide typesetting. | [tw93/kami](https://github.com/tw93/kami). |
 | `effect` | Effect v4 / effect-smol coding guidance for this repo. | Local project skill; API reference source is [Effect-TS/effect-smol](https://github.com/Effect-TS/effect-smol). |
 
@@ -230,10 +240,12 @@ The same workflow also runs when a `v*` tag is pushed.
 | Primary upstream codebase | [sst/opencode](https://github.com/sst/opencode) |
 | Historical package metadata still visible in some files | [anomalyco/miko](https://github.com/anomalyco/miko) |
 | Model catalog | [models.dev](https://models.dev) |
+| Built-in agent workspace references | [kdcokenny/opencode-workspace](https://github.com/kdcokenny/opencode-workspace) |
+| Impeccable design skill | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) |
 | Kami bundled skill | [tw93/kami](https://github.com/tw93/kami) |
 | Effect reference used by local `effect` skill | [Effect-TS/effect-smol](https://github.com/Effect-TS/effect-smol) |
 | Kami diagram inspiration | [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design) |
 
 Miko keeps attribution explicit so users can understand which parts are local
 Miko work, which parts come from upstream OpenCode, and which bundled skills
-carry their own origin.
+or references carry their own origin.

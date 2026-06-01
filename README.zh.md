@@ -1,18 +1,29 @@
 # Miko
 
-Miko 是一个面向开发者的终端优先 AI 编程助手：启动快、TUI 体验清爽、模型能力适配完整、内置工作流足够多，同时保持本地优先和可扩展。
+**简体中文 | [English](README.md)**
 
-当前仓库维护在 [jianga0801-ui/miko](https://github.com/jianga0801-ui/miko)，代码基础来自 [sst/opencode](https://github.com/sst/opencode)。Miko 保留了 OpenCode 里成熟的 TUI、MCP、Provider、工具调用、会话和插件体系，并把这个 fork 往更干净的本地发行版推进：自包含二进制、内置 skills、跨平台一键安装，以及更好的 Windows/WSL 使用体验。
+Miko 是一个专为开发者打造的终端优先 AI 编程助手：极致美观的终端交互体验、超快的启动速度、完整的模型能力适配、丰富多元的内置工作流，同时保持本地优先与极致的可扩展性。
 
-## 项目优势
+当前仓库由 [jianga0801-ui/miko](https://github.com/jianga0801-ui/miko) 维护，基于 [sst/opencode](https://github.com/sst/opencode) 代码库开发。Miko 保留了 OpenCode 中成熟的 TUI、MCP、Provider、工具调用、会话和插件体系，并致力于为用户提供更纯净、开箱即用的本地发行版：自包含免依赖二进制文件、内置丰富 Skills、跨平台一键快速安装，以及更好的 Windows 宿主机使用体验。
 
-- **下载即用**：Release 包内置核心 CLI/TUI 运行时，普通用户不需要安装 Bun、Node.js 或 `node_modules`。
-- **终端原生**：在项目目录里直接启动，读取仓库、编辑文件、运行命令、看结果都留在终端里。
-- **模型能力感知**：在发请求前统一处理模型上下文、输入输出能力、工具调用、推理能力、变体和 provider 选项。
-- **缓存命中优化**：对支持 inline cache hint 的 provider 默认启用 prompt cache 自动断点，减少长工具链路里的重复上下文成本。
-- **内置 skills 和 `/` 命令**：代码审查、计划、设计打磨、文档排版、翻译、changelog、清理等工作流开箱即用。
-- **WSL 友好**：推荐 Windows 做编辑器界面，WSL/Linux 做执行环境，减少 UNC 路径和跨系统进程问题。
-- **扩展能力完整**：MCP prompt、本地命令模板、插件、provider hook、workspace adapter、keymap、TUI slash command 都是一等扩展点。
+## 核心优势
+
+- **专为小米 Mimo 优化**：针对小米 Mimo (Xiaomi Mimo) 大模型进行深度全栈级定制，实现卓越的缓存命中率、全模态（音频/视频/图片）交互支持以及极高的代码生成质量。
+- **免安装依赖**：Release 压缩包内置核心 CLI/TUI 运行时，普通用户不需要手动安装 Bun、Node.js 或 `node_modules`。
+- **终端原生工作流**：在项目目录中直接启动，读取仓库、编辑文件、运行命令、查看结果，全流程闭环在终端内，高效无干扰。
+- **模型能力感知**：在发送请求前，智能且统一地处理模型上下文限制、输入输出能力、工具调用、推理能力、变体和 provider 选项。
+- **缓存命中优化**：对支持 inline cache hint 的 provider 默认启用 prompt cache 自动断点，大幅减少长链路工具链交互中的重复上下文成本。
+- **内置丰富 Skills 与 `/` 命令**：代码审查、计划拟定、设计打磨、文档排版、智能翻译、changelog 自动生成、无用代码清理等高频工作流开箱即用。
+- **扩展能力完整**：MCP prompt、本地命令模板、插件、provider hook、workspace adapter、keymap、TUI slash command 均是一等扩展点。
+
+## 小米 Mimo 模型深度优化 🚀
+
+Miko 专为**小米 Mimo (Xiaomi Mimo)** 大模型进行了深度的全栈级优化，带来卓越的开发速度、智能度与准确性：
+
+- **极速缓存命中 (Cache-Hit)**：针对 Mimo 的上下文窗口深度定制了 Prompt Caching（提示词缓存）机制。在长链路的工具调用和复杂交互中，自动对系统 Prompt、工具定义和仓库上下文进行精准缓存，大幅降低 Token 消耗并缩减响应延迟。
+- **全模态深度理解 (Multimodal)**：完美释放 Mimo 的多模态能力，无缝支持并理解图片、音频、视频等丰富媒介输入，无论是 UI 视觉审查、语音协助还是音视频多模态调试都能轻松应对。
+- **超高回复质量 (Reply Quality)**：针对 Mimo 的生成特性，定制了高度优化的格式提示、系统上下文结构和响应生成规则，确保生成的代码高度准确、结构严谨、规范且符合生产级标准。
+- **内置 Tavily 搜索**：深度集成 Tavily 搜索引擎（需配置 Tavily API Key），为 Mimo 提供即时、高质量的网页搜索与最新的文档 API 查询能力，彻底消除知识盲区。
 
 ## 安装
 
@@ -38,7 +49,7 @@ miko --version
 
 ### Agents
 
-Miko 内置多个专职 agent，而不是只靠一个泛用提示词：
+Miko 内置多个专职 agent，而不是只靠一个泛用提示词。Miko 的内置 Agent 及工作区（Workspace）设计参考并借鉴了 [opencode-workspace](https://github.com/kdcokenny/opencode-workspace)：
 
 | Agent | 作用 |
 | --- | --- |
@@ -62,7 +73,7 @@ Miko 内置多个专职 agent，而不是只靠一个泛用提示词：
 | `code-review` | 正确性、安全、性能、可维护性的四层审查方法。 | Miko 内置，本仓库。 |
 | `plan-protocol` | 实施计划格式、引用和进度追踪规范。 | Miko 内置，本仓库。 |
 | `plan-review` | 实施计划质量审查规则。 | Miko 内置，本仓库。 |
-| `impeccable` | 前端设计、审查、打磨、响应式、动画和 live variant 工作流。 | Miko 打包内置设计 skill，当前 bundled source 未声明上游 URL。 |
+| `impeccable` | 前端设计、审查、打磨、响应式、动画和 live variant 工作流。 | [pbakaus/impeccable](https://github.com/pbakaus/impeccable)。 |
 | `kami` | 专业文档、落地页、一页纸、简历、报告、PDF 和幻灯片排版。 | [tw93/kami](https://github.com/tw93/kami)。 |
 | `effect` | 本仓库 Effect v4 / effect-smol 编码指引。 | 本项目本地 skill；API 参考源是 [Effect-TS/effect-smol](https://github.com/Effect-TS/effect-smol)。 |
 
@@ -181,8 +192,10 @@ script/release 0.0.1
 | 主要上游代码库 | [sst/opencode](https://github.com/sst/opencode) |
 | 部分历史包元数据仍可见的 fork 链路 | [anomalyco/miko](https://github.com/anomalyco/miko) |
 | 模型目录 | [models.dev](https://models.dev) |
+| 内置 Agent 工作区参考来源 | [kdcokenny/opencode-workspace](https://github.com/kdcokenny/opencode-workspace) |
+| Impeccable 视觉设计 skill | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) |
 | Kami 内置 skill | [tw93/kami](https://github.com/tw93/kami) |
 | `effect` skill 使用的 Effect API 参考源 | [Effect-TS/effect-smol](https://github.com/Effect-TS/effect-smol) |
 | Kami diagram 灵感来源 | [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design) |
 
-这些来源明确写在 README 里，方便用户区分哪些是 Miko 本地改造，哪些来自 OpenCode 上游，哪些是随项目打包的第三方 skill 或参考源。
+这些来源明确写在 README 中，方便用户区分哪些是 Miko 本地所做的深度优化与改造，哪些来自 OpenCode 上游，哪些是随项目打包的第三方 Skill、内置工作区参考或外部参考源。
