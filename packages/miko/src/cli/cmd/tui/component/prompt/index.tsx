@@ -12,7 +12,6 @@ import type { CommandContext } from "@opentui/keymap"
 import { createEffect, createMemo, onMount, createSignal, onCleanup, on, Show, Switch, Match } from "solid-js"
 import "opentui-spinner/solid"
 import path from "path"
-import { fileURLToPath } from "url"
 import { Filesystem } from "@/util/filesystem"
 import { useLocal } from "@tui/context/local"
 import { tint, useTheme } from "@tui/context/theme"
@@ -29,7 +28,13 @@ import { createStore, produce, unwrap } from "solid-js/store"
 import { usePromptHistory, type PromptInfo } from "./history"
 import { computePromptTraits } from "./traits"
 import { assign, expandPastedTextPlaceholders } from "./part"
-import { promptAttachmentKind, promptAttachmentLabel } from "./attachment"
+import {
+  normalizePastedFilePath,
+  normalizePastedFilePaths,
+  promptAttachmentKind,
+  promptAttachmentLabel,
+  readPromptAttachmentFile,
+} from "./attachment"
 import { usePromptStash } from "./stash"
 import { DialogStash } from "../dialog-stash"
 import { type AutocompleteRef, Autocomplete } from "./autocomplete"
@@ -1066,6 +1071,7 @@ export function Prompt(props: PromptProps) {
   })
 
   let submitting = false
+  let plainPathAttachmentVersion = 0
   async function submit() {
     // Prevent overlapping invocations (e.g. a double-pressed Enter, or the
     // input's native onSubmit racing another dispatch). Without this guard,
@@ -1188,7 +1194,34 @@ export function Prompt(props: PromptProps) {
     }
 
     // Filter out text parts (pasted content) since they're now expanded inline
-    const nonTextParts = store.prompt.parts.filter((part) => part.type !== "text")
+    let nonTextParts = store.prompt.parts.filter((part) => part.type !== "text")
+    if (store.mode === "normal") {
+      const attachments = await readPromptAttachmentsFromText(inputText)
+      if (attachments.length > 0) {
+        const counts = new Map<ReturnType<typeof promptAttachmentKind>, number>()
+        for (const part of nonTextParts) {
+          const kind = part.type === "file" ? promptAttachmentKind(part.mime) : undefined
+          counts.set(kind, (counts.get(kind) ?? 0) + 1)
+        }
+        const labels = attachments.map((attachment) => {
+          const kind = promptAttachmentKind(attachment.mime)
+          const count = counts.get(kind) ?? 0
+          counts.set(kind, count + 1)
+          return promptAttachmentLabel(attachment.mime, count)
+        })
+        let offset = 0
+        inputText = labels.join(" ")
+        nonTextParts = [
+          ...nonTextParts,
+          ...attachments.map((attachment, index) => {
+            const value = labels[index]!
+            const part = createFilePart(attachment, offset, offset + value.length, value)
+            offset += value.length + 1
+            return part
+          }),
+        ]
+      }
+    }
 
     // Capture mode before it gets reset
     const currentMode = store.mode
@@ -1388,6 +1421,56 @@ export function Prompt(props: PromptProps) {
     }
   }
 
+  async function readPromptAttachmentsFromText(text: string) {
+    const filepaths = normalizePastedFilePaths(text)
+    if (filepaths.length === 0) return []
+
+    const attachments = await Promise.all(filepaths.map((filepath) => readPromptAttachmentFile(filepath)))
+    const found = attachments.filter((attachment): attachment is NonNullable<typeof attachment> => Boolean(attachment))
+    if (found.length !== filepaths.length) return []
+    return found
+  }
+
+  function attachPlainFilePathInput(value: string) {
+    const version = ++plainPathAttachmentVersion
+    const text = value.trim()
+    if (store.mode !== "normal") return
+    if (!text) return
+
+    setTimeout(() => {
+      if (version !== plainPathAttachmentVersion) return
+      if (!input || input.isDestroyed) return
+      if (input.plainText.trim() !== text) return
+
+      void readPromptAttachmentsFromText(text).then(async (attachments) => {
+        if (attachments.length === 0) return
+        if (version !== plainPathAttachmentVersion) return
+        if (!input || input.isDestroyed) return
+        if (input.plainText.trim() !== text) return
+
+        const existingFileParts = store.prompt.parts.filter((part) => part.type === "file")
+        input.clear()
+        input.extmarks.clear()
+        setStore("prompt", {
+          input: "",
+          parts: [],
+        })
+        setStore("extmarkToPartIndex", new Map())
+        for (const part of existingFileParts) {
+          await pasteAttachment({
+            filename: part.filename,
+            filepath: part.source?.type === "file" ? part.source.path : undefined,
+            mime: part.mime,
+            content: part.url.replace(/^data:[^;]+;base64,/, ""),
+          })
+        }
+        for (const attachment of attachments) {
+          await pasteAttachment(attachment)
+        }
+      })
+    }, 50)
+  }
+
   function pasteText(text: string, virtualText: string) {
     const currentOffset = input.visualCursor.offset
     const extmarkStart = currentOffset
@@ -1425,18 +1508,10 @@ export function Prompt(props: PromptProps) {
   async function pasteInputText(text: string) {
     const normalizedText = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n")
     const pastedContent = normalizedText.trim()
-    const filepath = iife(() => {
-      const raw = pastedContent.replace(/^['"]+|['"]+$/g, "")
-      if (raw.startsWith("file://")) {
-        try {
-          return fileURLToPath(raw)
-        } catch {}
-      }
-      if (process.platform === "win32") return raw
-      return raw.replace(/\\(.)/g, "$1")
-    })
+    const filepaths = normalizePastedFilePaths(pastedContent)
+    const filepath = filepaths[0] ?? normalizePastedFilePath(pastedContent)
     const isUrl = /^(https?):\/\//.test(filepath)
-    if (!isUrl) {
+    if (!isUrl && filepaths.length === 1) {
       try {
         const mime = await Filesystem.mimeType(filepath)
         const filename = path.basename(filepath)
@@ -1448,20 +1523,22 @@ export function Prompt(props: PromptProps) {
           }
         }
         if (promptAttachmentKind(mime)) {
-          const content = await Filesystem.readArrayBuffer(filepath)
-            .then((buffer) => Buffer.from(buffer).toString("base64"))
-            .catch(() => {})
-          if (content) {
-            await pasteAttachment({
-              filename,
-              filepath,
-              mime,
-              content,
-            })
+          const attachment = await readPromptAttachmentFile(filepath)
+          if (attachment) {
+            await pasteAttachment(attachment)
             return
           }
         }
       } catch {}
+    }
+    if (!isUrl && filepaths.length > 0) {
+      const attachments = await readPromptAttachmentsFromText(pastedContent)
+      if (attachments.length > 0) {
+        for (const attachment of attachments) {
+          await pasteAttachment(attachment)
+        }
+        return
+      }
     }
 
     const lineCount = (pastedContent.match(/\n/g)?.length ?? 0) + 1
@@ -1504,21 +1581,7 @@ export function Prompt(props: PromptProps) {
       typeId: promptPartTypeId,
     })
 
-    const part: Omit<FilePart, "id" | "messageID" | "sessionID"> = {
-      type: "file" as const,
-      mime: file.mime,
-      filename: file.filename,
-      url: `data:${file.mime};base64,${file.content}`,
-      source: {
-        type: "file",
-        path: file.filepath ?? file.filename ?? "",
-        text: {
-          start: extmarkStart,
-          end: extmarkEnd,
-          value: virtualText,
-        },
-      },
-    }
+    const part = createFilePart(file, extmarkStart, extmarkEnd, virtualText)
     setStore(
       produce((draft) => {
         const partIndex = draft.prompt.parts.length
@@ -1527,6 +1590,29 @@ export function Prompt(props: PromptProps) {
       }),
     )
     return
+  }
+
+  function createFilePart(
+    file: { filename?: string; filepath?: string; content: string; mime: string },
+    start: number,
+    end: number,
+    value: string,
+  ): Omit<FilePart, "id" | "messageID" | "sessionID"> {
+    return {
+      type: "file" as const,
+      mime: file.mime,
+      filename: file.filename,
+      url: `data:${file.mime};base64,${file.content}`,
+      source: {
+        type: "file",
+        path: file.filepath ?? file.filename ?? "",
+        text: {
+          start,
+          end,
+          value,
+        },
+      },
+    }
   }
 
   function clearPrompt() {
@@ -1661,6 +1747,7 @@ export function Prompt(props: PromptProps) {
                 setStore("prompt", "input", value)
                 auto()?.onInput(value)
                 syncExtmarksWithPromptParts()
+                attachPlainFilePathInput(value)
                 setCursorVersion((value) => value + 1)
               }}
               onCursorChange={() => setCursorVersion((value) => value + 1)}

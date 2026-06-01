@@ -26,7 +26,15 @@
 
 ### 快速开始
 
-#### 本地安装与运行
+#### 便携版安装
+
+普通用户请从 [GitHub Releases](https://github.com/jianga0801-ui/miko/releases)
+下载对应平台的发布压缩包，解压后直接运行其中的 `miko` 可执行文件。
+
+发布版二进制已内置核心 CLI/TUI 运行依赖，用户机器上不需要预装 Bun、Node.js
+或 `node_modules`。
+
+#### 源码开发
 
 要从源码运行 Miko：
 
@@ -40,18 +48,6 @@ bun install
 
 # 启动本地开发版 TUI 终端
 bun run dev
-```
-
-#### 启动其他组件
-
-Miko 还包含网页端和控制台，可运行对应的脚本启动：
-
-```bash
-# 启动网页端界面
-bun run dev:web
-
-# 启动管理控制台
-bun run dev:console
 ```
 
 ### WSL 深度融合指南

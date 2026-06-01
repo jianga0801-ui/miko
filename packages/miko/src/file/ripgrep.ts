@@ -1,9 +1,9 @@
 import path from "path"
+import nodeFs from "fs/promises"
 import { serviceUse } from "@miko-ai/core/effect/service-use"
 import { AppFileSystem } from "@miko-ai/core/filesystem"
 import { Cause, Context, Effect, Fiber, Layer, Queue, Schema, Stream } from "effect"
 import type { PlatformError } from "effect/PlatformError"
-import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/unstable/http"
 import { ChildProcess } from "effect/unstable/process"
 import { ChildProcessSpawner } from "effect/unstable/process/ChildProcessSpawner"
 
@@ -13,18 +13,9 @@ import * as Log from "@miko-ai/core/util/log"
 import { sanitizedProcessEnv } from "@miko-ai/core/util/miko-process"
 import { which } from "@/util/which"
 import { NonNegativeInt } from "@miko-ai/core/schema"
+import { minimatch } from "minimatch"
 
 const log = Log.create({ service: "ripgrep" })
-const VERSION = "15.1.0"
-const PLATFORM = {
-  "arm64-darwin": { platform: "aarch64-apple-darwin", extension: "tar.gz" },
-  "arm64-linux": { platform: "aarch64-unknown-linux-gnu", extension: "tar.gz" },
-  "x64-darwin": { platform: "x86_64-apple-darwin", extension: "tar.gz" },
-  "x64-linux": { platform: "x86_64-unknown-linux-musl", extension: "tar.gz" },
-  "arm64-win32": { platform: "aarch64-pc-windows-msvc", extension: "zip" },
-  "ia32-win32": { platform: "i686-pc-windows-msvc", extension: "zip" },
-  "x64-win32": { platform: "x86_64-pc-windows-msvc", extension: "zip" },
-} as const
 
 const TimeStats = Schema.Struct({
   secs: NonNegativeInt,
@@ -224,69 +215,103 @@ function raceAbort<A, E, R>(effect: Effect.Effect<A, E, R>, signal?: AbortSignal
   return signal ? effect.pipe(Effect.raceFirst(waitForAbort(signal))) : effect
 }
 
-export const layer: Layer.Layer<Service, never, AppFileSystem.Service | ChildProcessSpawner | HttpClient.HttpClient> =
+function matchesGlobs(file: string, globs?: string[]) {
+  if (!globs?.length) return true
+  let included = false
+  let hasInclude = false
+  for (const glob of globs) {
+    if (glob.startsWith("!")) {
+      if (minimatch(file, glob.slice(1), { dot: true })) return false
+      continue
+    }
+    hasInclude = true
+    if (minimatch(file, glob, { dot: true })) included = true
+  }
+  return hasInclude ? included : true
+}
+
+function isHidden(file: string) {
+  return file.split(/[\\/]/).some((part) => part.startsWith("."))
+}
+
+async function fallbackFiles(input: FilesInput) {
+  const out: string[] = []
+  const root = path.resolve(input.cwd)
+
+  async function visit(dir: string, depth: number): Promise<void> {
+    if (input.signal?.aborted) throw aborted(input.signal)
+    if (input.maxDepth !== undefined && depth > input.maxDepth) return
+
+    const entries = await nodeFs.readdir(dir, { withFileTypes: true })
+    for (const entry of entries) {
+      if (entry.name === ".git") continue
+      if (input.signal?.aborted) throw aborted(input.signal)
+
+      const full = path.join(dir, entry.name)
+      const rel = clean(path.relative(root, full))
+      if (!rel) continue
+      if (input.hidden === false && isHidden(rel)) continue
+
+      const stat = input.follow && entry.isSymbolicLink() ? await nodeFs.stat(full).catch(() => undefined) : undefined
+      const directory = stat?.isDirectory() ?? entry.isDirectory()
+      if (directory) {
+        await visit(full, depth + 1)
+        continue
+      }
+      if (matchesGlobs(rel, input.glob)) out.push(rel)
+    }
+  }
+
+  await visit(root, 1)
+  return out.sort((a, b) => a.localeCompare(b))
+}
+
+async function fallbackSearch(input: SearchInput): Promise<SearchResult> {
+  const files = input.file?.length
+    ? input.file.map((file) => clean(file)).filter((file) => matchesGlobs(file, input.glob))
+    : await fallbackFiles({ cwd: input.cwd, glob: input.glob, hidden: true, follow: input.follow, signal: input.signal })
+  const regex = new RegExp(input.pattern, "g")
+  const items: Item[] = []
+
+  for (const file of files) {
+    if (input.signal?.aborted) throw aborted(input.signal)
+    const full = path.resolve(input.cwd, file)
+    const text = await nodeFs.readFile(full, "utf8").catch(() => undefined)
+    if (text === undefined) continue
+
+    let offset = 0
+    const lines = text.split(/(?<=\n)/)
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
+      regex.lastIndex = 0
+      const submatches = Array.from(line.matchAll(regex)).map((match) => ({
+        match: { text: match[0] },
+        start: match.index ?? 0,
+        end: (match.index ?? 0) + match[0].length,
+      }))
+      if (submatches.length) {
+        items.push({
+          path: { text: file },
+          lines: { text: line },
+          line_number: i + 1,
+          absolute_offset: offset,
+          submatches,
+        })
+        if (input.limit && items.length >= input.limit) return { items, partial: true }
+      }
+      offset += line.length
+    }
+  }
+
+  return { items, partial: false }
+}
+
+export const layer: Layer.Layer<Service, never, AppFileSystem.Service | ChildProcessSpawner> =
   Layer.effect(
     Service,
     Effect.gen(function* () {
       const fs = yield* AppFileSystem.Service
-      const http = HttpClient.filterStatusOk(yield* HttpClient.HttpClient)
       const spawner = yield* ChildProcessSpawner
-
-      const run = Effect.fnUntraced(function* (command: string, args: string[], opts?: { cwd?: string }) {
-        const handle = yield* spawner.spawn(
-          ChildProcess.make(command, args, { cwd: opts?.cwd, extendEnv: true, stdin: "ignore" }),
-        )
-        const [stdout, stderr, code] = yield* Effect.all(
-          [
-            Stream.mkString(Stream.decodeText(handle.stdout)),
-            Stream.mkString(Stream.decodeText(handle.stderr)),
-            handle.exitCode,
-          ],
-          { concurrency: "unbounded" },
-        )
-        return { stdout, stderr, code }
-      }, Effect.scoped)
-
-      const extract = Effect.fnUntraced(function* (
-        archive: string,
-        config: (typeof PLATFORM)[keyof typeof PLATFORM],
-        target: string,
-      ) {
-        const dir = yield* fs.makeTempDirectoryScoped({ directory: Global.Path.bin, prefix: "ripgrep-" })
-
-        if (config.extension === "zip") {
-          const shell = (yield* Effect.sync(() => which("powershell.exe") ?? which("pwsh.exe"))) ?? "powershell.exe"
-          const result = yield* run(shell, [
-            "-NoProfile",
-            "-NonInteractive",
-            "-Command",
-            `$global:ProgressPreference = 'SilentlyContinue'; Expand-Archive -LiteralPath '${archive.replaceAll("'", "''")}' -DestinationPath '${dir.replaceAll("'", "''")}' -Force`,
-          ])
-          if (result.code !== 0) {
-            return yield* Effect.fail(error(result.stderr || result.stdout, result.code))
-          }
-        }
-
-        if (config.extension === "tar.gz") {
-          const result = yield* run("tar", ["-xzf", archive, "-C", dir])
-          if (result.code !== 0) {
-            return yield* Effect.fail(error(result.stderr || result.stdout, result.code))
-          }
-        }
-
-        const extracted = path.join(
-          dir,
-          `ripgrep-${VERSION}-${config.platform}`,
-          process.platform === "win32" ? "rg.exe" : "rg",
-        )
-        if (!(yield* fs.isFile(extracted))) {
-          return yield* Effect.fail(new Error(`ripgrep archive did not contain executable: ${extracted}`))
-        }
-
-        yield* fs.copyFile(extracted, target)
-        if (process.platform === "win32") return
-        yield* fs.chmod(target, 0o755)
-      }, Effect.scoped)
 
       const filepath = yield* Effect.cached(
         Effect.gen(function* () {
@@ -296,32 +321,8 @@ export const layer: Layer.Layer<Service, never, AppFileSystem.Service | ChildPro
           const target = path.join(Global.Path.bin, `rg${process.platform === "win32" ? ".exe" : ""}`)
           if (yield* fs.isFile(target).pipe(Effect.orDie)) return target
 
-          const platformKey = `${process.arch}-${process.platform}` as keyof typeof PLATFORM
-          const config = PLATFORM[platformKey]
-          if (!config) {
-            return yield* Effect.fail(new Error(`unsupported platform for ripgrep: ${platformKey}`))
-          }
-
-          const filename = `ripgrep-${VERSION}-${config.platform}.${config.extension}`
-          const url = `https://github.com/BurntSushi/ripgrep/releases/download/${VERSION}/${filename}`
-          const archive = path.join(Global.Path.bin, filename)
-
-          log.info("downloading ripgrep", { url })
-          yield* fs.ensureDir(Global.Path.bin).pipe(Effect.orDie)
-
-          const bytes = yield* HttpClientRequest.get(url).pipe(
-            http.execute,
-            Effect.flatMap((response) => response.arrayBuffer),
-            Effect.mapError((cause) => (cause instanceof Error ? cause : new Error(String(cause)))),
-          )
-          if (bytes.byteLength === 0) {
-            return yield* Effect.fail(new Error(`failed to download ripgrep from ${url}`))
-          }
-
-          yield* fs.writeWithDirs(archive, new Uint8Array(bytes))
-          yield* extract(archive, config, target)
-          yield* fs.remove(archive, { force: true }).pipe(Effect.ignore)
-          return target
+          log.info("ripgrep not found; using built-in file search fallback")
+          return undefined
         }),
       )
 
@@ -338,6 +339,7 @@ export const layer: Layer.Layer<Service, never, AppFileSystem.Service | ChildPro
 
       const command = Effect.fnUntraced(function* (cwd: string, args: string[]) {
         const binary = yield* filepath
+        if (!binary) return
         return ChildProcess.make(binary, args, {
           cwd,
           env: env(),
@@ -352,7 +354,15 @@ export const layer: Layer.Layer<Service, never, AppFileSystem.Service | ChildPro
             yield* Effect.forkScoped(
               Effect.gen(function* () {
                 yield* check(input.cwd)
-                const handle = yield* spawner.spawn(yield* command(input.cwd, filesArgs(input)))
+                const cmd = yield* command(input.cwd, filesArgs(input))
+                if (!cmd) {
+                  for (const file of yield* Effect.promise(() => fallbackFiles(input))) {
+                    Queue.offerUnsafe(queue, file)
+                  }
+                  Queue.endUnsafe(queue)
+                  return
+                }
+                const handle = yield* spawner.spawn(cmd)
                 const stderr = yield* Stream.mkString(Stream.decodeText(handle.stderr)).pipe(Effect.forkScoped)
                 const stdout = yield* Stream.decodeText(handle.stdout).pipe(
                   Stream.splitLines,
@@ -383,7 +393,9 @@ export const layer: Layer.Layer<Service, never, AppFileSystem.Service | ChildPro
 
         const program = Effect.scoped(
           Effect.gen(function* () {
-            const handle = yield* spawner.spawn(yield* command(input.cwd, searchArgs(input)))
+            const cmd = yield* command(input.cwd, searchArgs(input))
+            if (!cmd) return yield* Effect.promise(() => fallbackSearch(input))
+            const handle = yield* spawner.spawn(cmd)
 
             const [items, stderr, code] = yield* Effect.all(
               [
@@ -476,7 +488,6 @@ export const layer: Layer.Layer<Service, never, AppFileSystem.Service | ChildPro
   )
 
 export const defaultLayer = layer.pipe(
-  Layer.provide(FetchHttpClient.layer),
   Layer.provide(AppFileSystem.defaultLayer),
   Layer.provide(CrossSpawnSpawner.defaultLayer),
 )

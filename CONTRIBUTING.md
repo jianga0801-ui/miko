@@ -39,6 +39,10 @@ https://github.com/anomalyco/models.dev
   bun dev
   ```
 
+End-user release archives are built as self-contained binaries by
+`packages/miko/script/build.ts`. Do not commit `node_modules` to make releases
+portable; keep dependencies in the compiled release artifact instead.
+
 ### Running against a different directory
 
 By default, `bun dev` runs Miko in the `packages/miko` directory. To run it against a different directory or repository:
@@ -72,7 +76,7 @@ Replace `<platform>` with your platform (e.g., `darwin-arm64`, `linux-x64`).
 - Core pieces:
   - `packages/miko`: Miko core business logic & server.
   - `packages/miko/src/cli/cmd/tui/`: The TUI code, written in SolidJS with [opentui](https://github.com/sst/opentui)
-  - `packages/app`: The shared web UI components, written in SolidJS
+  - `packages/ui`: Shared SolidJS UI components and Storybook stories.
   - `packages/plugin`: Source for `@miko-ai/plugin`
 
 ### Understanding bun dev vs miko
@@ -106,20 +110,6 @@ This starts the headless server on port 4096 by default. You can specify a diffe
 ```bash
 bun dev serve --port 8080
 ```
-
-### Running the Web App
-
-To test UI changes during development:
-
-1. **First, start the Miko server** (see [Running the API Server](#running-the-api-server) section above)
-2. **Then run the web app:**
-
-```bash
-bun run --cwd packages/app dev
-```
-
-This starts a local dev server at http://localhost:5173 (or similar port shown in output). Most UI changes can be tested here, but the server must be running for full functionality.
-
 
 > [!NOTE]
 > If you make changes to the API or SDK (e.g. `packages/miko/src/server/server.ts`), run `./script/generate.ts` to regenerate the SDK and related files.

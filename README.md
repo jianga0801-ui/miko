@@ -26,7 +26,16 @@
 
 ### Getting Started
 
-#### Installation
+#### Portable Install
+
+For normal use, download the release archive for your platform from
+[GitHub Releases](https://github.com/jianga0801-ui/miko/releases), extract it,
+and run the included `miko` binary.
+
+The release binary is self-contained for the core CLI/TUI runtime. It does not
+require Bun, Node.js, or `node_modules` on the user's machine.
+
+#### Source Development
 
 To run Miko locally from source:
 
@@ -40,18 +49,6 @@ bun install
 
 # Run the development TUI CLI
 bun run dev
-```
-
-#### Running Subcomponents
-
-Miko includes additional interface layers (web app and management console) which can be run using the following scripts:
-
-```bash
-# Run the Web App interface
-bun run dev:web
-
-# Run the Management Console
-bun run dev:console
 ```
 
 ### WSL Integration Guidance

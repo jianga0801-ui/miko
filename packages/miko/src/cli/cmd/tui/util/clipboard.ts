@@ -100,6 +100,37 @@ export async function read(): Promise<Content | undefined> {
         return { data: imageBuffer.toString("base64"), mime: "image/png" }
       }
     }
+    const files = await Process.text(
+      [
+        "powershell.exe",
+        "-NonInteractive",
+        "-NoProfile",
+        "-Command",
+        [
+          "Add-Type -AssemblyName System.Windows.Forms",
+          "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8",
+          "$files = [System.Windows.Forms.Clipboard]::GetFileDropList()",
+          "if ($files -and $files.Count -gt 0) { $files | ForEach-Object { $_ } }",
+        ].join("; "),
+      ],
+      {
+        nothrow: true,
+      },
+    )
+    if (files.text.trim()) return { data: files.text, mime: "text/plain" }
+    const text = await Process.text(
+      [
+        "powershell.exe",
+        "-NonInteractive",
+        "-NoProfile",
+        "-Command",
+        "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Clipboard -Raw",
+      ],
+      {
+        nothrow: true,
+      },
+    )
+    if (text.text) return { data: text.text, mime: "text/plain" }
   }
 
   if (os === "linux") {
