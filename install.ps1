@@ -49,7 +49,13 @@ try {
   }
 
   Expand-Archive -Force -Path $Archive -DestinationPath $Temp
-  Copy-Item -Force (Join-Path $Temp "miko.exe") (Join-Path $InstallDir "miko.exe")
+  $PayloadFiles = @("miko.exe", "ffmpeg.exe")
+  foreach ($File in $PayloadFiles) {
+    $Source = Join-Path $Temp $File
+    if (Test-Path $Source) {
+      Copy-Item -Force $Source (Join-Path $InstallDir $File)
+    }
+  }
 
   if (-not $NoModifyPath) {
     $Path = [Environment]::GetEnvironmentVariable("Path", "User")
@@ -67,5 +73,6 @@ try {
   if (Test-Path $Archive) { Remove-Item $Archive }
   if (Test-Path $Checksums) { Remove-Item $Checksums }
   if (Test-Path (Join-Path $Temp "miko.exe")) { Remove-Item (Join-Path $Temp "miko.exe") }
+  if (Test-Path (Join-Path $Temp "ffmpeg.exe")) { Remove-Item (Join-Path $Temp "ffmpeg.exe") }
   if (Test-Path $Temp) { Remove-Item $Temp }
 }

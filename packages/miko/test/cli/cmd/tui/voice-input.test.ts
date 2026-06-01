@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { createWavBuffer, selectVoiceRecorder } from "../../../../src/cli/cmd/tui/util/voice-input"
+import { createWavBuffer, resolveManagedFFmpegPath, selectVoiceRecorder } from "../../../../src/cli/cmd/tui/util/voice-input"
 
 describe("voice input helpers", () => {
   test("prefers the integrated PulseAudio recorder for WSLg microphone input", () => {
@@ -17,6 +17,15 @@ describe("voice input helpers", () => {
 
     expect(recorder?.cmd).toBe("/managed/ffmpeg")
     expect(recorder?.args("/tmp/voice.wav")).toContain("alsa")
+  })
+
+  test("ignores stale managed ffmpeg paths from the build host", () => {
+    expect(
+      resolveManagedFFmpegPath(
+        ["C:\\home\\runner\\work\\miko\\miko\\node_modules\\@ffmpeg-installer\\win32-x64\\ffmpeg.exe"],
+        () => false,
+      ),
+    ).toBeUndefined()
   })
 
   test("selects the first available recorder without a fixed duration", () => {

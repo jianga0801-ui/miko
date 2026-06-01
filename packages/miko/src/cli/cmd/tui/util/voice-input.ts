@@ -1,7 +1,7 @@
 import { mkdir } from "fs/promises"
 import { existsSync } from "fs"
+import { createRequire } from "module"
 import path from "path"
-import ffmpeg from "@ffmpeg-installer/ffmpeg"
 import { Global } from "@miko-ai/core/global"
 import { which } from "@/util/which"
 
@@ -17,8 +17,24 @@ export type VoiceInput = {
   stop(): Promise<void>
 }
 
-function bundledFFmpegPath() {
-  return typeof ffmpeg.path === "string" && ffmpeg.path.length > 0 ? ffmpeg.path : undefined
+const require = createRequire(import.meta.url)
+
+function packageFFmpegPath() {
+  try {
+    const ffmpeg = require("@ffmpeg-installer/ffmpeg") as unknown
+    const ffmpegPath = typeof ffmpeg === "object" && ffmpeg !== null && "path" in ffmpeg ? ffmpeg.path : undefined
+    return typeof ffmpegPath === "string" && ffmpegPath.length > 0 ? ffmpegPath : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function siblingFFmpegPath() {
+  return path.join(path.dirname(process.execPath), process.platform === "win32" ? "ffmpeg.exe" : "ffmpeg")
+}
+
+export function resolveManagedFFmpegPath(candidates = [process.env.MIKO_FFMPEG_PATH, siblingFFmpegPath(), packageFFmpegPath()], exists = existsSync) {
+  return candidates.filter((candidate): candidate is string => typeof candidate === "string" && candidate.length > 0).find((candidate) => exists(candidate))
 }
 
 function pulseRecorder(pulseServer: string): Recorder {
@@ -98,7 +114,7 @@ export function wslPulseServerPath(value = process.env.PULSE_SERVER, exists = ex
 
 export function selectVoiceRecorder(
   lookup: (cmd: string) => boolean = (cmd) => (path.isAbsolute(cmd) ? existsSync(cmd) : which(cmd) !== null),
-  managedFFmpeg = bundledFFmpegPath(),
+  managedFFmpeg = resolveManagedFFmpegPath(),
   pulseServer = wslPulseServerPath(),
 ) {
   return [

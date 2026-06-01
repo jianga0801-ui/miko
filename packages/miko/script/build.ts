@@ -2,7 +2,6 @@
 
 import { $ } from "bun"
 import fs from "fs"
-import os from "os"
 import path from "path"
 import { fileURLToPath } from "url"
 import { createSolidTransformPlugin } from "@opentui/solid/bun-plugin"
@@ -33,7 +32,7 @@ const resetDir = (target: string) => {
     throw new Error(`Refusing to reset path outside package: ${resolved}`)
   }
   if (!fs.existsSync(resolved)) return
-  const trash = path.join(os.tmpdir(), `miko-build-${path.basename(resolved)}-${Date.now()}`)
+  const trash = path.join(dir, `dist-trash-${path.basename(resolved)}-${Date.now()}`)
   fs.renameSync(resolved, trash)
 }
 
@@ -152,6 +151,7 @@ const binaries: Record<string, string> = {}
 if (!skipInstall) {
   await $`bun install --os="*" --cpu="*" @opentui/core@${pkg.dependencies["@opentui/core"]}`
   await $`bun install --os="*" --cpu="*" @parcel/watcher@${pkg.dependencies["@parcel/watcher"]}`
+  await $`bun install --os="*" --cpu="*" @ffmpeg-installer/ffmpeg@${pkg.dependencies["@ffmpeg-installer/ffmpeg"]}`
 }
 for (const item of targets) {
   const name = [
@@ -206,6 +206,22 @@ for (const item of targets) {
       MIKO_LIBC: item.os === "linux" ? `'${item.abi ?? "glibc"}'` : "",
     },
   })
+
+  if (item.os === "win32" && item.arch === "x64") {
+    const ffmpegRoot = path.join(dir, "../../node_modules/.bun")
+    const ffmpegBinary = (
+      await Array.fromAsync(
+        new Bun.Glob("@ffmpeg-installer+win32-x64@*/node_modules/@ffmpeg-installer/win32-x64/ffmpeg.exe").scan({
+          cwd: ffmpegRoot,
+          onlyFiles: true,
+        }),
+      )
+    )
+      .sort()
+      .at(-1)
+    if (!ffmpegBinary) throw new Error("Missing @ffmpeg-installer/win32-x64 binary for Windows release")
+    await Bun.write(`dist/${name}/bin/ffmpeg.exe`, Bun.file(path.join(ffmpegRoot, ffmpegBinary)))
+  }
 
   // Smoke test: only run if binary is for current platform
   if (item.os === process.platform && item.arch === process.arch && !item.abi) {
