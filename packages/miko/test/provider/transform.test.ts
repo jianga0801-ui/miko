@@ -1381,6 +1381,64 @@ describe("ProviderTransform.message - empty image handling", () => {
     expect(result[0].content[1]).toEqual({ type: "image", image: `data:image/png;base64,${validBase64}` })
   })
 
+  test("should route images through the media tool when the model has no native image input", () => {
+    const msgs = [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "look at this" },
+          { type: "file", mediaType: "image/png", filename: "screen.png", data: "https://x/screen.png" },
+        ],
+      },
+    ] as any[]
+    const model = {
+      ...mockModel,
+      id: "mimo-v2.5-pro",
+      providerID: "xiaomi-token-plan-cn",
+      api: { ...mockModel.api, id: "mimo-v2.5-pro", npm: "@ai-sdk/openai-compatible" },
+      capabilities: {
+        ...mockModel.capabilities,
+        input: { ...mockModel.capabilities.input, image: false },
+      },
+    }
+
+    const result = ProviderTransform.message(msgs, model, {})
+
+    expect(result[0].content[1]).toEqual({
+      type: "text",
+      text: 'MEDIA INPUT REQUIRED: "screen.png" is image input, and this model cannot inspect image directly. If the mimo_analyze_media tool is available, call it with a short prompt matching the user\'s question before answering. Do not ask the user to describe it unless the tool is unavailable or fails.',
+    })
+  })
+
+  test("should route audio through the media tool when the model has no native audio input", () => {
+    const msgs = [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "transcribe this" },
+          { type: "file", mediaType: "audio/wav", filename: "voice.wav", data: "https://x/voice.wav" },
+        ],
+      },
+    ] as any[]
+    const model = {
+      ...mockModel,
+      id: "mimo-v2.5-pro",
+      providerID: "xiaomi-token-plan-cn",
+      api: { ...mockModel.api, id: "mimo-v2.5-pro", npm: "@ai-sdk/openai-compatible" },
+      capabilities: {
+        ...mockModel.capabilities,
+        input: { ...mockModel.capabilities.input, audio: false },
+      },
+    }
+
+    const result = ProviderTransform.message(msgs, model, {})
+
+    expect(result[0].content[1]).toEqual({
+      type: "text",
+      text: 'MEDIA INPUT REQUIRED: "voice.wav" is audio input, and this model cannot inspect audio directly. If the mimo_analyze_media tool is available, call it with a short prompt matching the user\'s question before answering. Do not ask the user to describe it unless the tool is unavailable or fails.',
+    })
+  })
+
   test("should handle mixed valid and empty images", () => {
     const validBase64 =
       "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="

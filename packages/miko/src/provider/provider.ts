@@ -1127,10 +1127,10 @@ function fromModelsDevModel(provider: ModelsDev.Provider, model: ModelsDev.Model
       toolcall: model.tool_call ?? true,
       input: {
         text: model.modalities?.input?.includes("text") ?? false,
-        audio: model.modalities?.input?.includes("audio") ?? false,
-        image: model.modalities?.input?.includes("image") ?? false,
-        video: model.modalities?.input?.includes("video") ?? false,
-        pdf: model.modalities?.input?.includes("pdf") ?? false,
+        audio: isMimoProviderID(provider.id) ? false : (model.modalities?.input?.includes("audio") ?? false),
+        image: isMimoProviderID(provider.id) ? false : (model.modalities?.input?.includes("image") ?? false),
+        video: isMimoProviderID(provider.id) ? false : (model.modalities?.input?.includes("video") ?? false),
+        pdf: isMimoProviderID(provider.id) ? false : (model.modalities?.input?.includes("pdf") ?? false),
       },
       output: {
         text: model.modalities?.output?.includes("text") ?? false,
@@ -1143,6 +1143,12 @@ function fromModelsDevModel(provider: ModelsDev.Provider, model: ModelsDev.Model
     },
     release_date: model.release_date ?? "",
     variants: {},
+  }
+
+  if (isMimoProviderID(provider.id)) {
+    base.capabilities.reasoning = true
+    base.capabilities.temperature = true
+    base.capabilities.interleaved = { field: "reasoning_content" }
   }
 
   return {
@@ -1357,10 +1363,18 @@ export const layer = Layer.effect(
                 toolcall: model.tool_call ?? existingModel?.capabilities.toolcall ?? true,
                 input: {
                   text: model.modalities?.input?.includes("text") ?? existingModel?.capabilities.input.text ?? true,
-                  audio: model.modalities?.input?.includes("audio") ?? existingModel?.capabilities.input.audio ?? false,
-                  image: model.modalities?.input?.includes("image") ?? existingModel?.capabilities.input.image ?? false,
-                  video: model.modalities?.input?.includes("video") ?? existingModel?.capabilities.input.video ?? false,
-                  pdf: model.modalities?.input?.includes("pdf") ?? existingModel?.capabilities.input.pdf ?? false,
+                  audio: isMimoProviderID(providerID)
+                    ? false
+                    : (model.modalities?.input?.includes("audio") ?? existingModel?.capabilities.input.audio ?? false),
+                  image: isMimoProviderID(providerID)
+                    ? false
+                    : (model.modalities?.input?.includes("image") ?? existingModel?.capabilities.input.image ?? false),
+                  video: isMimoProviderID(providerID)
+                    ? false
+                    : (model.modalities?.input?.includes("video") ?? existingModel?.capabilities.input.video ?? false),
+                  pdf: isMimoProviderID(providerID)
+                    ? false
+                    : (model.modalities?.input?.includes("pdf") ?? existingModel?.capabilities.input.pdf ?? false),
                 },
                 output: {
                   text: model.modalities?.output?.includes("text") ?? existingModel?.capabilities.output.text ?? true,

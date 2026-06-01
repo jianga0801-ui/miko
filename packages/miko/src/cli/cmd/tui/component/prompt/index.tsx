@@ -63,7 +63,7 @@ import { Flag } from "@miko-ai/core/flag/flag"
 import { type WorkspaceStatus } from "../workspace-label"
 import { MIKO_BASE_MODE, useBindings, useCommandShortcut, useLeaderActive, useMikoKeymap } from "../../keymap"
 import { useTuiConfig } from "../../context/tui-config"
-import { startVoiceInput } from "../../util/voice-input"
+import { startVoiceInput, type VoiceInput } from "../../util/voice-input"
 
 export type PromptProps = {
   sessionID?: string
@@ -160,6 +160,7 @@ export function Prompt(props: PromptProps) {
   const dimensions = useTerminalDimensions()
   const { theme, syntax } = useTheme()
   const kv = useKV()
+  const permissionMode = createMemo(() => kv.get("permission_mode", "normal"))
   const animationsEnabled = createMemo(() => kv.get("animations_enabled", true))
   const list = createMemo(() => props.placeholders?.normal ?? [])
   const shell = createMemo(() => props.placeholders?.shell ?? [])
@@ -383,11 +384,11 @@ export function Prompt(props: PromptProps) {
     extmarkToPartIndex: new Map(),
     interrupt: 0,
   })
-  let voiceProcess: { file: string; proc: ReturnType<typeof Bun.spawn> } | undefined
+  let voiceProcess: VoiceInput | undefined
   let voicePressed = false
   let voiceStopping = false
   onCleanup(() => {
-    voiceProcess?.proc.kill("SIGINT")
+    void voiceProcess?.stop()
     voiceProcess = undefined
   })
 
@@ -511,6 +512,25 @@ export function Prompt(props: PromptProps) {
             setStore("interrupt", 0)
           }
           dialog.clear()
+        },
+      },
+      {
+        title: "Toggle voice prompt",
+        desc: "Start or stop recording a voice note",
+        name: "prompt.voice.toggle",
+        category: "Prompt",
+        run: async () => {
+          await toggleVoicePrompt()
+        },
+      },
+      {
+        title: "Cancel voice prompt",
+        desc: "Cancel the active voice note",
+        name: "prompt.voice.cancel",
+        category: "Prompt",
+        hidden: true,
+        run: async () => {
+          await cancelVoicePrompt()
         },
       },
       {
@@ -679,8 +699,7 @@ export function Prompt(props: PromptProps) {
     bindings: tuiConfig.keybinds.gather("prompt.palette", [
       "prompt.submit",
       "prompt.editor",
-      "prompt.voice.start",
-      "prompt.voice.stop",
+      "prompt.voice.toggle",
       "prompt.editor_context.clear",
       "prompt.stash",
       "prompt.stash.pop",
@@ -956,6 +975,14 @@ export function Prompt(props: PromptProps) {
       target: inputTarget,
       enabled: inputTarget() !== undefined && store.mode === "shell",
       bindings: [{ key: "escape", desc: "Exit shell mode", group: "Prompt", cmd: () => setStore("mode", "normal") }],
+    }
+  })
+
+  useBindings(() => {
+    return {
+      target: inputTarget,
+      enabled: inputTarget() !== undefined && voiceRecording(),
+      bindings: tuiConfig.keybinds.get("prompt.voice.cancel"),
     }
   })
 
@@ -1284,14 +1311,13 @@ export function Prompt(props: PromptProps) {
     try {
       const current = await startVoiceInput()
       if (!voicePressed) {
-        current.proc.kill("SIGINT")
-        await current.proc.exited.catch(() => undefined)
+        await current.stop()
         return
       }
 
       voiceProcess = current
       setVoiceRecording(true)
-      void current.proc.exited.then((code) => {
+      void current.exited.then((code) => {
         if (voiceProcess !== current) return
         voiceProcess = undefined
         setVoiceRecording(false)
@@ -1302,6 +1328,14 @@ export function Prompt(props: PromptProps) {
       voicePressed = false
       setVoiceRecording(false)
     }
+  }
+
+  async function toggleVoicePrompt() {
+    if (voiceProcess || voiceRecording() || voicePressed) {
+      await stopVoicePrompt()
+      return
+    }
+    await startVoicePrompt()
   }
 
   async function stopVoicePrompt() {
@@ -1315,8 +1349,7 @@ export function Prompt(props: PromptProps) {
     voiceStopping = true
     const current = voiceProcess
     voiceProcess = undefined
-    current.proc.kill("SIGINT")
-    await current.proc.exited.catch(() => undefined)
+    await current.stop()
 
     try {
       const content = await Bun.file(current.file).arrayBuffer()
@@ -1331,6 +1364,27 @@ export function Prompt(props: PromptProps) {
     } finally {
       voiceStopping = false
       setVoiceRecording(false)
+    }
+  }
+
+  async function cancelVoicePrompt() {
+    dialog.clear()
+    voicePressed = false
+    if (!voiceProcess || voiceStopping) {
+      setVoiceRecording(false)
+      setVoiceError(undefined)
+      return
+    }
+
+    voiceStopping = true
+    const current = voiceProcess
+    voiceProcess = undefined
+    try {
+      await current.stop()
+    } finally {
+      voiceStopping = false
+      setVoiceRecording(false)
+      setVoiceError(undefined)
     }
   }
 
@@ -1738,6 +1792,8 @@ export function Prompt(props: PromptProps) {
             <Match when={voiceRecording()}>
               <box paddingLeft={3} flexDirection="row" gap={1}>
                 <text fg={theme.error}>● REC</text>
+                <text fg={theme.textMuted}>alt+v stop</text>
+                <text fg={theme.textMuted}>esc cancel</text>
               </box>
             </Match>
             <Match when={voiceError()}>
@@ -1882,8 +1938,11 @@ export function Prompt(props: PromptProps) {
                       )}
                     </Match>
                     <Match when={true}>
-                      <text fg={theme.text}>
-                        {agentShortcut()} <span style={{ fg: theme.textMuted }}>agents</span>
+                      <text fg={permissionMode() === "auto-approve" ? theme.success : theme.text}>
+                        tab{" "}
+                        <span style={{ fg: permissionMode() === "auto-approve" ? theme.success : theme.textMuted }}>
+                          {permissionMode() === "auto-approve" ? "auto-approve on" : "auto-approve"}
+                        </span>
                       </text>
                     </Match>
                   </Switch>

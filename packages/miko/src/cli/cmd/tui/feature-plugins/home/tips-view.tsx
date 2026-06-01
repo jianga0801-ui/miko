@@ -9,6 +9,7 @@ type TipPart = { text: string; highlight: boolean }
 type TipShortcut = Accessor<string>
 type Shortcuts = {
   agentCycle: TipShortcut
+  permissionToggle: TipShortcut
   childFirst: TipShortcut
   childNext: TipShortcut
   childPrevious: TipShortcut
@@ -99,6 +100,7 @@ export function Tips(props: { api: TuiPluginApi; connected?: boolean }) {
   const tipOffset = Math.random()
   const shortcuts: Shortcuts = {
     agentCycle: useCommandShortcut("agent.cycle"),
+    permissionToggle: useCommandShortcut("permission.toggle"),
     childFirst: configShortcut(props.api, "session.child.first"),
     childNext: configShortcut(props.api, "session.child.next"),
     childPrevious: configShortcut(props.api, "session.child.previous"),
@@ -164,7 +166,7 @@ export function Tips(props: { api: TuiPluginApi; connected?: boolean }) {
 const TIPS: Tip[] = [
   "Type {highlight}@{/highlight} followed by a filename to fuzzy search and attach files",
   "Start a message with {highlight}!{/highlight} to run shell commands directly (e.g., {highlight}!ls -la{/highlight})",
-  (shortcuts) => press(shortcuts.agentCycle(), "to cycle between Build and Plan agents"),
+  (shortcuts) => press(shortcuts.permissionToggle(), "to toggle Auto-Approve permission mode (on/off)"),
   "Use {highlight}/undo{/highlight} to revert the last message and file changes",
   "Use {highlight}/redo{/highlight} to restore previously undone messages and file changes",
   "Run {highlight}/share{/highlight} to create a public link to your conversation at miko.dev",
@@ -198,7 +200,7 @@ const TIPS: Tip[] = [
   (shortcuts) => press(shortcuts.inputNewline(), "to add newlines in your prompt"),
   (shortcuts) => press(shortcuts.inputClear(), "when typing to clear the input field"),
   (shortcuts) => press(shortcuts.sessionInterrupt(), "to stop the AI mid-response"),
-  "Switch to {highlight}Plan{/highlight} agent to get suggestions without making actual changes",
+  "Run {highlight}/plan [task]{/highlight} to generate an implementation plan before making changes",
   "Use {highlight}@agent-name{/highlight} in prompts to invoke specialized subagents",
   (shortcuts) => {
     const items = [
@@ -217,10 +219,10 @@ const TIPS: Tip[] = [
   "Override any keybind in {highlight}tui.json{/highlight} via the {highlight}keybinds{/highlight} section",
   "Set any keybind to {highlight}none{/highlight} to disable it completely",
   "Configure local or remote MCP servers in the {highlight}mcp{/highlight} config section",
-  "Add {highlight}.md{/highlight} files to {highlight}.miko/commands/{/highlight} to define reusable custom prompts",
+  "Add {highlight}.md{/highlight} files to {highlight}.miko/command/{/highlight} to define reusable custom prompts",
   "Use {highlight}$ARGUMENTS{/highlight}, {highlight}$1{/highlight}, {highlight}$2{/highlight} in custom commands for dynamic input",
   "Use backticks in commands to inject shell output (e.g., {highlight}`git status`{/highlight})",
-  "Add {highlight}.md{/highlight} files to {highlight}.miko/agents/{/highlight} for specialized AI personas",
+  "Add {highlight}.md{/highlight} files to {highlight}.miko/agent/{/highlight} for specialized AI personas",
   "Configure per-agent permissions for {highlight}edit{/highlight}, {highlight}bash{/highlight}, and {highlight}webfetch{/highlight} tools",
   'Use patterns like {highlight}"git *": "allow"{/highlight} for granular bash permissions',
   'Set {highlight}"rm -rf *": "deny"{/highlight} to block destructive commands',
@@ -229,7 +231,7 @@ const TIPS: Tip[] = [
   'Set {highlight}"formatter": false{/highlight} in config to disable formatters enabled by another config layer',
   "Define custom formatter commands with file extensions in config",
   'Set {highlight}"lsp": true{/highlight} in config to enable built-in LSP servers for code analysis',
-  "Create {highlight}.ts{/highlight} files in {highlight}.miko/tools/{/highlight} to define new LLM tools",
+  "Create {highlight}.ts{/highlight} files in {highlight}.miko/tool/{/highlight} to define new LLM tools",
   "Tool definitions can invoke scripts written in Python, Go, etc",
   "Add {highlight}.ts{/highlight} files to {highlight}.miko/plugins/{/highlight} for event hooks",
   "Use plugins to send OS notifications when sessions complete",

@@ -69,8 +69,8 @@ export const MimoPlugin = PluginV2.define({
             model.family = ModelV2.Family.make("mimo")
             model.capabilities = {
               tools: true,
-              input: ["text", "image"],
-              output: ["text"],
+              input: ["text"],
+              output: ["text", "reasoning"],
             }
             model.limit = {
               context: 128000,

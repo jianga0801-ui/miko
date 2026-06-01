@@ -190,3 +190,47 @@ describe("makeMimoFetch web_search degradation", () => {
     expect(JSON.parse(calls[0].body).tools).toEqual([{ type: "web_search" }])
   })
 })
+
+describe("rewriteMimoRequestBody reasoning and temperature", () => {
+  test("injects thinking: enabled and clamps temperature for mimo models", () => {
+    const body = JSON.stringify({
+      model: "mimo-v2.5-pro",
+      temperature: 0.7,
+      messages: [{ role: "user", content: "hello" }],
+    })
+    const out = JSON.parse(rewriteMimoRequestBody(body))
+    expect(out.extra_body).toEqual({ thinking: { type: "enabled" } })
+    expect(out.temperature).toBe(0.2) // Clamped to max 0.2
+  })
+
+  test("injects thinking: enabled and defaults temperature to 0.1 for xiaomi models", () => {
+    const body = JSON.stringify({
+      model: "xiaomi-token-plan-cn",
+      messages: [{ role: "user", content: "hello" }],
+    })
+    const out = JSON.parse(rewriteMimoRequestBody(body))
+    expect(out.extra_body).toEqual({ thinking: { type: "enabled" } })
+    expect(out.temperature).toBe(0.1) // Defaulted to 0.1
+  })
+
+  test("extracts assistant reasoning_content and sets it on the message object", () => {
+    const body = JSON.stringify({
+      model: "mimo-v2.5-pro",
+      messages: [
+        { role: "user", content: "hello" },
+        {
+          role: "assistant",
+          content: [{ type: "text", text: "Here is code" }, { type: "reasoning", text: "Thinking process..." }],
+          providerOptions: {
+            openaiCompatible: {
+              reasoning_content: "Encrypted thoughts",
+            },
+          },
+        },
+      ],
+    })
+    const out = JSON.parse(rewriteMimoRequestBody(body))
+    expect(out.messages[1].reasoning_content).toBe("Encrypted thoughts")
+    expect(out.messages[1].content).toEqual([{ type: "text", text: "Here is code" }])
+  })
+})

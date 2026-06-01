@@ -480,6 +480,7 @@ export function message(msgs: ModelMessage[], model: Provider.Model, options: Re
 
 export function temperature(model: Provider.Model) {
   const id = model.id.toLowerCase()
+  if (id.includes("mimo") || id.includes("xiaomi")) return 0.1
   if (id.includes("qwen")) return 0.55
   if (id.includes("claude")) return undefined
   if (id.includes("gemini")) return 1.0

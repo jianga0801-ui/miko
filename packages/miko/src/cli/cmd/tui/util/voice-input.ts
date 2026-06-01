@@ -7,11 +7,26 @@ import { which } from "@/util/which"
 
 type Recorder = {
   cmd: string
+  pulseServer?: string
   args(file: string): string[]
+}
+
+export type VoiceInput = {
+  file: string
+  exited: Promise<number>
+  stop(): Promise<void>
 }
 
 function bundledFFmpegPath() {
   return typeof ffmpeg.path === "string" && ffmpeg.path.length > 0 ? ffmpeg.path : undefined
+}
+
+function pulseRecorder(pulseServer: string): Recorder {
+  return {
+    cmd: "pulseaudio.js",
+    pulseServer,
+    args: () => [],
+  }
 }
 
 function ffmpegRecorder(cmd: string, managed: boolean): Recorder {
@@ -75,14 +90,80 @@ const RECORDERS: Recorder[] = [
   },
 ]
 
+export function wslPulseServerPath(value = process.env.PULSE_SERVER, exists = existsSync) {
+  const server = value?.startsWith("unix:") ? value.slice("unix:".length) : value
+  if (server && path.isAbsolute(server) && exists(server)) return server
+  if (exists("/mnt/wslg/PulseServer")) return "/mnt/wslg/PulseServer"
+}
+
 export function selectVoiceRecorder(
   lookup: (cmd: string) => boolean = (cmd) => (path.isAbsolute(cmd) ? existsSync(cmd) : which(cmd) !== null),
   managedFFmpeg = bundledFFmpegPath(),
+  pulseServer = wslPulseServerPath(),
 ) {
   return [
+    ...(pulseServer ? [pulseRecorder(pulseServer)] : []),
     ...(managedFFmpeg ? [ffmpegRecorder(managedFFmpeg, true)] : []),
     ...RECORDERS,
-  ].find((recorder) => lookup(recorder.cmd))
+  ].find((recorder) => recorder.pulseServer !== undefined || lookup(recorder.cmd))
+}
+
+export function createWavBuffer(pcm: Buffer, sampleRate = 16000, channels = 1) {
+  const bytesPerSample = 2
+  const header = Buffer.alloc(44)
+  header.write("RIFF", 0)
+  header.writeUInt32LE(36 + pcm.length, 4)
+  header.write("WAVE", 8)
+  header.write("fmt ", 12)
+  header.writeUInt32LE(16, 16)
+  header.writeUInt16LE(1, 20)
+  header.writeUInt16LE(channels, 22)
+  header.writeUInt32LE(sampleRate, 24)
+  header.writeUInt32LE(sampleRate * channels * bytesPerSample, 28)
+  header.writeUInt16LE(channels * bytesPerSample, 32)
+  header.writeUInt16LE(bytesPerSample * 8, 34)
+  header.write("data", 36)
+  header.writeUInt32LE(pcm.length, 40)
+  return Buffer.concat([header, pcm])
+}
+
+async function startPulseVoiceInput(file: string, pulseServer: string): Promise<VoiceInput> {
+  const { PA_SAMPLE_FORMAT, PulseAudio } = await import("pulseaudio.js")
+  const pulse = new PulseAudio("Miko", undefined, pulseServer)
+  await pulse.connect()
+  const stream = await pulse.createRecordStream({ sampleSpec: { format: PA_SAMPLE_FORMAT.S16LE, rate: 44100, channels: 2 } })
+  const chunks: Buffer[] = []
+  let finished = false
+  let resolveExited!: (code: number) => void
+  const exited = new Promise<number>((resolve) => {
+    resolveExited = resolve
+  })
+
+  async function finish(code: number) {
+    if (finished) return
+    finished = true
+    const closed = new Promise<void>((resolve) => stream.once("close", () => resolve()))
+    if (!stream.destroyed) {
+      stream.destroy()
+      await Promise.race([closed, new Promise((resolve) => setTimeout(resolve, 500))])
+    }
+    await pulse.disconnect().catch(() => undefined)
+    if (code === 0) await Bun.write(file, createWavBuffer(Buffer.concat(chunks), 44100, 2))
+    resolveExited(code)
+  }
+
+  stream.on("data", (chunk: Buffer) => chunks.push(Buffer.from(chunk)))
+  stream.once("error", () => void finish(1))
+  stream.once("close", () => void finish(finished ? 0 : 1))
+  stream.resume()
+
+  return {
+    file,
+    exited,
+    stop: async () => {
+      await finish(0)
+    },
+  }
 }
 
 export async function startVoiceInput() {
@@ -95,10 +176,19 @@ export async function startVoiceInput() {
   await mkdir(dir, { recursive: true })
 
   const file = path.join(dir, `voice-${Date.now()}.wav`)
+  if (recorder.pulseServer) return startPulseVoiceInput(file, recorder.pulseServer)
+
   const proc = Bun.spawn([recorder.cmd, ...recorder.args(file)], {
     stdin: "ignore",
     stdout: "ignore",
     stderr: "ignore",
   })
-  return { file, proc }
+  return {
+    file,
+    exited: proc.exited,
+    stop: async () => {
+      proc.kill("SIGINT")
+      await proc.exited.catch(() => undefined)
+    },
+  }
 }

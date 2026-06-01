@@ -34,8 +34,6 @@ import * as ProviderError from "@/provider/error"
 import { iife } from "@/util/iife"
 import { errorMessage } from "@/util/error"
 import { isMedia } from "@/util/media"
-import { isMimoProviderID } from "@/provider/mimo-setup"
-import { encodeMimoMediaSentinel } from "@miko-ai/core/plugin/provider/mimo-media"
 import type { SystemError } from "bun"
 import type { Provider } from "@/provider/provider"
 import { Effect, Schema } from "effect"
@@ -53,8 +51,7 @@ export { isMedia }
 
 function truncateToolOutput(text: string, maxChars?: number) {
   if (!maxChars || text.length <= maxChars) return text
-  const omitted = text.length - maxChars
-  return `${text.slice(0, maxChars)}\n[Tool output truncated for compaction: omitted ${omitted} chars]`
+  return `${text.slice(0, maxChars)}\n[Tool output truncated for compaction]`
 }
 
 export const Event = {
@@ -223,25 +220,7 @@ export const toModelMessagesEffect = Effect.fnUntraced(function* (
           })
         // text/plain and directory files are converted into text parts, ignore them
         if (part.type === "file" && part.mime !== "text/plain" && part.mime !== "application/x-directory") {
-          // MiMo accepts audio/video via non-standard content blocks the AI SDK
-          // can't emit; carry them as sentinel text parts that the MiMo provider
-          // fetch rewrites on the wire. Images use the standard file->image_url path.
-          const mimoMediaKind =
-            model.providerID === "mimo" || isMimoProviderID(model.providerID)
-              ? part.mime.startsWith("audio/")
-                ? "audio"
-                : part.mime.startsWith("video/")
-                  ? "video"
-                  : undefined
-              : undefined
-          if (mimoMediaKind) {
-            userMessage.parts.push({
-              type: "text",
-              text: options?.stripMedia
-                ? `[Attached ${part.mime}: ${part.filename ?? "file"}]`
-                : encodeMimoMediaSentinel({ kind: mimoMediaKind, url: part.url, mediaType: part.mime }),
-            })
-          } else if (options?.stripMedia && isMedia(part.mime)) {
+          if (options?.stripMedia && isMedia(part.mime)) {
             userMessage.parts.push({
               type: "text",
               text: `[Attached ${part.mime}: ${part.filename ?? "file"}]`,

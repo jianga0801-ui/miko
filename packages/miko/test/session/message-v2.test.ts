@@ -8,7 +8,6 @@ import type { Provider } from "@/provider/provider"
 import { SessionID, MessageID, PartID } from "../../src/session/schema"
 import { Question } from "../../src/question"
 import { ProviderV2 } from "@miko-ai/core/provider"
-import { encodeMimoMediaSentinel } from "@miko-ai/core/plugin/provider/mimo-media"
 
 const sessionID = SessionID.make("session")
 const providerID = ProviderV2.ID.make("test")
@@ -319,7 +318,7 @@ describe("session.message-v2.toModelMessage", () => {
     ])
   })
 
-  test("routes MiMo audio/video to sentinel text parts and keeps images as files", async () => {
+  test("keeps MiMo media as files so provider transform can route them through the media tool", async () => {
     const messageID = "m-user"
     const mimoModel: Provider.Model = { ...model, providerID: ProviderV2.ID.make("xiaomi-token-plan-cn") }
 
@@ -340,9 +339,8 @@ describe("session.message-v2.toModelMessage", () => {
         role: "user",
         content: [
           { type: "text", text: "describe" },
-          { type: "text", text: encodeMimoMediaSentinel({ kind: "audio", url: "https://x/a.wav", mediaType: "audio/wav" }) },
-          { type: "text", text: encodeMimoMediaSentinel({ kind: "video", url: "https://x/v.mp4", mediaType: "video/mp4" }) },
-          // Images keep the standard file -> image_url path.
+          { type: "file", mediaType: "audio/wav", filename: "a.wav", data: "https://x/a.wav" },
+          { type: "file", mediaType: "video/mp4", filename: "v.mp4", data: "https://x/v.mp4" },
           { type: "file", mediaType: "image/png", filename: "i.png", data: "https://x/i.png" },
         ],
       },
@@ -843,7 +841,7 @@ describe("session.message-v2.toModelMessage", () => {
             toolName: "bash",
             output: {
               type: "text",
-              value: "abcd\n[Tool output truncated for compaction: omitted 6 chars]",
+              value: "abcd\n[Tool output truncated for compaction]",
             },
           },
         ],

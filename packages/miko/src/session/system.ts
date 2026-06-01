@@ -8,6 +8,7 @@ import PROMPT_BEAST from "./prompt/beast.txt"
 import PROMPT_GEMINI from "./prompt/gemini.txt"
 import PROMPT_GPT from "./prompt/gpt.txt"
 import PROMPT_KIMI from "./prompt/kimi.txt"
+import PROMPT_MIMO from "./prompt/mimo.txt"
 
 import PROMPT_CODEX from "./prompt/codex.txt"
 import PROMPT_TRINITY from "./prompt/trinity.txt"
@@ -17,6 +18,8 @@ import { Permission } from "@/permission"
 import { Skill } from "@/skill"
 
 export function provider(model: Provider.Model) {
+  const apiId = model.api.id.toLowerCase()
+  if (apiId.includes("mimo") || apiId.includes("xiaomi")) return [PROMPT_MIMO]
   if (model.api.id.includes("gpt-4") || model.api.id.includes("o1") || model.api.id.includes("o3"))
     return [PROMPT_BEAST]
   if (model.api.id.includes("gpt")) {
@@ -46,19 +49,8 @@ export const layer = Layer.effect(
 
     return Service.of({
       environment: Effect.fn("SystemPrompt.environment")(function* (model: Provider.Model) {
-        const ctx = yield* InstanceState.context
         return [
-          [
-            `You are powered by the model named ${model.api.id}. The exact model ID is ${model.providerID}/${model.api.id}`,
-            `Here is some useful information about the environment you are running in:`,
-            `<env>`,
-            `  Working directory: ${ctx.directory}`,
-            `  Workspace root folder: ${ctx.worktree}`,
-            `  Is directory a git repo: ${ctx.project.vcs === "git" ? "yes" : "no"}`,
-            `  Platform: ${process.platform}`,
-            `  Today's date: ${new Date().toDateString()}`,
-            `</env>`,
-          ].join("\n"),
+          `You are powered by the model named ${model.api.id}. The exact model ID is ${model.providerID}/${model.api.id}`,
         ]
       }),
 

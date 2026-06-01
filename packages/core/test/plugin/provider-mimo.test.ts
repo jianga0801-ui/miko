@@ -112,6 +112,7 @@ describe("MimoPlugin", () => {
       expect(proModel.name).toBe("Xiaomi MiMo Pro")
       expect(proModel.family).toBe(ModelV2.Family.make("mimo"))
       expect(proModel.capabilities.tools).toBe(true)
+      expect(proModel.capabilities.input).toEqual(["text"])
       expect(proModel.enabled).toBe(true)
     }),
   )

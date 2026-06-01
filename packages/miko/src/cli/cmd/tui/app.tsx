@@ -106,6 +106,7 @@ const appBindingCommands = [
   "mcp.list",
   "agent.cycle",
   "agent.cycle.reverse",
+  "permission.toggle",
   "variant.cycle",
   "variant.list",
   "provider.connect",
@@ -741,6 +742,16 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
         },
       },
       {
+        name: "permission.toggle",
+        title: kv.get("permission_mode", "normal") === "auto-approve" ? "Disable auto-approve" : "Enable auto-approve",
+        category: "Agent",
+        run: () => {
+          const current = kv.get("permission_mode", "normal")
+          kv.set("permission_mode", current === "auto-approve" ? "normal" : "auto-approve")
+          dialog.clear()
+        },
+      },
+      {
         name: "provider.connect",
         title: "Connect provider",
         suggested: !connected(),
@@ -973,6 +984,29 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
 
   event.on(TuiEvent.CommandExecute.type, (evt) => {
     keymap.dispatchCommand(evt.properties.command)
+  })
+
+  event.on("permission.asked", (evt) => {
+    const isAutoApprove = kv.get("permission_mode", "normal") === "auto-approve"
+    let isCommandMode = false
+    const messages = sync.data.message[evt.properties.sessionID] ?? []
+    const lastUserMessage = [...messages].reverse().find((m) => m.role === "user")
+    if (lastUserMessage) {
+      const parts = sync.data.part[lastUserMessage.id] ?? []
+      const textPart = parts.find((p) => p.type === "text")
+      if (textPart && "text" in textPart) {
+        const text = textPart.text.trim()
+        isCommandMode = text.startsWith("/yolo") || text.startsWith("/goal")
+      }
+    }
+
+    if (!isAutoApprove && !isCommandMode) return
+
+    void sdk.client.permission.reply({
+      reply: "once",
+      requestID: evt.properties.id,
+      workspace: project.workspace.current(),
+    })
   })
 
   event.on(TuiEvent.ToastShow.type, (evt) => {

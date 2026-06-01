@@ -146,30 +146,70 @@ export function rewriteMimoRequestBody(bodyText: string, options?: { webSearch?:
 
   if (Array.isArray(body.messages)) {
     for (const message of body.messages) {
-      if (!message || message.role !== "user") continue
+      if (!message) continue
 
-      // AI SDK collapses a single-text user message to a plain string.
-      if (typeof message.content === "string") {
-        const block = sentinelToBlock(message.content)
-        if (block) {
-          message.content = [block]
-          changed = true
-        }
-        continue
-      }
-
-      if (!Array.isArray(message.content)) continue
-      for (let i = 0; i < message.content.length; i++) {
-        const part = message.content[i]
-        if (part && part.type === "text" && typeof part.text === "string") {
-          const block = sentinelToBlock(part.text)
+      if (message.role === "user") {
+        // AI SDK collapses a single-text user message to a plain string.
+        if (typeof message.content === "string") {
+          const block = sentinelToBlock(message.content)
           if (block) {
-            message.content[i] = block
+            message.content = [block]
             changed = true
+          }
+          continue
+        }
+
+        if (!Array.isArray(message.content)) continue
+        for (let i = 0; i < message.content.length; i++) {
+          const part = message.content[i]
+          if (part && part.type === "text" && typeof part.text === "string") {
+            const block = sentinelToBlock(part.text)
+            if (block) {
+              message.content[i] = block
+              changed = true
+            }
           }
         }
       }
+
+      if (message.role === "assistant") {
+        let reasoningText =
+          message.providerOptions?.openaiCompatible?.reasoning_content ??
+          message.provider_options?.openai_compatible?.reasoning_content ??
+          message.providerOptions?.openaiCompatible?.reasoning_details ??
+          message.provider_options?.openai_compatible?.reasoning_details
+
+        if (Array.isArray(message.content)) {
+          const reasoningParts = message.content.filter((part: any) => part && part.type === "reasoning")
+          if (reasoningParts.length > 0) {
+            if (!reasoningText) {
+              reasoningText = reasoningParts.map((part: any) => part.text).join("")
+            }
+            message.content = message.content.filter((part: any) => part && part.type !== "reasoning")
+            changed = true
+          }
+        }
+
+        if (reasoningText !== undefined) {
+          message.reasoning_content = reasoningText
+          changed = true
+        }
+      }
     }
+  }
+
+  if (body.model && (body.model.includes("mimo") || body.model.includes("xiaomi"))) {
+    body.extra_body = {
+      ...body.extra_body,
+      thinking: { type: "enabled" }
+    }
+
+    if (typeof body.temperature === "number") {
+      body.temperature = Math.max(0.1, Math.min(0.2, body.temperature))
+    } else {
+      body.temperature = 0.1
+    }
+    changed = true
   }
 
   if (options?.webSearch && injectWebSearchTool(body, options.webSearch)) changed = true
@@ -207,7 +247,8 @@ export function makeMimoFetch(
 ): typeof fetch {
   const webSearch = options?.webSearch
   return (async (input: any, init?: any) => {
-    if (!init || typeof init.body !== "string" || !(webSearch || hasMimoMediaSentinel(init.body))) {
+    const isMimoRequest = typeof init.body === "string" && (init.body.includes("mimo-v2.5") || init.body.includes("xiaomi"))
+    if (!init || typeof init.body !== "string" || !(webSearch || hasMimoMediaSentinel(init.body) || isMimoRequest)) {
       return baseFetch(input, init)
     }
 

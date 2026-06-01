@@ -44,7 +44,10 @@ export const MIMO_KEY_OPTIONS: MimoKeyOption[] = [
   },
 ]
 
-export const MIMO_PROVIDER_IDS = MIMO_KEY_OPTIONS.map((option) => option.providerID)
+export const MIMO_PROVIDER_IDS = [
+  ...MIMO_KEY_OPTIONS.map((option) => option.providerID),
+  "mimo",
+]
 
 export function isMimoProviderID(providerID: string): boolean {
   return MIMO_PROVIDER_IDS.includes(providerID)
