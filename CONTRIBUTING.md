@@ -43,6 +43,16 @@ End-user release archives are built as self-contained binaries by
 `packages/miko/script/build.ts`. Do not commit `node_modules` to make releases
 portable; keep dependencies in the compiled release artifact instead.
 
+Release installers live at the repository root:
+
+- `install`: Linux/macOS installer used by the curl command.
+- `install.ps1`: native Windows PowerShell installer.
+- `install.sh`: compatibility entrypoint that delegates to `install`.
+
+Release archives are produced by `.github/workflows/release.yml` from version
+tags or manual workflow dispatch. The workflow builds platform archives and a
+`checksums.txt` file for installer verification.
+
 ### Running against a different directory
 
 By default, `bun dev` runs Miko in the `packages/miko` directory. To run it against a different directory or repository:

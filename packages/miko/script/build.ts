@@ -2,6 +2,7 @@
 
 import { $ } from "bun"
 import fs from "fs"
+import os from "os"
 import path from "path"
 import { fileURLToPath } from "url"
 import { createSolidTransformPlugin } from "@opentui/solid/bun-plugin"
@@ -23,6 +24,17 @@ const skipInstall = process.argv.includes("--skip-install")
 const sourcemapsFlag = process.argv.includes("--sourcemaps")
 const plugin = createSolidTransformPlugin()
 const skipEmbedWebUi = process.argv.includes("--skip-embed-web-ui")
+const archiveFlag = Script.release || process.argv.includes("--archive")
+
+const resetDir = (target: string) => {
+  const resolved = path.resolve(target)
+  if (!resolved.startsWith(`${dir}${path.sep}`)) {
+    throw new Error(`Refusing to reset path outside package: ${resolved}`)
+  }
+  if (!fs.existsSync(resolved)) return
+  const trash = path.join(os.tmpdir(), `miko-build-${path.basename(resolved)}-${Date.now()}`)
+  fs.renameSync(resolved, trash)
+}
 
 const createEmbeddedWebUIBundle = async () => {
   console.log(`Building Web UI to embed in the binary`)
@@ -134,7 +146,7 @@ const targets = singleFlag
     })
   : allTargets
 
-await $`rm -rf dist`
+resetDir(path.join(dir, "dist"))
 
 const binaries: Record<string, string> = {}
 if (!skipInstall) {
@@ -208,7 +220,7 @@ for (const item of targets) {
     }
   }
 
-  await $`rm -rf ./dist/${name}/bin/tui`
+  resetDir(path.join(dir, "dist", name, "bin", "tui"))
   await Bun.file(`dist/${name}/package.json`).write(
     JSON.stringify(
       {
@@ -225,7 +237,7 @@ for (const item of targets) {
   binaries[name] = Script.version
 }
 
-if (Script.release) {
+if (archiveFlag) {
   for (const key of Object.keys(binaries)) {
     if (key.includes("linux")) {
       await $`tar -czf ../../${key}.tar.gz *`.cwd(`dist/${key}/bin`)
@@ -233,7 +245,9 @@ if (Script.release) {
       await $`zip -r ../../${key}.zip *`.cwd(`dist/${key}/bin`)
     }
   }
-  await $`gh release upload v${Script.version} ./dist/*.zip ./dist/*.tar.gz --clobber --repo ${process.env.GH_REPO}`
+  if (Script.release) {
+    await $`gh release upload v${Script.version} ./dist/*.zip ./dist/*.tar.gz --clobber --repo ${process.env.GH_REPO}`
+  }
 }
 
 export { binaries }

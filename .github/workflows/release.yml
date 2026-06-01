@@ -1,0 +1,75 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, without the leading v"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency: release-${{ github.ref_name }}-${{ inputs.version || '' }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.version || '' }}" ]; then
+            version="${{ inputs.version }}"
+          else
+            version="${GITHUB_REF_NAME#v}"
+          fi
+          echo "version=${version#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Typecheck core package
+        working-directory: packages/miko
+        run: bun typecheck
+
+      - name: Build release archives
+        working-directory: packages/miko
+        env:
+          MIKO_VERSION: ${{ steps.version.outputs.version }}
+          MIKO_CHANNEL: latest
+        run: bun run script/build.ts --archive
+
+      - name: Generate checksums
+        working-directory: packages/miko/dist
+        shell: bash
+        run: sha256sum miko-*.zip miko-*.tar.gz > checksums.txt
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release view "v$VERSION" >/dev/null 2>&1 || \
+            gh release create "v$VERSION" --target "$GITHUB_SHA" --title "v$VERSION" --notes "Miko v$VERSION"
+
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release upload "v$VERSION" \
+            packages/miko/dist/miko-*.zip \
+            packages/miko/dist/miko-*.tar.gz \
+            packages/miko/dist/checksums.txt \
+            --clobber

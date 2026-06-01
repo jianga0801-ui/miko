@@ -28,11 +28,24 @@
 
 #### 便携版安装
 
-普通用户请从 [GitHub Releases](https://github.com/jianga0801-ui/miko/releases)
-下载对应平台的发布压缩包，解压后直接运行其中的 `miko` 可执行文件。
+普通用户请直接安装自包含发布版二进制：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jianga0801-ui/miko/dev/install | bash
+miko --version
+```
+
+Windows PowerShell：
+
+```powershell
+irm https://raw.githubusercontent.com/jianga0801-ui/miko/dev/install.ps1 | iex
+miko --version
+```
 
 发布版二进制已内置核心 CLI/TUI 运行依赖，用户机器上不需要预装 Bun、Node.js
 或 `node_modules`。
+
+手动安装和指定版本安装请看 [docs/install.md](./docs/install.md)。
 
 #### 源码开发
 

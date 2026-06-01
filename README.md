@@ -28,12 +28,25 @@
 
 #### Portable Install
 
-For normal use, download the release archive for your platform from
-[GitHub Releases](https://github.com/jianga0801-ui/miko/releases), extract it,
-and run the included `miko` binary.
+For normal use, install the self-contained release binary:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jianga0801-ui/miko/dev/install | bash
+miko --version
+```
+
+Windows PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/jianga0801-ui/miko/dev/install.ps1 | iex
+miko --version
+```
 
 The release binary is self-contained for the core CLI/TUI runtime. It does not
 require Bun, Node.js, or `node_modules` on the user's machine.
+
+See [docs/install.md](./docs/install.md) for manual installs and version-pinned
+installs.
 
 #### Source Development
 
