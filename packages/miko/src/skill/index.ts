@@ -1,6 +1,7 @@
 import path from "path"
 import { pathToFileURL, fileURLToPath } from "url"
 import { Effect, Layer, Context, Schema } from "effect"
+import fs from "fs"
 import { NamedError } from "@miko-ai/core/util/error"
 import type { Agent } from "@/agent/agent"
 import { EventV2Bridge } from "@/event-v2-bridge"
@@ -227,7 +228,14 @@ const discoverSkills = Effect.fnUntraced(function* (
   }
 
   // KDCO harness built-in skills (shipped with miko; lowest priority — user skills override).
-  const builtinSkills = fileURLToPath(new URL("../../builtin/skills/", import.meta.url))
+  const getBuiltinSkills = () => {
+    if (!process.execPath.endsWith("bun") && !process.execPath.endsWith("bun.exe")) {
+      const hostBuiltinSkills = path.join(path.dirname(process.execPath), "builtin", "skills")
+      if (fs.existsSync(hostBuiltinSkills)) return hostBuiltinSkills
+    }
+    return fileURLToPath(new URL("../../builtin/skills/", import.meta.url))
+  }
+  const builtinSkills = getBuiltinSkills()
   if (yield* fsys.isDir(builtinSkills)) {
     yield* scan(state, builtinSkills, SKILL_PATTERN)
   }

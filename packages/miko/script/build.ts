@@ -124,7 +124,12 @@ const allTargets: {
   },
 ]
 
-const targets = singleFlag
+const osArg = process.argv.find((arg) => arg.startsWith("--os="))?.split("=")[1]
+const archArg = process.argv.find((arg) => arg.startsWith("--arch="))?.split("=")[1]
+
+const targets = osArg
+  ? allTargets.filter((item) => item.os === osArg && (!archArg || item.arch === archArg) && item.avx2 !== false && item.abi === undefined)
+  : singleFlag
   ? allTargets.filter((item) => {
       if (item.os !== process.platform || item.arch !== process.arch) {
         return false
@@ -206,6 +211,8 @@ for (const item of targets) {
       MIKO_LIBC: item.os === "linux" ? `'${item.abi ?? "glibc"}'` : "",
     },
   })
+
+  await $`cp -r builtin dist/${name}/bin/builtin`
 
   if (item.os === "win32" && item.arch === "x64") {
     const ffmpegRoot = path.join(dir, "../../node_modules/.bun")

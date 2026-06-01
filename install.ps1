@@ -56,6 +56,9 @@ try {
       Copy-Item -Force $Source (Join-Path $InstallDir $File)
     }
   }
+  if (Test-Path (Join-Path $Temp "builtin")) {
+    Copy-Item -Force -Recurse (Join-Path $Temp "builtin") $InstallDir
+  }
 
   if (-not $NoModifyPath) {
     $Path = [Environment]::GetEnvironmentVariable("Path", "User")

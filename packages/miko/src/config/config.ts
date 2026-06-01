@@ -608,7 +608,14 @@ export const layer = Layer.effect(
         }
 
         // KDCO harness built-in defaults (shipped with miko, lowest precedence — user config overrides).
-        const BUILTIN_DIR = fileURLToPath(new URL("../../builtin/", import.meta.url))
+        const getBuiltinDir = () => {
+          if (!process.execPath.endsWith("bun") && !process.execPath.endsWith("bun.exe")) {
+            const hostBuiltin = path.join(path.dirname(process.execPath), "builtin")
+            if (existsSync(hostBuiltin)) return hostBuiltin
+          }
+          return fileURLToPath(new URL("../../builtin/", import.meta.url))
+        }
+        const BUILTIN_DIR = getBuiltinDir()
         const builtinConfig = path.join(BUILTIN_DIR, "miko.jsonc")
         yield* merge(builtinConfig, yield* loadFile(builtinConfig, authEnv), "global")
 
