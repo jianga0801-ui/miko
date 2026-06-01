@@ -1,5 +1,4 @@
 import type { Event } from "@miko-ai/sdk/v2"
-import { useProject } from "./project"
 import { useSDK } from "./sdk"
 
 type EventMetadata = {
@@ -7,7 +6,6 @@ type EventMetadata = {
 }
 
 export function useEvent() {
-  const project = useProject()
   const sdk = useSDK()
 
   function subscribe(handler: (event: Event, metadata: EventMetadata) => void) {
@@ -16,9 +14,7 @@ export function useEvent() {
         return
       }
 
-      if (event.directory === "global" || event.project === project.project()) {
-        handler(event.payload, { workspace: event.workspace })
-      }
+      handler(event.payload, { workspace: event.workspace })
     })
   }
 
