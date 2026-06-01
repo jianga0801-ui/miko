@@ -115,7 +115,8 @@ function splashInfo(title: string | undefined, history: RunPrompt[]) {
 }
 
 function footerLabels(input: Pick<RunInput, "agent" | "model" | "variant">): FooterLabels {
-  const agentLabel = Locale.titlecase(input.agent ?? "build")
+  const agent = input.agent ?? "build"
+  const agentLabel = agent === "build" ? "Miko" : Locale.titlecase(agent)
 
   if (!input.model) {
     return {
