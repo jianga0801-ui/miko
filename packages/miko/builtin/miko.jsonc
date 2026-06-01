@@ -1,0 +1,23 @@
+{
+  "$schema": "https://github.com/jianga0801-ui/miko/raw/dev/config.json",
+  // Built-in KDCO harness defaults (shipped with miko). User config overrides these.
+  "default_agent": "miko",
+  // The `miko` orchestrator replaces the native plan/build agents.
+  "agent": {
+    "build": { "disable": true },
+    "plan": { "disable": true }
+  },
+  // npm plugin: markdown table formatter (the 4 local plugins are built-in/internal).
+  "plugin": ["@franlol/opencode-md-table-formatter@0.0.6"],
+  "mcp": {
+    "context7": { "type": "remote", "url": "https://mcp.context7.com/mcp", "timeout": 15000 },
+    "gh_grep": { "type": "remote", "url": "https://mcp.grep.app", "timeout": 15000 }
+  },
+  "permission": {
+    "webfetch": "deny",
+    "task": "deny",
+    "worktree_*": "deny",
+    "context7_*": "deny",
+    "gh_grep_*": "deny"
+  }
+}

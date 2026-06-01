@@ -1,7 +1,7 @@
 import * as Log from "@miko-ai/core/util/log"
 import { serviceUse } from "@miko-ai/core/effect/service-use"
 import path from "path"
-import { pathToFileURL } from "url"
+import { pathToFileURL, fileURLToPath } from "url"
 import os from "os"
 import { mergeDeep } from "remeda"
 import { Global } from "@miko-ai/core/global"
@@ -607,6 +607,11 @@ export const layer = Layer.effect(
           }
         }
 
+        // KDCO harness built-in defaults (shipped with miko, lowest precedence — user config overrides).
+        const BUILTIN_DIR = fileURLToPath(new URL("../../builtin/", import.meta.url))
+        const builtinConfig = path.join(BUILTIN_DIR, "miko.jsonc")
+        yield* merge(builtinConfig, yield* loadFile(builtinConfig, authEnv), "global")
+
         const global = Object.keys(authEnv).length ? yield* loadGlobal(authEnv) : yield* getGlobal()
         yield* merge(Global.Path.config, global, "global")
 
@@ -627,6 +632,16 @@ export const layer = Layer.effect(
         result.agent = result.agent || {}
         result.mode = result.mode || {}
         result.plugin = result.plugin || []
+
+        // KDCO harness built-in agents + commands (base; per-dir config below overrides).
+        result.command = mergeDeep(
+          yield* Effect.promise(() => ConfigCommand.load(BUILTIN_DIR)),
+          result.command ?? {},
+        )
+        result.agent = mergeDeep(
+          yield* Effect.promise(() => ConfigAgent.load(BUILTIN_DIR)),
+          result.agent ?? {},
+        )
 
         const directories = yield* ConfigPaths.directories(ctx.directory, ctx.worktree)
 

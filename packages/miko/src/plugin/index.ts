@@ -19,6 +19,10 @@ import { CloudflareAIGatewayAuthPlugin, CloudflareWorkersAuthPlugin } from "./cl
 import { AzureAuthPlugin } from "./azure"
 import { DigitalOceanAuthPlugin } from "./digitalocean"
 import { XaiAuthPlugin } from "./xai"
+import KdcoWorkspace from "./kdco/workspace-plugin"
+import KdcoBackgroundAgents from "./kdco/background-agents"
+import KdcoNotify from "./kdco/notify"
+import KdcoWorktree from "./kdco/worktree"
 import { Effect, Layer, Context } from "effect"
 import { EffectBridge } from "@/effect/bridge"
 import { InstanceState } from "@/effect/instance-state"
@@ -78,6 +82,11 @@ function internalPlugins(flags: RuntimeFlags.Info): PluginInstance[] {
     AzureAuthPlugin,
     DigitalOceanAuthPlugin,
     XaiAuthPlugin,
+    // KDCO workspace harness (built-in): planning, delegation, notify, worktree
+    KdcoWorkspace.server,
+    KdcoBackgroundAgents.server,
+    KdcoNotify.server,
+    KdcoWorktree.server,
   ]
 }
 
