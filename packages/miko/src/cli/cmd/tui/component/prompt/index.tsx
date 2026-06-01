@@ -24,10 +24,11 @@ import { useSync } from "@tui/context/sync"
 import { useEvent } from "@tui/context/event"
 import { editorSelectionKey, useEditorContext, type EditorSelection } from "@tui/context/editor"
 import { MessageID, PartID } from "@/session/schema"
+import { promptOffsetWidth } from "@/cli/cmd/prompt-display"
 import { createStore, produce, unwrap } from "solid-js/store"
 import { usePromptHistory, type PromptInfo } from "./history"
 import { computePromptTraits } from "./traits"
-import { assign, expandPastedTextPlaceholders } from "./part"
+import { assign, expandPastedTextPlaceholders, expandTrackedPastedText } from "./part"
 import {
   normalizePastedFilePath,
   normalizePastedFilePaths,
@@ -1175,23 +1176,15 @@ export function Prompt(props: PromptProps) {
     }
 
     const messageID = MessageID.ascending()
-    let inputText = store.prompt.input
-
-    // Expand pasted text inline before submitting
-    const allExtmarks = input.extmarks.getAllForTypeId(promptPartTypeId)
-    const sortedExtmarks = allExtmarks.sort((a: { start: number }, b: { start: number }) => b.start - a.start)
-
-    for (const extmark of sortedExtmarks) {
-      const partIndex = store.extmarkToPartIndex.get(extmark.id)
-      if (partIndex !== undefined) {
-        const part = store.prompt.parts[partIndex]
-        if (part?.type === "text" && part.text) {
-          const before = inputText.slice(0, extmark.start)
-          const after = inputText.slice(extmark.end)
-          inputText = before + part.text + after
-        }
-      }
-    }
+    const inputText = expandTrackedPastedText(
+      store.prompt.input,
+      input.extmarks.getAllForTypeId(promptPartTypeId).flatMap((extmark) => {
+        const partIndex = store.extmarkToPartIndex.get(extmark.id)
+        const part = partIndex === undefined ? undefined : store.prompt.parts[partIndex]
+        if (part?.type !== "text") return []
+        return [{ start: extmark.start, end: extmark.end, text: part.text }]
+      }),
+    )
 
     // Filter out text parts (pasted content) since they're now expanded inline
     let nonTextParts = store.prompt.parts.filter((part) => part.type !== "text")
@@ -1472,9 +1465,9 @@ export function Prompt(props: PromptProps) {
   }
 
   function pasteText(text: string, virtualText: string) {
-    const currentOffset = input.visualCursor.offset
+    const currentOffset = input.cursorOffset
     const extmarkStart = currentOffset
-    const extmarkEnd = extmarkStart + virtualText.length
+    const extmarkEnd = extmarkStart + promptOffsetWidth(virtualText)
 
     input.insertText(virtualText + " ")
 
@@ -1560,7 +1553,7 @@ export function Prompt(props: PromptProps) {
   }
 
   async function pasteAttachment(file: { filename?: string; filepath?: string; content: string; mime: string }) {
-    const currentOffset = input.visualCursor.offset
+    const currentOffset = input.cursorOffset
     const extmarkStart = currentOffset
     const kind = promptAttachmentKind(file.mime)
     const count = store.prompt.parts.filter((x) => {
