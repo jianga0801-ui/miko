@@ -13,7 +13,7 @@ miko --version
 To install a specific version:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jianga0801-ui/miko/dev/install | bash -s -- --version 1.15.13
+curl -fsSL https://raw.githubusercontent.com/jianga0801-ui/miko/dev/install | bash -s -- --version 0.0.1
 ```
 
 The installer detects Linux glibc/musl, macOS Intel/Apple Silicon, and x64
@@ -31,7 +31,7 @@ miko --version
 To install a specific version:
 
 ```powershell
-$env:VERSION = "1.15.13"; irm https://raw.githubusercontent.com/jianga0801-ui/miko/dev/install.ps1 | iex
+$env:VERSION = "0.0.1"; irm https://raw.githubusercontent.com/jianga0801-ui/miko/dev/install.ps1 | iex
 ```
 
 The Windows installer installs to:
