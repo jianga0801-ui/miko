@@ -1,6 +1,8 @@
 export * as TuiConfig from "./tui"
 
 import path from "path"
+import { existsSync } from "node:fs"
+import { fileURLToPath } from "node:url"
 import { createBindingLookup } from "@opentui/keymap/extras"
 import { mergeDeep, unique } from "remeda"
 import { Cause, Context, Effect, Fiber, Layer, Schema } from "effect"
@@ -262,6 +264,23 @@ const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx: { directory: 
   }
 })
 
+// In a local dev checkout `@miko-ai/plugin` is an unpublished workspace package,
+// so installing it by version hits the registry and hangs (404/retries), leaving
+// the TUI on a blank screen. Resolve the local package root and install it via a
+// `file:` spec instead so the dependency links against the workspace copy.
+const localPluginSpec = (() => {
+  if (!InstallationLocal) return undefined
+  try {
+    let dir = path.dirname(fileURLToPath(import.meta.resolve("@miko-ai/plugin")))
+    while (!existsSync(path.join(dir, "package.json")) && path.dirname(dir) !== dir) {
+      dir = path.dirname(dir)
+    }
+    return `file:${dir}`
+  } catch {
+    return undefined
+  }
+})()
+
 export const layer = Layer.effect(
   Service,
   Effect.gen(function* () {
@@ -276,7 +295,7 @@ export const layer = Layer.effect(
             add: [
               {
                 name: "@miko-ai/plugin",
-                version: InstallationLocal ? undefined : InstallationVersion,
+                version: InstallationLocal ? localPluginSpec : InstallationVersion,
               },
             ],
           })

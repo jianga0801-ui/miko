@@ -775,7 +775,7 @@ async function loadDirectorySnapshot(sdk: MikoClient, directory: string) {
       directory,
       providers,
       modes,
-      defaultModeID: agents.find((agent) => agent.mode === "primary" && agent.hidden !== true)?.name ?? "build",
+      defaultModeID: agents.find((agent) => agent.mode === "primary" && agent.hidden !== true)?.name ?? "miko",
       commands: commands.toSorted((a, b) => a.name.localeCompare(b.name)),
       ...(defaultModel ? { defaultModel } : {}),
     })

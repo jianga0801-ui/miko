@@ -128,38 +128,15 @@ export const layer = Layer.effect(
         const user = Permission.fromConfig(cfg.permission ?? {})
 
         const agents: Record<string, Info> = {
-          build: {
-            name: "build",
-            description: "The default agent. Executes tools based on configured permissions.",
+          miko: {
+            name: "miko",
+            description: "The default orchestrator agent. Executes tools based on configured permissions.",
             options: {},
             permission: Permission.merge(
               defaults,
               Permission.fromConfig({
                 question: "allow",
                 plan_enter: "allow",
-              }),
-              user,
-            ),
-            mode: "primary",
-            native: true,
-          },
-          plan: {
-            name: "plan",
-            description: "Plan mode. Disallows all edit tools.",
-            options: {},
-            permission: Permission.merge(
-              defaults,
-              Permission.fromConfig({
-                question: "allow",
-                plan_exit: "allow",
-                external_directory: {
-                  [path.join(Global.Path.data, "plans", "*")]: "allow",
-                },
-                edit: {
-                  "*": "deny",
-                  [path.join(".miko", "plans", "*.md")]: "allow",
-                  [path.relative(ctx.worktree, path.join(Global.Path.data, path.join("plans", "*.md")))]: "allow",
-                },
               }),
               user,
             ),
@@ -336,7 +313,7 @@ export const layer = Layer.effect(
             agents,
             values(),
             sortBy(
-              [(x) => (cfg.default_agent ? x.name === cfg.default_agent : x.name === "build"), "desc"],
+              [(x) => (cfg.default_agent ? x.name === cfg.default_agent : x.name === "miko"), "desc"],
               [(x) => x.name, "asc"],
             ),
           )

@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@miko-ai/plugin": "1.15.13",
+    "@miko-ai/plugin": "file:../packages/plugin",
     "@opencode-ai/plugin": "1.15.13",
     "detect-terminal": "2.0.0",
     "jsonc-parser": "3.3.1",
