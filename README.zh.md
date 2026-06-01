@@ -2,7 +2,7 @@
 
 **简体中文 | [English](README.md)**
 
-Miko 是一个专为开发者打造的终端优先 AI 编程助手：极致美观的终端交互体验、超快的启动速度、完整的模型能力适配、丰富多元的内置工作流，同时保持本地优先与极致的可扩展性。
+Miko 是一个专为开发者打造、专为小米 Mimo 模型优化的终端优先 AI 编程助手：极致美观的终端交互体验、超快的启动速度、完整的模型能力适配、丰富多元的内置工作流，同时保持本地优先与极致的可扩展性。
 
 当前仓库由 [jianga0801-ui/miko](https://github.com/jianga0801-ui/miko) 维护，基于 [sst/opencode](https://github.com/sst/opencode) 代码库开发。Miko 保留了 OpenCode 中成熟的 TUI、MCP、Provider、工具调用、会话和插件体系，并致力于为用户提供更纯净、开箱即用的本地发行版：自包含免依赖二进制文件、内置丰富 Skills、跨平台一键快速安装，以及更好的 Windows 宿主机使用体验。
 

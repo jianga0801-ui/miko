@@ -2,7 +2,7 @@
 
 **[简体中文](README.zh.md) | English**
 
-Miko is a terminal-first AI coding agent for developers who want a fast local
+Miko is a terminal-first AI coding agent specially optimized for the Xiaomi Mimo model, built for developers who want a fast local
 workflow, a polished TUI, strong model support, and real extensibility without a
 heavy desktop stack.
 
