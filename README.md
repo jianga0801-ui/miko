@@ -97,9 +97,6 @@ workflows when appropriate:
 | `kami` | Professional document, landing page, one-pager, resume, report, PDF, and slide typesetting. | [tw93/kami](https://github.com/tw93/kami). |
 | `effect` | Effect v4 / effect-smol coding guidance for this repo. | Local project skill; API reference source is [Effect-TS/effect-smol](https://github.com/Effect-TS/effect-smol). |
 
-Kami's diagram guidance also credits
-[cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design)
-as inspiration for editorial inline-SVG diagram patterns.
 
 ### Slash Commands
 
@@ -181,7 +178,7 @@ Miko optimizes repeated agent turns at several layers:
 
 ## Extensibility
 
-Miko can be extended without patching core code:
+Miko can be extended without patching core code, fully compatible with all original OpenCode extensions:
 
 - **MCP**: MCP prompts become slash commands; MCP tools become available through
   the agent runtime.
@@ -234,8 +231,4 @@ The same workflow also runs when a `v*` tag is pushed.
 | Impeccable design skill | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) |
 | Kami bundled skill | [tw93/kami](https://github.com/tw93/kami) |
 | Effect reference used by local `effect` skill | [Effect-TS/effect-smol](https://github.com/Effect-TS/effect-smol) |
-| Kami diagram inspiration | [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design) |
 
-Miko keeps attribution explicit so users can understand which parts are local
-Miko work, which parts come from upstream OpenCode, and which bundled skills
-or references carry their own origin.
