@@ -141,31 +141,22 @@ Miko combines two model layers:
 - Runtime provider adapters that normalize authentication, endpoint selection,
   request options, streaming events, and model capabilities.
 
-Supported provider families include Miko, Anthropic, OpenAI, Google, Google
-Vertex, GitHub Copilot, Amazon Bedrock, Azure, OpenRouter, Mistral, xAI,
-Cloudflare, Alibaba, Cerebras, Cohere, DeepInfra, Groq, Perplexity, TogetherAI,
-Vercel, Venice, GitLab, and generic OpenAI-compatible endpoints.
+Miko is specifically designed for the **Xiaomi Mimo** model family as its primary, fully optimized provider. It also retains a generic **OpenAI-compatible** provider adapter to support custom self-hosted endpoints, local LLM runtimes, and standard OpenAI integrations.
 
 Miko tracks capabilities instead of treating every model as plain text:
 
 - context, input, and output limits
-- text, image, audio, video, and PDF input/output modalities
+- text, image, audio, video, and PDF input/output modalities (perfectly supporting Mimo's multi-modal features)
 - tool-call support
-- reasoning support and reasoning variants
+- reasoning support and reasoning variants (specially optimized for Mimo's reasoning-content continuation)
 - temperature support
 - provider-specific endpoint type
 - cost, cache read/write cost, and status metadata
 
 Provider-specific optimizations include:
 
-- OpenAI Responses support, with optional WebSocket reuse for lower-latency
-  streamed sessions.
-- Anthropic headers for interleaved thinking and fine-grained tool streaming.
-- GitHub Copilot model discovery that maps remote capabilities into Miko
-  variants, reasoning options, vision flags, and endpoint selection.
-- Bedrock region and cross-region model prefix handling.
-- OpenAI-compatible profiles for DeepSeek, Groq, TogetherAI, Cerebras,
-  Fireworks, DeepInfra, Baseten, OpenRouter, and xAI.
+- First-class Mimo provider optimizations, integrating token usage tracking, reasoning part separation, and high-performance streaming.
+- OpenAI-compatible profiles for deep integration with standard services and local mock servers.
 
 ## Cache-Hit and Context Optimizations
 
@@ -177,8 +168,7 @@ Miko optimizes repeated agent turns at several layers:
   repeatedly during a single tool-heavy turn.
 - **Manual cache hints preserved**: explicit `cache` markers on tools, system
   parts, or messages are not overwritten.
-- **Provider-aware behavior**: inline markers are applied to Anthropic Messages
-  and Bedrock Converse paths, while providers with implicit caching or
+- **Provider-aware behavior**: inline markers are applied to Mimo and other compatible paths, while providers with implicit caching or
   out-of-band cache systems are left alone.
 - **Usage accounting**: usage events keep non-cached input tokens, cache-read
   tokens, cache-write tokens, reasoning tokens, visible output tokens, and raw
