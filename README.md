@@ -100,8 +100,8 @@ workflows when appropriate:
 
 ### Slash Commands
 
-Miko commands are Markdown-backed prompt templates. They can come from built-ins,
-project files, MCP prompts, or skills.
+Miko features an elegant and highly customizable slash command system. Commands can come from built-ins,
+project configuration files, MCP server prompts, or custom skills.
 
 Built-in commands:
 
@@ -126,8 +126,7 @@ Project commands in `.miko/command`:
 | `/translate` | Translates changed English docs and UI copy while preserving code terms. |
 | `/yolo` | Direct execution mode with verification and no planning detour. |
 
-MCP prompt names and skill names are also added to the command list when they do
-not conflict with existing commands.
+All active MCP prompts and custom skills are automatically registered as slash commands (`/`), providing a unified and autocompletable TUI shortcut experience.
 
 ## Model and Provider Runtime
 
