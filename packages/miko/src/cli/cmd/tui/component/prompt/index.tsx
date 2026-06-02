@@ -1177,7 +1177,7 @@ export function Prompt(props: PromptProps) {
     }
 
     const messageID = MessageID.ascending()
-    const inputText = expandTrackedPastedText(
+    let inputText = expandTrackedPastedText(
       store.prompt.input,
       input.extmarks.getAllForTypeId(promptPartTypeId).flatMap((extmark) => {
         const partIndex = store.extmarkToPartIndex.get(extmark.id)
