@@ -10,5 +10,5 @@ Requirements:
 - Preserve meaning, intent, tone, and formatting (including Markdown/MDX structure).
 - Preserve all technical terms and artifacts exactly: product/company names, API names, identifiers, code, commands/flags, file paths, URLs, versions, error messages, config keys/values, and anything inside inline code or code blocks.
 - Also preserve every term listed in the Do-Not-Translate glossary below.
-- Also apply locale-specific guidance from `.miko/glossary/<locale>.md` when available (for example, `zh-cn.md`).
+- Also load the `translate-glossary` skill and apply each target language's locale-specific guidance: read `<locale>.md` (for example, `zh-cn.md`) from the skill's base directory and follow its do-not-translate, preferred-terms, and phrasing rules.
 - Do not modify fenced code blocks.
