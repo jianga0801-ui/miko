@@ -214,20 +214,49 @@ for (const item of targets) {
 
   await $`cp -r builtin dist/${name}/bin/builtin`
 
-  if (item.os === "win32" && item.arch === "x64") {
+  // Ship SnoreToast for native Windows toast notifications and for WSL: Linux
+  // binaries running under WSL launch this Windows .exe via binfmt interop.
+  // macOS uses `alerter` (resolved from PATH) instead, so it needs nothing here.
+  if (item.os === "win32" || item.os === "linux") {
+    const snoreCandidates = [
+      path.join(dir, "node_modules/node-notifier/vendor/snoreToast/snoretoast-x64.exe"),
+      path.join(dir, "../../node_modules/node-notifier/vendor/snoreToast/snoretoast-x64.exe"),
+    ]
+    const snoreSource = snoreCandidates.find((candidate) => fs.existsSync(candidate))
+    if (!snoreSource) throw new Error("Missing node-notifier SnoreToast binary for notify packaging")
+    const snoreDest = `dist/${name}/bin/snoretoast-x64.exe`
+    await Bun.write(snoreDest, Bun.file(snoreSource))
+    // Exec bit lets WSL interop launch the Windows .exe from the Linux binary.
+    fs.chmodSync(snoreDest, 0o755)
+  }
+
+  // Ship a managed ffmpeg next to the binary so voice input works out of the box
+  // on every platform (previously Windows-x64 only). The ffmpeg binary is the same
+  // regardless of the miko binary's avx2/musl/baseline variant. @ffmpeg-installer
+  // has no win32-arm64 build, so that single target falls back to a system ffmpeg.
+  {
+    const ffmpegExt = item.os === "win32" ? ".exe" : ""
+    const ffmpegPkg = `${item.os}-${item.arch}`
     const ffmpegRoot = path.join(dir, "../../node_modules/.bun")
     const ffmpegBinary = (
       await Array.fromAsync(
-        new Bun.Glob("@ffmpeg-installer+win32-x64@*/node_modules/@ffmpeg-installer/win32-x64/ffmpeg.exe").scan({
-          cwd: ffmpegRoot,
-          onlyFiles: true,
-        }),
+        new Bun.Glob(
+          `@ffmpeg-installer+${ffmpegPkg}@*/node_modules/@ffmpeg-installer/${ffmpegPkg}/ffmpeg${ffmpegExt}`,
+        ).scan({ cwd: ffmpegRoot, onlyFiles: true }),
       )
     )
       .sort()
       .at(-1)
-    if (!ffmpegBinary) throw new Error("Missing @ffmpeg-installer/win32-x64 binary for Windows release")
-    await Bun.write(`dist/${name}/bin/ffmpeg.exe`, Bun.file(path.join(ffmpegRoot, ffmpegBinary)))
+    if (ffmpegBinary) {
+      const ffmpegDest = `dist/${name}/bin/ffmpeg${ffmpegExt}`
+      await Bun.write(ffmpegDest, Bun.file(path.join(ffmpegRoot, ffmpegBinary)))
+      // Exec bit for macOS/Linux managed ffmpeg.
+      if (item.os !== "win32") fs.chmodSync(ffmpegDest, 0o755)
+    } else if (item.os === "win32" && item.arch === "arm64") {
+      console.warn(`No @ffmpeg-installer build for ${ffmpegPkg}; voice input will use a system ffmpeg on this target.`)
+    } else {
+      throw new Error(`Missing @ffmpeg-installer/${ffmpegPkg} binary for ${name}`)
+    }
   }
 
   // Smoke test: only run if binary is for current platform

@@ -399,7 +399,13 @@ async function sendDesktopNotification(options: NotificationOptions): Promise<vo
 		subtitle: options.subtitle,
 		sound,
 		senderBundleId: terminalInfo.bundleId,
-		sendNodeNotifierNotification: () => notifier.notify(notifyOptions),
+		sendNodeNotifierNotification: () =>
+			notifier.notify(notifyOptions, (error: unknown) => {
+				if (error) {
+					const message = error instanceof Error ? error.message : String(error)
+					console.warn(`notify: desktop notification failed (${message}).`)
+				}
+			}),
 	})
 }
 

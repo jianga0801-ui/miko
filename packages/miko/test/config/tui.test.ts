@@ -503,6 +503,22 @@ it.instance("resolves keybind lookup from canonical keybinds", () =>
   ),
 )
 
+it.instance("defaults Alt+V to a repeat-safe voice toggle", () =>
+  withCleanState(
+    Effect.gen(function* () {
+      const test = yield* TestInstance
+
+      const config = yield* getTuiConfig(test.directory)
+
+      expect(config.keybinds.get("prompt.voice.toggle")).toEqual([
+        { key: "alt+v", cmd: "prompt.voice.toggle", desc: "Start or stop voice prompt recording" },
+      ])
+      expect(config.keybinds.get("prompt.voice.start")).toEqual([])
+      expect(config.keybinds.get("prompt.voice.stop")).toEqual([])
+    }),
+  ),
+)
+
 it.instance("keybinds accept OpenTUI binding specs", () =>
   withCleanState(
     Effect.gen(function* () {

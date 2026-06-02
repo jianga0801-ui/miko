@@ -69,7 +69,8 @@ import { Flag } from "@miko-ai/core/flag/flag"
 import { type WorkspaceStatus } from "../workspace-label"
 import { MIKO_BASE_MODE, useBindings, useCommandShortcut, useLeaderActive, useMikoKeymap } from "../../keymap"
 import { useTuiConfig } from "../../context/tui-config"
-import { startVoiceInput, type VoiceInput } from "../../util/voice-input"
+import { readVoiceInputFile, startVoiceInput, type VoiceInput } from "../../util/voice-input"
+import { createVoiceToggleController } from "./voice-toggle"
 
 export type PromptProps = {
   sessionID?: string
@@ -394,6 +395,7 @@ export function Prompt(props: PromptProps) {
   let voiceProcess: VoiceInput | undefined
   let voicePressed = false
   let voiceStopping = false
+  const voiceToggle = createVoiceToggleController()
   onCleanup(() => {
     void voiceProcess?.stop()
     voiceProcess = undefined
@@ -526,8 +528,13 @@ export function Prompt(props: PromptProps) {
         desc: "Start or stop recording a voice note",
         name: "prompt.voice.toggle",
         category: "Prompt",
-        run: async () => {
-          await toggleVoicePrompt()
+        run: async (ctx: CommandContext<Renderable, KeyEvent>) => {
+          const action = voiceToggle({
+            recording: Boolean(voiceProcess || voiceRecording() || voicePressed),
+            event: ctx.event,
+          })
+          if (action === "start") await startVoicePrompt()
+          if (action === "stop") await stopVoicePrompt()
         },
       },
       {
@@ -1379,7 +1386,7 @@ export function Prompt(props: PromptProps) {
     await current.stop()
 
     try {
-      const content = await Bun.file(current.file).arrayBuffer()
+      const content = await readVoiceInputFile(current.file)
       await pasteAttachment({
         filename: path.basename(current.file),
         filepath: current.file,
