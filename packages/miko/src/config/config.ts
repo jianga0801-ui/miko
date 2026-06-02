@@ -430,8 +430,8 @@ export const layer = Layer.effect(
 
       yield* Effect.promise(() => resolveLoadedPlugins(data, options.path))
       if (!data.$schema) {
-        data.$schema = "https://github.com/jianga0801-ui/miko/raw/dev/config.json"
-        const updated = text.replace(/^\s*\{/, '{\n  "$schema": "https://github.com/jianga0801-ui/miko/raw/dev/config.json",')
+        data.$schema = "https://github.com/jianga0801-ui/miko/raw/main/config.json"
+        const updated = text.replace(/^\s*\{/, '{\n  "$schema": "https://github.com/jianga0801-ui/miko/raw/main/config.json",')
         yield* fs.writeFileString(options.path, updated).pipe(Effect.catch(() => Effect.void))
       }
       return data
@@ -456,7 +456,7 @@ export const layer = Layer.effect(
               file,
               JSON.stringify(
                 {
-                  $schema: "https://github.com/jianga0801-ui/miko/raw/dev/config.json",
+                  $schema: "https://github.com/jianga0801-ui/miko/raw/main/config.json",
                   model: "xiaomi-token-plan-cn/mimo-v2.5-pro",
                 },
                 null,
@@ -479,7 +479,7 @@ export const layer = Layer.effect(
             .then(async (mod) => {
               const { provider, model, ...rest } = mod.default
               if (provider && model) result.model = `${provider}/${model}`
-              result["$schema"] = "https://github.com/jianga0801-ui/miko/raw/dev/config.json"
+              result["$schema"] = "https://github.com/jianga0801-ui/miko/raw/main/config.json"
               result = mergeConfig(result, rest)
               await fsNode.writeFile(path.join(Global.Path.config, "config.json"), JSON.stringify(result, null, 2))
               await fsNode.unlink(legacy)

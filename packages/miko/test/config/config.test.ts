@@ -312,7 +312,7 @@ it.effect("creates global jsonc config with schema when no global configs exist"
       yield* Config.use.get().pipe(provideInstanceEffect(dir))
 
       const content = yield* AppFileSystem.use.readFileString(path.join(dir, "miko.jsonc"))
-      expect(content).toContain('"$schema": "https://github.com/jianga0801-ui/miko/raw/dev/config.json"')
+      expect(content).toContain('"$schema": "https://github.com/jianga0801-ui/miko/raw/main/config.json"')
     }).pipe(Effect.provide(testInstanceStoreLayer), Effect.provide(CrossSpawnSpawner.defaultLayer)),
   ),
 )
