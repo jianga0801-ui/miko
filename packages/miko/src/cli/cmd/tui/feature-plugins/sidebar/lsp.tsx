@@ -4,11 +4,11 @@ import { createMemo, For, Show, createSignal } from "solid-js"
 
 const id = "internal:sidebar-lsp"
 
-function View(props: { api: TuiPluginApi }) {
+export function View(props: { api: TuiPluginApi }) {
   const [open, setOpen] = createSignal(true)
   const theme = () => props.api.theme.current
   const list = createMemo(() => props.api.state.lsp())
-  const off = createMemo(() => !props.api.state.config.lsp)
+  const off = createMemo(() => props.api.state.config.lsp === false)
 
   return (
     <box>
