@@ -77,5 +77,5 @@ try {
   if (Test-Path $Checksums) { Remove-Item $Checksums }
   if (Test-Path (Join-Path $Temp "miko.exe")) { Remove-Item (Join-Path $Temp "miko.exe") }
   if (Test-Path (Join-Path $Temp "ffmpeg.exe")) { Remove-Item (Join-Path $Temp "ffmpeg.exe") }
-  if (Test-Path $Temp) { Remove-Item $Temp }
+  if (Test-Path $Temp) { Remove-Item $Temp -Recurse -Force -ErrorAction SilentlyContinue }
 }
