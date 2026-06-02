@@ -6,4 +6,4 @@ if [ -n "$source_path" ] && [ -f "$source_path" ] && [ -f "$(dirname "$source_pa
   exec "$(dirname "$source_path")/install" "$@"
 fi
 
-curl -fsSL https://raw.githubusercontent.com/jianga0801-ui/miko/dev/install | bash -s -- "$@"
+curl -fsSL https://raw.githubusercontent.com/jianga0801-ui/miko/main/install | bash -s -- "$@"

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://github.com/jianga0801-ui/miko/raw/dev/config.json",
+  "$schema": "https://github.com/jianga0801-ui/miko/raw/main/config.json",
   // Built-in KDCO harness defaults (shipped with miko). User config overrides these.
   "default_agent": "miko",
   // The `miko` orchestrator replaces the native plan/build agents.

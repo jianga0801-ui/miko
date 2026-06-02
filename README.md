@@ -46,14 +46,14 @@ Miko is meticulously tailored and optimized for the **Xiaomi Mimo** large model,
 Linux and macOS:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jianga0801-ui/miko/dev/install | bash
+curl -fsSL https://raw.githubusercontent.com/jianga0801-ui/miko/main/install | bash
 miko --version
 ```
 
 Windows PowerShell:
 
 ```powershell
-irm https://raw.githubusercontent.com/jianga0801-ui/miko/dev/install.ps1 | iex
+irm https://raw.githubusercontent.com/jianga0801-ui/miko/main/install.ps1 | iex
 miko --version
 ```
 

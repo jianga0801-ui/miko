@@ -30,14 +30,14 @@ Miko 专为**小米 Mimo (Xiaomi Mimo)** 大模型进行了深度的全栈级优
 Linux / macOS：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jianga0801-ui/miko/dev/install | bash
+curl -fsSL https://raw.githubusercontent.com/jianga0801-ui/miko/main/install | bash
 miko --version
 ```
 
 Windows PowerShell：
 
 ```powershell
-irm https://raw.githubusercontent.com/jianga0801-ui/miko/dev/install.ps1 | iex
+irm https://raw.githubusercontent.com/jianga0801-ui/miko/main/install.ps1 | iex
 miko --version
 ```
 
