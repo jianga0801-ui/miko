@@ -111,9 +111,28 @@ describe("MimoPlugin", () => {
       const proModel = yield* catalog.model.get(ProviderV2.ID.mimo, ModelV2.ID.make("mimo-v2.5-pro"))
       expect(proModel.name).toBe("Xiaomi MiMo Pro")
       expect(proModel.family).toBe(ModelV2.Family.make("mimo"))
+      // Pro: text-only agentic LLM, 1M context / 128K output, no key in this
+      // test so the pay-as-you-go ($) pricing applies with a 256K context tier.
       expect(proModel.capabilities.tools).toBe(true)
       expect(proModel.capabilities.input).toEqual(["text"])
+      expect(proModel.capabilities.output).toEqual(["text", "reasoning"])
+      expect(proModel.limit.context).toBe(1_048_576)
+      expect(proModel.limit.output).toBe(131_072)
       expect(proModel.enabled).toBe(true)
+      expect(proModel.cost[0]).toEqual({ input: 1.0, output: 3.0, cache: { read: 0.2, write: 0 } })
+      expect(proModel.cost[1]).toEqual({
+        tier: { type: "context", size: 262_144 },
+        input: 2.0,
+        output: 6.0,
+        cache: { read: 0.4, write: 0 },
+      })
+
+      // mimo-v2.5 is the omni model; image is the attachable modality (audio/
+      // video go through the mimo_analyze_media tool, not message attachments).
+      const omniModel = yield* catalog.model.get(ProviderV2.ID.mimo, ModelV2.ID.make("mimo-v2.5"))
+      expect(omniModel.capabilities.input).toEqual(["text", "image"])
+      expect(omniModel.limit.context).toBe(1_048_576)
+      expect(omniModel.cost[0]).toEqual({ input: 0.4, output: 2.0, cache: { read: 0.08, write: 0 } })
     }),
   )
 

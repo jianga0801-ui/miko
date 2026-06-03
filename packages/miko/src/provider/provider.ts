@@ -1127,8 +1127,12 @@ function fromModelsDevModel(provider: ModelsDev.Provider, model: ModelsDev.Model
       toolcall: model.tool_call ?? true,
       input: {
         text: model.modalities?.input?.includes("text") ?? false,
+        // MiMo image input rides the standard image_url path (the AI SDK emits
+        // it natively and MiMo accepts it). Audio/video stay gated off: the AI
+        // SDK openai-compatible provider throws on video and reshapes audio, so
+        // those are handled via the mimo_analyze_media tool, not attachments.
         audio: isMimoProviderID(provider.id) ? false : (model.modalities?.input?.includes("audio") ?? false),
-        image: isMimoProviderID(provider.id) ? false : (model.modalities?.input?.includes("image") ?? false),
+        image: model.modalities?.input?.includes("image") ?? false,
         video: isMimoProviderID(provider.id) ? false : (model.modalities?.input?.includes("video") ?? false),
         pdf: isMimoProviderID(provider.id) ? false : (model.modalities?.input?.includes("pdf") ?? false),
       },
@@ -1363,12 +1367,13 @@ export const layer = Layer.effect(
                 toolcall: model.tool_call ?? existingModel?.capabilities.toolcall ?? true,
                 input: {
                   text: model.modalities?.input?.includes("text") ?? existingModel?.capabilities.input.text ?? true,
+                  // MiMo image input rides the standard image_url path; audio/
+                  // video stay gated off (AI SDK can't emit them) and are handled
+                  // by the mimo_analyze_media tool instead.
                   audio: isMimoProviderID(providerID)
                     ? false
                     : (model.modalities?.input?.includes("audio") ?? existingModel?.capabilities.input.audio ?? false),
-                  image: isMimoProviderID(providerID)
-                    ? false
-                    : (model.modalities?.input?.includes("image") ?? existingModel?.capabilities.input.image ?? false),
+                  image: model.modalities?.input?.includes("image") ?? existingModel?.capabilities.input.image ?? false,
                   video: isMimoProviderID(providerID)
                     ? false
                     : (model.modalities?.input?.includes("video") ?? existingModel?.capabilities.input.video ?? false),
