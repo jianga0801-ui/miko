@@ -5,6 +5,10 @@ inputs:
     description: "Additional flags to pass to 'bun install'"
     required: false
     default: ""
+  use-baseline:
+    description: "Use Bun's x64 baseline runtime on x64 runners"
+    required: false
+    default: "true"
 runs:
   using: "composite"
   steps:
@@ -12,7 +16,7 @@ runs:
       id: bun-url
       shell: bash
       run: |
-        if [ "$RUNNER_ARCH" = "X64" ]; then
+        if [ "$RUNNER_ARCH" = "X64" ] && [ "${{ inputs.use-baseline }}" = "true" ]; then
           V=$(node -p "require('./package.json').packageManager.split('@')[1]")
           case "$RUNNER_OS" in
             macOS)   OS=darwin ;;

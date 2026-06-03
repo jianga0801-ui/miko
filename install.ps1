@@ -17,6 +17,39 @@ $Arch = switch ((Get-CimInstance Win32_Processor | Select-Object -First 1).Archi
   default { throw "Unsupported Windows CPU architecture." }
 }
 
+function Test-Avx2 {
+  try {
+    try {
+      $Kernel32 = [Win32.Kernel32]
+    } catch {
+      $Kernel32 = Add-Type -MemberDefinition '[DllImport("kernel32.dll")] public static extern bool IsProcessorFeaturePresent(int ProcessorFeature);' -Name Kernel32 -Namespace Win32 -PassThru
+    }
+    return [bool]$Kernel32::IsProcessorFeaturePresent(40)
+  } catch {
+    return $false
+  }
+}
+
+function Remove-InstallTempDir {
+  param([string]$Path)
+
+  if ([string]::IsNullOrWhiteSpace($Path)) { return }
+
+  $TempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
+  $Resolved = [IO.Path]::GetFullPath($Path)
+  if (-not $Resolved.StartsWith($TempRoot, [StringComparison]::OrdinalIgnoreCase)) {
+    Write-Warning "Skipping cleanup outside temp directory: $Resolved"
+    return
+  }
+  if (-not (Test-Path -LiteralPath $Resolved)) { return }
+
+  try {
+    [IO.Directory]::Delete($Resolved, $true)
+  } catch {
+    Write-Warning "Failed to clean temporary install directory: $Resolved"
+  }
+}
+
 if ([string]::IsNullOrWhiteSpace($Version)) {
   $Release = Invoke-RestMethod "https://api.github.com/repos/$Repo/releases/latest"
   $Tag = $Release.tag_name
@@ -24,7 +57,8 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
   $Tag = if ($Version.StartsWith("v")) { $Version } else { "v$Version" }
 }
 
-$Name = "miko-windows-$Arch.zip"
+$Variant = if ($Arch -eq "x64" -and -not (Test-Avx2)) { "-baseline" } else { "" }
+$Name = "miko-windows-$Arch$Variant.zip"
 $Base = "https://github.com/$Repo/releases/download/$Tag"
 $Temp = Join-Path ([IO.Path]::GetTempPath()) "miko-install-$PID"
 $Archive = Join-Path $Temp $Name
@@ -49,7 +83,7 @@ try {
   }
 
   Expand-Archive -Force -Path $Archive -DestinationPath $Temp
-  $PayloadFiles = @("miko.exe", "ffmpeg.exe")
+  $PayloadFiles = @("miko.exe", "ffmpeg.exe", "snoretoast-x64.exe")
   foreach ($File in $PayloadFiles) {
     $Source = Join-Path $Temp $File
     if (Test-Path $Source) {
@@ -77,5 +111,6 @@ try {
   if (Test-Path $Checksums) { Remove-Item $Checksums }
   if (Test-Path (Join-Path $Temp "miko.exe")) { Remove-Item (Join-Path $Temp "miko.exe") }
   if (Test-Path (Join-Path $Temp "ffmpeg.exe")) { Remove-Item (Join-Path $Temp "ffmpeg.exe") }
-  if (Test-Path $Temp) { Remove-Item $Temp -Recurse -Force -ErrorAction SilentlyContinue }
+  if (Test-Path (Join-Path $Temp "snoretoast-x64.exe")) { Remove-Item (Join-Path $Temp "snoretoast-x64.exe") }
+  Remove-InstallTempDir $Temp
 }

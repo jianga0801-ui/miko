@@ -98,6 +98,23 @@ workflows when appropriate:
 | `effect` | Effect v4 / effect-smol coding guidance for this repo. | Local project skill; API reference source is [Effect-TS/effect-smol](https://github.com/Effect-TS/effect-smol). |
 
 
+### Plugins
+
+Miko's TUI is powered by a set of built-in feature plugins that load automatically at startup with zero configuration. They share the same plugin interface as third-party plugins (see "Extensibility" below), so you can author and install your own the same way.
+
+| Plugin | Purpose |
+| --- | --- |
+| `which-key` | Keybinding hint overlay showing available shortcuts and pending key sequences. |
+| `diff-viewer` | Built-in diff viewer with file-tree navigation and split-pane comparison. |
+| `plugin-manager` | Plugin management UI to browse and enable / disable installed plugins. |
+| `notifications` | Desktop / system notifications when a task finishes or needs attention. |
+| `sidebar-context` | Sidebar: current context usage and session info. |
+| `sidebar-mcp` | Sidebar: connected MCP servers and their status. |
+| `sidebar-lsp` | Sidebar: LSP server status (enabled by default). |
+| `sidebar-todo` | Sidebar: current task / TODO list. |
+| `sidebar-files` | Sidebar: files changed during the session. |
+| `home-footer`, `home-tips`, `sidebar-footer` | Footer info and usage tips on the home screen and sidebar. |
+
 ### Slash Commands
 
 Miko features an elegant and highly customizable slash command system. Commands can come from built-ins,
@@ -137,7 +154,7 @@ Miko combines two model layers:
 - Runtime provider adapters that normalize authentication, endpoint selection,
   request options, streaming events, and model capabilities.
 
-Miko is specifically designed for the **Xiaomi Mimo** model family as its primary, fully optimized provider. It also retains a generic **OpenAI-compatible** provider adapter to support custom self-hosted endpoints, local LLM runtimes, and standard OpenAI integrations.
+Miko is specifically designed for the **Xiaomi Mimo** model family as its primary, fully optimized provider.
 
 Miko tracks capabilities instead of treating every model as plain text:
 
@@ -152,7 +169,6 @@ Miko tracks capabilities instead of treating every model as plain text:
 Provider-specific optimizations include:
 
 - First-class Mimo provider optimizations, integrating token usage tracking, reasoning part separation, and high-performance streaming.
-- OpenAI-compatible profiles for deep integration with standard services and local mock servers.
 
 ## Cache-Hit and Context Optimizations
 
@@ -185,8 +201,8 @@ Miko can be extended without patching core code, fully compatible with all origi
 - **Skills**: add `SKILL.md` directories under the configured skills paths.
 - **Plugins**: register tools, provider hooks, model hooks, keymap layers,
   TUI routes, slash commands, workspace adapters, and context injectors.
-- **Providers**: use bundled AI SDK providers or define OpenAI-compatible
-  endpoints and provider-specific options.
+- **Providers**: use bundled AI SDK providers or define custom endpoints and
+  provider-specific options.
 
 ## Source Development
 
