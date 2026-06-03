@@ -17,7 +17,6 @@ export class Service extends ConfigService.Service<Service>()("@miko/RuntimeFlag
   autoShare: bool("MIKO_AUTO_SHARE"),
   pure: bool("MIKO_PURE"),
   disableDefaultPlugins: bool("MIKO_DISABLE_DEFAULT_PLUGINS"),
-  disableEmbeddedWebUi: bool("MIKO_DISABLE_EMBEDDED_WEB_UI"),
   disableExternalSkills: bool("MIKO_DISABLE_EXTERNAL_SKILLS"),
   disableLspDownload: bool("MIKO_DISABLE_LSP_DOWNLOAD"),
   disableClaudeCodePrompt: Config.all({

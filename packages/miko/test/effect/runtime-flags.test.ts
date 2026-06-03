@@ -25,7 +25,6 @@ describe("RuntimeFlags", () => {
             MIKO_PURE: "true",
             MIKO_DISABLE_DEFAULT_PLUGINS: "true",
             MIKO_AUTO_SHARE: "true",
-            MIKO_DISABLE_EMBEDDED_WEB_UI: "true",
             MIKO_DISABLE_EXTERNAL_SKILLS: "true",
             MIKO_DISABLE_LSP_DOWNLOAD: "true",
             MIKO_EXPERIMENTAL: "true",
@@ -41,7 +40,6 @@ describe("RuntimeFlags", () => {
       expect(flags.pure).toBe(true)
       expect(flags.autoShare).toBe(true)
       expect(flags.disableDefaultPlugins).toBe(true)
-      expect(flags.disableEmbeddedWebUi).toBe(true)
       expect(flags.disableExternalSkills).toBe(true)
       expect(flags.disableLspDownload).toBe(true)
       expect(flags.disableClaudeCodePrompt).toBe(false)
@@ -107,7 +105,6 @@ describe("RuntimeFlags", () => {
       expect(flags.pure).toBe(false)
       expect(flags.autoShare).toBe(false)
       expect(flags.disableDefaultPlugins).toBe(true)
-      expect(flags.disableEmbeddedWebUi).toBe(false)
       expect(flags.disableExternalSkills).toBe(false)
       expect(flags.disableLspDownload).toBe(false)
       expect(flags.disableClaudeCodePrompt).toBe(false)
@@ -333,7 +330,6 @@ describe("RuntimeFlags", () => {
 
       expect(flags.pure).toBe(false)
       expect(flags.disableDefaultPlugins).toBe(false)
-      expect(flags.disableEmbeddedWebUi).toBe(false)
       expect(flags.disableExternalSkills).toBe(false)
       expect(flags.disableLspDownload).toBe(false)
       expect(flags.disableClaudeCodePrompt).toBe(false)

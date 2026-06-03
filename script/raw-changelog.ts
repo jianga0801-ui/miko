@@ -121,7 +121,7 @@ async function commits(from: string, to: string) {
   }
 
   const log =
-    await $`git log ${base}..${head} --format=%H -- packages/miko packages/sdk packages/plugin packages/desktop packages/app sdks/vscode packages/extensions github`.text()
+    await $`git log ${base}..${head} --format=%H -- packages/miko packages/sdk packages/plugin packages/desktop sdks/vscode packages/extensions github`.text()
 
   const list: Commit[] = []
   for (const hash of log.split("\n").filter(Boolean)) {
@@ -136,7 +136,7 @@ async function commits(from: string, to: string) {
       if (file.startsWith("packages/miko/src/cli/cmd/")) areas.add("tui")
       else if (file.startsWith("packages/miko/")) areas.add("core")
       else if (file.startsWith("packages/desktop/src-tauri/")) areas.add("tauri")
-      else if (file.startsWith("packages/desktop/") || file.startsWith("packages/app/")) areas.add("app")
+      else if (file.startsWith("packages/desktop/")) areas.add("app")
       else if (file.startsWith("packages/sdk/") || file.startsWith("packages/plugin/")) areas.add("sdk")
       else if (file.startsWith("packages/extensions/")) areas.add("extensions/zed")
       else if (file.startsWith("sdks/vscode/") || file.startsWith("github/")) areas.add("extensions/vscode")
