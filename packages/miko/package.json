@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "version": "0.2.5",
+  "version": "2026.6.4",
   "name": "miko",
   "type": "module",
   "license": "MIT",
