@@ -43,7 +43,7 @@ import { useRenderer, useTerminalDimensions, type JSX } from "@opentui/solid"
 import * as Editor from "@tui/util/editor"
 import { useExit } from "../../context/exit"
 import * as Clipboard from "../../util/clipboard"
-import type { AssistantMessage, FilePart, UserMessage } from "@miko-ai/sdk/v2"
+import type { FilePart, UserMessage } from "@miko-ai/sdk/v2"
 import { TuiEvent } from "../../event"
 import { iife } from "@/util/iife"
 import { Locale } from "@/util/locale"
@@ -71,6 +71,7 @@ import { MIKO_BASE_MODE, useBindings, useCommandShortcut, useLeaderActive, useMi
 import { useTuiConfig } from "../../context/tui-config"
 import { readVoiceInputFile, startVoiceInput, type VoiceInput } from "../../util/voice-input"
 import { createVoiceToggleController } from "./voice-toggle"
+import { useTuiI18n } from "../../context/i18n"
 
 export type PromptProps = {
   sessionID?: string
@@ -97,10 +98,6 @@ export type PromptRef = {
   submit(): void
 }
 
-const money = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-})
 
 const DRAFT_RETENTION_MIN_CHARS = 20
 
@@ -155,6 +152,7 @@ export function Prompt(props: PromptProps) {
   const project = useProject()
   const sync = useSync()
   const tuiConfig = useTuiConfig()
+  const i18n = useTuiI18n()
   const dialog = useDialog()
   const toast = useToast()
   const status = createMemo(() => sync.data.session_status?.[props.sessionID ?? ""] ?? { type: "idle" })
@@ -223,7 +221,7 @@ export function Prompt(props: PromptProps) {
   }
 
   function showWarpNotice(name: string) {
-    setWarpNotice(`Warped to ${name}`)
+    setWarpNotice(i18n.t("prompt.warpedTo", { name }))
     setTimeout(() => setWarpNotice(undefined), 4000)
   }
 
@@ -236,7 +234,7 @@ export function Prompt(props: PromptProps) {
       selectWorkspace(undefined)
       setCreatingWorkspace(false)
       toast.show({
-        title: "Creating workspace failed",
+        title: i18n.t("prompt.creatingWorkspaceFailed"),
         message: errorMessage(err),
         variant: "error",
       })
@@ -246,7 +244,7 @@ export function Prompt(props: PromptProps) {
       selectWorkspace(undefined)
       setCreatingWorkspace(false)
       toast.show({
-        title: "Creating workspace failed",
+        title: i18n.t("prompt.creatingWorkspaceFailed"),
         message: errorMessage(result.error ?? "no response"),
         variant: "error",
       })
@@ -356,26 +354,6 @@ export function Prompt(props: PromptProps) {
     return messages.findLast((m): m is UserMessage => m.role === "user")
   })
 
-  const usage = createMemo(() => {
-    if (!props.sessionID) return
-    const session = sync.session.get(props.sessionID)
-    const msg = sync.data.message[props.sessionID] ?? []
-    const last = msg.findLast((item): item is AssistantMessage => item.role === "assistant" && item.tokens.output > 0)
-    if (!last) return
-
-    const tokens =
-      last.tokens.input + last.tokens.output + last.tokens.reasoning + last.tokens.cache.read + last.tokens.cache.write
-    if (tokens <= 0) return
-
-    const model = sync.data.provider.find((item) => item.id === last.providerID)?.models[last.modelID]
-    const pct = model?.limit.context ? `${Math.round((tokens / model.limit.context) * 100)}%` : undefined
-    const cost = session?.cost ?? 0
-    return {
-      context: pct ? `${Locale.number(tokens)} (${pct})` : Locale.number(tokens),
-      cost: cost > 0 ? money.format(cost) : undefined,
-    }
-  })
-
   const [store, setStore] = createStore<{
     prompt: PromptInfo
     mode: "normal" | "shell"
@@ -438,9 +416,9 @@ export function Prompt(props: PromptProps) {
   const promptCommands = createMemo(() =>
     [
       {
-        title: "Clear prompt",
+        title: i18n.t("prompt.clear"),
         name: "prompt.clear",
-        category: "Prompt",
+        category: i18n.t("prompt.category"),
         hidden: true,
         run: () => {
           clearPrompt()
@@ -448,9 +426,9 @@ export function Prompt(props: PromptProps) {
         },
       },
       {
-        title: "Submit prompt",
+        title: i18n.t("prompt.submit"),
         name: "prompt.submit",
-        category: "Prompt",
+        category: i18n.t("prompt.category"),
         hidden: true,
         run: async () => {
           if (!input.focused) return
@@ -461,9 +439,9 @@ export function Prompt(props: PromptProps) {
         },
       },
       {
-        title: "Remove editor context",
+        title: i18n.t("prompt.removeEditorContext"),
         name: "prompt.editor_context.clear",
-        category: "Prompt",
+        category: i18n.t("prompt.category"),
         enabled: Boolean(editorContext()),
         run: () => {
           dismissEditorContext()
@@ -471,9 +449,9 @@ export function Prompt(props: PromptProps) {
         },
       },
       {
-        title: "Paste",
+        title: i18n.t("prompt.paste"),
         name: "prompt.paste",
-        category: "Prompt",
+        category: i18n.t("prompt.category"),
         hidden: true,
         run: async (ctx: CommandContext<Renderable, KeyEvent>) => {
           ctx.event.preventDefault()
@@ -493,9 +471,9 @@ export function Prompt(props: PromptProps) {
         },
       },
       {
-        title: "Interrupt session",
+        title: i18n.t("prompt.interruptSession"),
         name: "session.interrupt",
-        category: "Session",
+        category: i18n.t("session.category"),
         hidden: true,
         enabled: status().type !== "idle",
         run: () => {
@@ -524,10 +502,10 @@ export function Prompt(props: PromptProps) {
         },
       },
       {
-        title: "Toggle voice prompt",
-        desc: "Start or stop recording a voice note",
+        title: i18n.t("prompt.toggleVoice"),
+        desc: i18n.t("prompt.toggleVoiceDesc"),
         name: "prompt.voice.toggle",
-        category: "Prompt",
+        category: i18n.t("prompt.category"),
         run: async (ctx: CommandContext<Renderable, KeyEvent>) => {
           const action = voiceToggle({
             recording: Boolean(voiceProcess || voiceRecording() || voicePressed),
@@ -538,38 +516,38 @@ export function Prompt(props: PromptProps) {
         },
       },
       {
-        title: "Cancel voice prompt",
-        desc: "Cancel the active voice note",
+        title: i18n.t("prompt.cancelVoice"),
+        desc: i18n.t("prompt.cancelVoiceDesc"),
         name: "prompt.voice.cancel",
-        category: "Prompt",
+        category: i18n.t("prompt.category"),
         hidden: true,
         run: async () => {
           await cancelVoicePrompt()
         },
       },
       {
-        title: "Start voice prompt",
-        desc: "Start recording a voice note",
+        title: i18n.t("prompt.startVoice"),
+        desc: i18n.t("prompt.startVoiceDesc"),
         name: "prompt.voice.start",
-        category: "Prompt",
+        category: i18n.t("prompt.category"),
         hidden: true,
         run: async () => {
           await startVoicePrompt()
         },
       },
       {
-        title: "Stop voice prompt",
-        desc: "Stop recording and attach the voice note",
+        title: i18n.t("prompt.stopVoice"),
+        desc: i18n.t("prompt.stopVoiceDesc"),
         name: "prompt.voice.stop",
-        category: "Prompt",
+        category: i18n.t("prompt.category"),
         hidden: true,
         run: async () => {
           await stopVoicePrompt()
         },
       },
       {
-        title: "Open editor",
-        category: "Session",
+        title: i18n.t("prompt.editor"),
+        category: i18n.t("session.category"),
         name: "prompt.editor",
         slashName: "editor",
         run: async () => {
@@ -659,9 +637,9 @@ export function Prompt(props: PromptProps) {
         },
       },
       {
-        title: "Skills",
+        title: i18n.t("prompt.skills"),
         name: "prompt.skills",
-        category: "Prompt",
+        category: i18n.t("prompt.category"),
         slashName: "skills",
         run: () => {
           dialog.replace(() => (
@@ -679,10 +657,10 @@ export function Prompt(props: PromptProps) {
         },
       },
       {
-        title: "Warp",
-        desc: "Change the workspace for the session",
+        title: i18n.t("prompt.warp"),
+        desc: i18n.t("prompt.warpDesc"),
         name: "workspace.set",
-        category: "Session",
+        category: i18n.t("session.category"),
         enabled: Flag.MIKO_EXPERIMENTAL_WORKSPACES,
         slashName: "warp",
         run: () => {
@@ -1879,9 +1857,9 @@ export function Prompt(props: PromptProps) {
           <Switch>
             <Match when={voiceRecording()}>
               <box paddingLeft={3} flexDirection="row" gap={1}>
-                <text fg={theme.error}>● REC</text>
-                <text fg={theme.textMuted}>alt+v stop</text>
-                <text fg={theme.textMuted}>esc cancel</text>
+                <text fg={theme.error}>● {i18n.t("prompt.voiceRecord")}</text>
+                <text fg={theme.textMuted}>alt+v {i18n.t("prompt.voiceStop")}</text>
+                <text fg={theme.textMuted}>esc {i18n.t("prompt.voiceCancel")}</text>
               </box>
             </Match>
             <Match when={voiceError()}>
@@ -1939,7 +1917,7 @@ export function Prompt(props: PromptProps) {
                         const r = retry()
                         if (!r) return
                         if (isTruncated()) {
-                          void DialogAlert.show(dialog, "Retry Error", r.message)
+                          void DialogAlert.show(dialog, i18n.t("prompt.retryError"), r.message)
                         }
                       }
 
@@ -1966,7 +1944,7 @@ export function Prompt(props: PromptProps) {
                 <text fg={store.interrupt > 0 ? theme.primary : theme.text}>
                   esc{" "}
                   <span style={{ fg: store.interrupt > 0 ? theme.primary : theme.textMuted }}>
-                    {store.interrupt > 0 ? "again to interrupt" : "interrupt"}
+                    {store.interrupt > 0 ? i18n.t("prompt.interruptAgain") : i18n.t("prompt.interrupt")}
                   </span>
                 </text>
               </box>
@@ -1989,16 +1967,22 @@ export function Prompt(props: PromptProps) {
                       const item = workspace()
                       if (item.type === "new") {
                         if (workspaceCreating())
-                          return `Creating ${item.workspaceType}${".".repeat(workspaceCreatingDots())}`
+                          return i18n.t("prompt.creatingWorkspace", {
+                            type: item.workspaceType,
+                            dots: ".".repeat(workspaceCreatingDots()),
+                          })
                         return (
                           <>
-                            Workspace <span style={{ fg: theme.textMuted }}>(new {item.workspaceType})</span>
+                            {i18n.t("prompt.workspace")}{" "}
+                            <span style={{ fg: theme.textMuted }}>
+                              {i18n.t("prompt.newWorkspace", { type: item.workspaceType })}
+                            </span>
                           </>
                         )
                       }
                       return (
                         <>
-                          Workspace <span style={{ fg: theme.textMuted }}>{item.workspaceName}</span>
+                          {i18n.t("prompt.workspace")} <span style={{ fg: theme.textMuted }}>{item.workspaceName}</span>
                         </>
                       )
                     })()}
@@ -2017,30 +2001,21 @@ export function Prompt(props: PromptProps) {
               </Show>
               <Switch>
                 <Match when={store.mode === "normal"}>
-                  <Switch>
-                    <Match when={usage()}>
-                      {(item) => (
-                        <text fg={theme.textMuted} wrapMode="none">
-                          {[item().context, item().cost].filter(Boolean).join(" · ")}
-                        </text>
-                      )}
-                    </Match>
-                    <Match when={true}>
-                      <text fg={permissionMode() === "auto-approve" ? theme.success : theme.text}>
-                        tab{" "}
-                        <span style={{ fg: permissionMode() === "auto-approve" ? theme.success : theme.textMuted }}>
-                          {permissionMode() === "auto-approve" ? "auto-approve on" : "auto-approve"}
-                        </span>
-                      </text>
-                    </Match>
-                  </Switch>
+                  <text fg={permissionMode() === "auto-approve" ? theme.success : theme.text}>
+                    tab{" "}
+                    <span style={{ fg: permissionMode() === "auto-approve" ? theme.success : theme.textMuted }}>
+                      {permissionMode() === "auto-approve"
+                        ? i18n.t("prompt.autoApproveOn")
+                        : i18n.t("prompt.autoApprove")}
+                    </span>
+                  </text>
                   <text fg={theme.text}>
-                    {paletteShortcut()} <span style={{ fg: theme.textMuted }}>commands</span>
+                  {paletteShortcut()} <span style={{ fg: theme.textMuted }}>{i18n.t("prompt.commands")}</span>
                   </text>
                 </Match>
                 <Match when={store.mode === "shell"}>
                   <text fg={theme.text}>
-                    esc <span style={{ fg: theme.textMuted }}>exit shell mode</span>
+                  esc <span style={{ fg: theme.textMuted }}>{i18n.t("prompt.exitShellMode")}</span>
                   </text>
                 </Match>
               </Switch>

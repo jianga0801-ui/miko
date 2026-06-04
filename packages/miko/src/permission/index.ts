@@ -248,12 +248,27 @@ export const layer = Layer.effect(
       yield* Deferred.succeed(existing.deferred, undefined)
       if (input.reply === "once") return
 
-      for (const pattern of existing.info.always) {
-        approved.push({
-          permission: existing.info.permission,
-          pattern,
-          action: "allow",
-        })
+      if (existing.info.always.length > 0) {
+        for (const pattern of existing.info.always) {
+          approved.push({
+            permission: existing.info.permission,
+            pattern,
+            action: "allow",
+          })
+        }
+
+        // Persist the approved ruleset so "always" decisions survive a restart;
+        // the in-memory `approved` array is otherwise reloaded empty from the DB.
+        const ctx = yield* InstanceState.context
+        yield* db
+          .insert(PermissionTable)
+          .values({ project_id: ctx.project.id, data: approved, time_updated: Date.now() })
+          .onConflictDoUpdate({
+            target: PermissionTable.project_id,
+            set: { data: approved, time_updated: Date.now() },
+          })
+          .run()
+          .pipe(Effect.orDie)
       }
 
       for (const [id, item] of pending.entries()) {

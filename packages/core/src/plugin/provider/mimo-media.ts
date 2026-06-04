@@ -128,6 +128,49 @@ function injectWebSearchTool(body: any, tool: MimoWebSearchTool): boolean {
   return true
 }
 
+function normalizeMimoChatParams(body: any): boolean {
+  let changed = false
+
+  for (const key of ["reasoning_effort", "reasoningEffort", "reasoning", "enable_thinking"]) {
+    if (body[key] !== undefined) {
+      delete body[key]
+      changed = true
+    }
+  }
+
+  if (body.extra_body && typeof body.extra_body === "object" && !Array.isArray(body.extra_body)) {
+    for (const [key, value] of Object.entries(body.extra_body)) {
+      if (body[key] === undefined) body[key] = value
+    }
+    delete body.extra_body
+    changed = true
+  }
+
+  if (body.max_tokens !== undefined) {
+    if (body.max_completion_tokens === undefined) body.max_completion_tokens = body.max_tokens
+    delete body.max_tokens
+    changed = true
+  }
+
+  if (body.thinking === undefined) {
+    body.thinking = { type: "enabled" }
+    changed = true
+  }
+
+  if (typeof body.temperature === "number") {
+    const next = Math.max(0.1, Math.min(0.2, body.temperature))
+    if (next !== body.temperature) {
+      body.temperature = next
+      changed = true
+    }
+  } else {
+    body.temperature = 0.1
+    changed = true
+  }
+
+  return changed
+}
+
 /**
  * Rewrite an OpenAI-compatible chat request body, replacing any sentinel text
  * parts in user messages with MiMo audio/video content blocks. Returns the
@@ -199,17 +242,7 @@ export function rewriteMimoRequestBody(bodyText: string, options?: { webSearch?:
   }
 
   if (body.model && (body.model.includes("mimo") || body.model.includes("xiaomi"))) {
-    body.extra_body = {
-      ...body.extra_body,
-      thinking: { type: "enabled" }
-    }
-
-    if (typeof body.temperature === "number") {
-      body.temperature = Math.max(0.1, Math.min(0.2, body.temperature))
-    } else {
-      body.temperature = 0.1
-    }
-    changed = true
+    if (normalizeMimoChatParams(body)) changed = true
   }
 
   if (options?.webSearch && injectWebSearchTool(body, options.webSearch)) changed = true

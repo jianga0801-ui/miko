@@ -19,6 +19,7 @@ import { Locale } from "@/util/locale"
 import { getScrollAcceleration } from "../util/scroll"
 import { useTuiConfig } from "../context/tui-config"
 import { formatKeyBindings, useBindings, useKeymapSelector } from "../keymap"
+import { useTuiI18n } from "../context/i18n"
 
 export interface DialogSelectProps<T> {
   title: string
@@ -72,6 +73,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
   const dialog = useDialog()
   const { theme } = useTheme()
   const tuiConfig = useTuiConfig()
+  const i18n = useTuiI18n()
   const scrollAcceleration = createMemo(() => getScrollAcceleration(tuiConfig))
 
   const [store, setStore] = createStore({
@@ -241,8 +243,8 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
       commands: [
         {
           name: "dialog.select.prev",
-          title: "Previous item",
-          category: "Dialog",
+          title: i18n.t("dialog.previousItem"),
+          category: i18n.t("dialog.category"),
           run() {
             setStore("input", "keyboard")
             move(-1)
@@ -250,8 +252,8 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
         },
         {
           name: "dialog.select.next",
-          title: "Next item",
-          category: "Dialog",
+          title: i18n.t("dialog.nextItem"),
+          category: i18n.t("dialog.category"),
           run() {
             setStore("input", "keyboard")
             move(1)
@@ -259,8 +261,8 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
         },
         {
           name: "dialog.select.page_up",
-          title: "Page up",
-          category: "Dialog",
+          title: i18n.t("dialog.pageUp"),
+          category: i18n.t("dialog.category"),
           run() {
             setStore("input", "keyboard")
             move(-10)
@@ -268,8 +270,8 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
         },
         {
           name: "dialog.select.page_down",
-          title: "Page down",
-          category: "Dialog",
+          title: i18n.t("dialog.pageDown"),
+          category: i18n.t("dialog.category"),
           run() {
             setStore("input", "keyboard")
             move(10)
@@ -277,8 +279,8 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
         },
         {
           name: "dialog.select.home",
-          title: "First item",
-          category: "Dialog",
+          title: i18n.t("dialog.firstItem"),
+          category: i18n.t("dialog.category"),
           run() {
             setStore("input", "keyboard")
             moveTo(0)
@@ -286,8 +288,8 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
         },
         {
           name: "dialog.select.end",
-          title: "Last item",
-          category: "Dialog",
+          title: i18n.t("dialog.lastItem"),
+          category: i18n.t("dialog.category"),
           run() {
             setStore("input", "keyboard")
             moveTo(flat().length - 1)
@@ -295,14 +297,14 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
         },
         {
           name: "dialog.select.submit",
-          title: "Select item",
-          category: "Dialog",
+          title: i18n.t("dialog.selectItem"),
+          category: i18n.t("dialog.category"),
           run: submit,
         },
         ...enabledActions.map((item) => ({
           name: item.command,
           title: item.title,
-          category: "Dialog",
+          category: i18n.t("dialog.category"),
           run() {
             setStore("input", "keyboard")
             const option = selected()
@@ -358,7 +360,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
       <box paddingLeft={4} paddingRight={4}>
         <box flexDirection="row" justifyContent="space-between">
           <text fg={theme.text} attributes={TextAttributes.BOLD}>
-            {props.title}
+            {i18n.command(props.title) ?? props.title}
           </text>
           <text fg={theme.textMuted} onMouseUp={() => dialog.clear()}>
             esc
@@ -385,7 +387,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
                   input.focus()
                 }, 1)
               }}
-              placeholder={props.placeholder ?? "Search"}
+              placeholder={props.placeholder ?? i18n.t("common.search")}
               placeholderColor={theme.textMuted}
             />
           </box>
@@ -396,7 +398,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
           when={grouped().length > 0}
           fallback={
             <box paddingLeft={4} paddingRight={4} paddingTop={1}>
-              <text fg={theme.textMuted}>No results found</text>
+              <text fg={theme.textMuted}>{i18n.t("common.noResults")}</text>
             </box>
           }
         >
@@ -417,7 +419,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
                         when={options[0]?.categoryView}
                         fallback={
                           <text fg={theme.accent} attributes={TextAttributes.BOLD}>
-                            {category}
+                            {i18n.command(category) ?? category}
                           </text>
                         }
                       >
@@ -507,7 +509,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
               {(item) => (
                 <text>
                   <span style={{ fg: theme.text }}>
-                    <b>{item.title}</b>{" "}
+                    <b>{i18n.command(item.title) ?? item.title}</b>{" "}
                   </span>
                   <span style={{ fg: theme.textMuted }}>{item.label}</span>
                 </text>
@@ -519,7 +521,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
               {(item) => (
                 <text>
                   <span style={{ fg: theme.text }}>
-                    <b>{item.title}</b>{" "}
+                    <b>{i18n.command(item.title) ?? item.title}</b>{" "}
                   </span>
                   <span style={{ fg: theme.textMuted }}>{item.label}</span>
                 </text>

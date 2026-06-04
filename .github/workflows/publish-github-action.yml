@@ -1,11 +1,8 @@
 name: publish-github-action
 
 on:
+  # Manual-only: this fork does not publish the GitHub Action.
   workflow_dispatch:
-  push:
-    tags:
-      - "github-v*.*.*"
-      - "!github-v1"
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 

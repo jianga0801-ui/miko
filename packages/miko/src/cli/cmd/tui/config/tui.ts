@@ -26,6 +26,7 @@ import { Npm } from "@miko-ai/core/npm"
 import type { DeepMutable } from "@miko-ai/core/schema"
 import type { TuiAttentionSoundName } from "@miko-ai/plugin/tui"
 import { FormatError, FormatUnknownError } from "@/cli/error"
+import { resolveTuiLanguage, type TuiLanguage, type TuiLanguageConfig } from "../i18n"
 
 const log = Log.create({ service: "tui.config" })
 
@@ -37,7 +38,7 @@ type Acc = {
   plugin_origins: ConfigPlugin.Origin[]
 }
 
-export type Resolved = Omit<Info, "attention" | "keybinds" | "leader_timeout"> & {
+export type Resolved = Omit<Info, "attention" | "keybinds" | "language" | "leader_timeout"> & {
   attention: {
     enabled: boolean
     notifications: boolean
@@ -47,6 +48,7 @@ export type Resolved = Omit<Info, "attention" | "keybinds" | "leader_timeout"> &
     sounds: Partial<Record<TuiAttentionSoundName, string>>
   }
   keybinds: TuiKeybind.BindingLookupView
+  language?: TuiLanguage
   leader_timeout: number
   // Internal resolved plugin list used by runtime loading.
   plugin_origins?: ConfigPlugin.Origin[]
@@ -254,6 +256,7 @@ const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx: { directory: 
       commandMap: TuiKeybind.CommandMap,
       bindingDefaults: TuiKeybind.bindingDefaults(),
     }),
+    language: resolveTuiLanguage(acc.result.language as TuiLanguageConfig | undefined),
     leader_timeout: acc.result.leader_timeout ?? KeymapLeaderTimeoutDefault,
     plugin_origins: acc.plugin_origins.length ? acc.plugin_origins : undefined,
   }

@@ -281,7 +281,7 @@ export default function () {
                             <div class="flex gap-3 items-center">
                               <IconButton
                                 as={"a"}
-                                href="https://github.com/anomalyco/miko"
+                                href="https://github.com/jianga0801-ui/miko"
                                 target="_blank"
                                 icon="github"
                                 variant="ghost"

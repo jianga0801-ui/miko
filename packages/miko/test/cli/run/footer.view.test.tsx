@@ -60,6 +60,7 @@ function model(input: {
   status?: "active" | "deprecated"
   cost?: number
   variants?: Record<string, Record<string, never>>
+  textOutput?: boolean
 }) {
   return {
     id: input.id,
@@ -83,7 +84,7 @@ function model(input: {
         pdf: true,
       },
       output: {
-        text: true,
+        text: input.textOutput ?? true,
         audio: false,
         image: false,
         video: false,
@@ -121,6 +122,7 @@ function provider() {
     models: {
       "gpt-5": model({ id: "gpt-5", name: "GPT-5", variants: { high: {}, minimal: {} } }),
       "gpt-free": model({ id: "gpt-free", name: "GPT Free", cost: 0 }),
+      tts: model({ id: "tts", name: "TTS", textOutput: false }),
       old: model({ id: "old", name: "Old Model", status: "deprecated" }),
     },
   } satisfies RunProvider
@@ -483,6 +485,7 @@ test("direct model panel renders current model selector", async () => {
     expect(frame).toContain("current")
     expect(frame).toContain("GPT Free")
     expect(frame).toContain("Free")
+    expect(frame).not.toContain("TTS")
     expect(frame).not.toContain("Old Model")
   } finally {
     app.renderer.destroy()

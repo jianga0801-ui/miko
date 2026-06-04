@@ -141,7 +141,12 @@ export const fromWebSocket = (
 ): Effect.Effect<WebSocketConnection, LLMError> =>
   Effect.gen(function* () {
     yield* waitOpen(ws, input)
-    const messages = yield* Queue.bounded<string | Uint8Array, LLMError | Cause.Done<void>>(128)
+    // The `onMessage` listener below is a synchronous DOM event handler, so it
+    // cannot apply backpressure (it can't await a full queue). A bounded queue
+    // would force `offerUnsafe` to silently drop frames once full, corrupting
+    // the streamed LLM response. Use an unbounded queue — the producer is a
+    // remote server streaming one finite response per request.
+    const messages = yield* Queue.unbounded<string | Uint8Array, LLMError | Cause.Done<void>>()
 
     const onMessage = (event: MessageEvent) => {
       if (typeof event.data === "string") return Queue.offerUnsafe(messages, event.data)

@@ -34,6 +34,14 @@ export const layer: Layer.Layer<Service, never, AppFileSystem.Service | Path.Pat
       const http = HttpClient.filterStatusOk(withTransientReadRetry(yield* HttpClient.HttpClient))
       const cache = path.join(Global.Path.cache, "skills")
 
+      // Names and file paths in the remote index.json are untrusted. Reject any
+      // entry that would resolve outside its intended directory so a malicious
+      // (or compromised) skill host cannot write through `../` path traversal.
+      const contained = (base: string, child: string) => {
+        const resolved = path.resolve(base, child)
+        return resolved === base || resolved.startsWith(base + path.sep)
+      }
+
       const download = Effect.fn("Discovery.download")(function* (url: string, dest: string) {
         if (yield* fs.exists(dest).pipe(Effect.orDie)) return true
 
@@ -77,6 +85,10 @@ export const layer: Layer.Layer<Service, never, AppFileSystem.Service | Path.Pat
             log.warn("skill entry missing SKILL.md", { url: index, skill: skill.name })
             return false
           }
+          if (!contained(cache, skill.name)) {
+            log.warn("skill name escapes cache directory", { url: index, skill: skill.name })
+            return false
+          }
           return true
         })
 
@@ -87,7 +99,11 @@ export const layer: Layer.Layer<Service, never, AppFileSystem.Service | Path.Pat
               const root = path.join(cache, skill.name)
 
               yield* Effect.forEach(
-                skill.files,
+                skill.files.filter((file) => {
+                  if (contained(root, file)) return true
+                  log.warn("skill file escapes skill directory", { url: index, skill: skill.name, file })
+                  return false
+                }),
                 (file) => download(new URL(file, `${host}/${skill.name}/`).href, path.join(root, file)),
                 {
                   concurrency: fileConcurrency,

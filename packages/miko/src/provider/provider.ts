@@ -30,7 +30,7 @@ import { ProviderV2 } from "@miko-ai/core/provider"
 import { ModelStatus } from "./model-status"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 import { ProviderError } from "./error"
-import { filterMimoProviders, isMimoProviderID } from "./mimo-setup"
+import { filterMimoProviders, isMimoProviderID, isSupportedMimoModelID } from "./mimo-setup"
 
 const log = Log.create({ service: "provider" })
 const OPENAI_HEADER_TIMEOUT_DEFAULT = 10_000
@@ -1100,6 +1100,14 @@ function cost(c: ModelsDev.Model["cost"]): Model["cost"] {
   return result
 }
 
+function isMimoNativeMediaModel(modelID: string) {
+  return modelID === "mimo-v2.5"
+}
+
+function isAllowedProviderModel(providerID: string, modelID: string) {
+  return !isMimoProviderID(providerID) || isSupportedMimoModelID(modelID)
+}
+
 function fromModelsDevModel(provider: ModelsDev.Provider, model: ModelsDev.Model): Model {
   const base: Model = {
     id: ProviderV2.ModelID.make(model.id),
@@ -1127,13 +1135,15 @@ function fromModelsDevModel(provider: ModelsDev.Provider, model: ModelsDev.Model
       toolcall: model.tool_call ?? true,
       input: {
         text: model.modalities?.input?.includes("text") ?? false,
-        // MiMo image input rides the standard image_url path (the AI SDK emits
-        // it natively and MiMo accepts it). Audio/video stay gated off: the AI
-        // SDK openai-compatible provider throws on video and reshapes audio, so
-        // those are handled via the mimo_analyze_media tool, not attachments.
-        audio: isMimoProviderID(provider.id) ? false : (model.modalities?.input?.includes("audio") ?? false),
+        // MiMo audio/video are native to mimo-v2.5, but need
+        // provider-transform sentinel encoding before the AI SDK sees them.
+        audio: isMimoProviderID(provider.id)
+          ? isMimoNativeMediaModel(model.id)
+          : (model.modalities?.input?.includes("audio") ?? false),
         image: model.modalities?.input?.includes("image") ?? false,
-        video: isMimoProviderID(provider.id) ? false : (model.modalities?.input?.includes("video") ?? false),
+        video: isMimoProviderID(provider.id)
+          ? isMimoNativeMediaModel(model.id)
+          : (model.modalities?.input?.includes("video") ?? false),
         pdf: isMimoProviderID(provider.id) ? false : (model.modalities?.input?.includes("pdf") ?? false),
       },
       output: {
@@ -1164,9 +1174,11 @@ function fromModelsDevModel(provider: ModelsDev.Provider, model: ModelsDev.Model
 export function fromModelsDevProvider(provider: ModelsDev.Provider): Info {
   const models: Record<string, Model> = {}
   for (const [key, model] of Object.entries(provider.models)) {
+    if (!isAllowedProviderModel(provider.id, model.id)) continue
     models[key] = fromModelsDevModel(provider, model)
     for (const [mode, opts] of Object.entries(model.experimental?.modes ?? {})) {
       const id = `${model.id}-${mode}`
+      if (!isAllowedProviderModel(provider.id, id)) continue
       const base = fromModelsDevModel(provider, model)
       models[id] = {
         ...base,
@@ -1339,6 +1351,7 @@ export const layer = Layer.effect(
           for (const [modelID, model] of Object.entries(provider.models ?? {})) {
             const existingModel = parsed.models[model.id ?? modelID]
             const apiID = model.id ?? existingModel?.api.id ?? modelID
+            if (!isAllowedProviderModel(providerID, apiID)) continue
             const apiNpm =
               model.provider?.npm ??
               provider.npm ??
@@ -1367,15 +1380,14 @@ export const layer = Layer.effect(
                 toolcall: model.tool_call ?? existingModel?.capabilities.toolcall ?? true,
                 input: {
                   text: model.modalities?.input?.includes("text") ?? existingModel?.capabilities.input.text ?? true,
-                  // MiMo image input rides the standard image_url path; audio/
-                  // video stay gated off (AI SDK can't emit them) and are handled
-                  // by the mimo_analyze_media tool instead.
+                  // MiMo audio/video are native to mimo-v2.5,
+                  // with provider-transform sentinel encoding for the AI SDK.
                   audio: isMimoProviderID(providerID)
-                    ? false
+                    ? isMimoNativeMediaModel(apiID)
                     : (model.modalities?.input?.includes("audio") ?? existingModel?.capabilities.input.audio ?? false),
                   image: model.modalities?.input?.includes("image") ?? existingModel?.capabilities.input.image ?? false,
                   video: isMimoProviderID(providerID)
-                    ? false
+                    ? isMimoNativeMediaModel(apiID)
                     : (model.modalities?.input?.includes("video") ?? existingModel?.capabilities.input.video ?? false),
                   pdf: isMimoProviderID(providerID)
                     ? false

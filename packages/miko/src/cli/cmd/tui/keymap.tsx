@@ -9,6 +9,7 @@ import { KeymapProvider, useKeymap, useKeymapSelector, useBindings } from "@open
 import { createMemo, type Accessor } from "solid-js"
 import type { TuiConfig } from "./config/tui"
 import { useTuiConfig } from "./context/tui-config"
+import { useTuiI18n } from "./context/i18n"
 import { TuiKeybind } from "./config/keybind"
 
 export const LEADER_TOKEN = "leader"
@@ -242,6 +243,7 @@ export function useLeaderActive(): Accessor<boolean> {
 
 export function useCommandSlashes(): Accessor<readonly CommandSlashEntry[]> {
   const keymap = useMikoKeymap()
+  const i18n = useTuiI18n()
   const entries = useKeymapSelector((keymap: OpenTuiKeymap) =>
     keymap.getCommandEntries({
       visibility: "reachable",
@@ -257,12 +259,13 @@ export function useCommandSlashes(): Accessor<readonly CommandSlashEntry[]> {
       const slashAliases = entry.command.slashAliases
       return {
         display: `/${slashName}`,
-        description:
+        description: i18n.command(
           typeof entry.command.desc === "string"
             ? entry.command.desc
             : typeof entry.command.title === "string"
               ? entry.command.title
               : undefined,
+        ),
         aliases: Array.isArray(slashAliases)
           ? slashAliases.filter((alias): alias is string => typeof alias === "string").map((alias) => `/${alias}`)
           : undefined,

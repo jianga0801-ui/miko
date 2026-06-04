@@ -133,6 +133,12 @@ function hydrate(db: Database.Interface["db"], rows: (typeof MessageTable.$infer
   })
 }
 
+type ToModelMessagesOptions = { stripMedia?: boolean; stripStaleMedia?: boolean; toolOutputMaxChars?: number }
+
+function isModelInputMedia(mime: string) {
+  return isMedia(mime) || mime.startsWith("audio/") || mime.startsWith("video/")
+}
+
 function providerMeta(metadata: Record<string, any> | undefined) {
   if (!metadata) return undefined
   const { providerExecuted: _, ...rest } = metadata
@@ -142,10 +148,18 @@ function providerMeta(metadata: Record<string, any> | undefined) {
 export const toModelMessagesEffect = Effect.fnUntraced(function* (
   input: WithParts[],
   model: Provider.Model,
-  options?: { stripMedia?: boolean; toolOutputMaxChars?: number },
+  options?: ToModelMessagesOptions,
 ) {
   const result: UIMessage[] = []
   const toolNames = new Set<string>()
+  const latestMediaUserIndex = iife(() => {
+    if (!options?.stripStaleMedia) return -1
+    for (let i = input.length - 1; i >= 0; i--) {
+      const msg = input[i]
+      if (msg?.info.role === "user" && msg.parts.some((part) => part.type === "file" && isModelInputMedia(part.mime))) return i
+    }
+    return -1
+  })
   // Track media from tool results that need to be injected as user messages
   // for providers that don't support that media type in tool results.
   //
@@ -202,7 +216,7 @@ export const toModelMessagesEffect = Effect.fnUntraced(function* (
     return { type: "json", value: output as never }
   }
 
-  for (const msg of input) {
+  for (const [messageIndex, msg] of input.entries()) {
     if (msg.parts.length === 0) continue
 
     if (msg.info.role === "user") {
@@ -220,7 +234,10 @@ export const toModelMessagesEffect = Effect.fnUntraced(function* (
           })
         // text/plain and directory files are converted into text parts, ignore them
         if (part.type === "file" && part.mime !== "text/plain" && part.mime !== "application/x-directory") {
-          if (options?.stripMedia && isMedia(part.mime)) {
+          if (
+            (options?.stripMedia || (options?.stripStaleMedia && messageIndex !== latestMediaUserIndex)) &&
+            isModelInputMedia(part.mime)
+          ) {
             userMessage.parts.push({
               type: "text",
               text: `[Attached ${part.mime}: ${part.filename ?? "file"}]`,
@@ -427,7 +444,7 @@ export const toModelMessagesEffect = Effect.fnUntraced(function* (
 export function toModelMessages(
   input: WithParts[],
   model: Provider.Model,
-  options?: { stripMedia?: boolean; toolOutputMaxChars?: number },
+  options?: ToModelMessagesOptions,
 ): Promise<ModelMessage[]> {
   return Effect.runPromise(toModelMessagesEffect(input, model, options).pipe(Effect.provide(EffectLogger.layer)))
 }

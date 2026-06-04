@@ -419,6 +419,7 @@ type TuiAttentionConfigView = {
 type TuiConfigView = Pick<PluginConfig, "$schema" | "theme" | "plugin"> &
   NonNullable<PluginConfig["tui"]> & {
     leader_timeout: number
+    language?: "en" | "zh-CN"
     attention: TuiAttentionConfigView
     plugin_enabled?: Record<string, boolean>
     keybinds: TuiBindingLookupView

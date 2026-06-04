@@ -91,6 +91,7 @@ import { SessionRetry } from "@/session/retry"
 import { getRevertDiffFiles } from "../../util/revert-diff"
 import { MIKO_BASE_MODE, useBindings, useCommandShortcut, useMikoKeymap } from "../../keymap"
 import { PathFormatterProvider, usePathFormatter } from "../../context/path-format"
+import { useTuiI18n } from "../../context/i18n"
 
 addDefaultParsers(parsers.parsers)
 
@@ -187,6 +188,7 @@ export function Session() {
   const event = useEvent()
   const project = useProject()
   const tuiConfig = useTuiConfig()
+  const i18n = useTuiI18n()
   const kv = useKV()
   const { theme } = useTheme()
   const promptRef = usePromptRef()
@@ -421,7 +423,7 @@ export function Session() {
       sessionID,
     })
     const status = sync.data.session_status[sessionID]
-    if (status?.type === "retry") void DialogAlert.show(dialog, "Retry Error", status.message)
+    if (status?.type === "retry") void DialogAlert.show(dialog, i18n.t("prompt.retryError"), status.message)
   }
 
   function moveFirstChild() {
@@ -2177,6 +2179,7 @@ function Task(props: ToolProps<typeof TaskTool>) {
   const { navigate } = useRoute()
   const sync = useSync()
   const dialog = useDialog()
+  const i18n = useTuiI18n()
 
   onMount(() => {
     if (props.metadata.sessionId && !sync.data.message[props.metadata.sessionId]?.length)
@@ -2256,7 +2259,7 @@ function Task(props: ToolProps<typeof TaskTool>) {
           navigate({ type: "session", sessionID: props.metadata.sessionId })
         }
         const status = retry()
-        if (status) void DialogAlert.show(dialog, "Retry Error", status.message)
+        if (status) void DialogAlert.show(dialog, i18n.t("prompt.retryError"), status.message)
       }}
     >
       {content()}

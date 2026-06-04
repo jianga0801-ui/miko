@@ -3,16 +3,24 @@ import type { InternalTuiPlugin } from "../../plugin/internal"
 import { createMemo, Show } from "solid-js"
 import { Tips } from "./tips-view"
 import { useBindings } from "../../keymap"
+import { createTuiI18n, resolveTuiLanguage, TuiLanguageKVKey, type TuiLanguageConfig } from "../../i18n"
 
 const id = "internal:home-tips"
 
 function View(props: { api: TuiPluginApi; hidden: boolean; show: boolean; connected: boolean }) {
+  const t = (...args: Parameters<ReturnType<typeof createTuiI18n>["t"]>) =>
+    createTuiI18n(
+      resolveTuiLanguage(props.api.kv.get(TuiLanguageKVKey, props.api.tuiConfig.language) as
+        | TuiLanguageConfig
+        | undefined),
+    ).t(...args)
+
   useBindings(() => ({
     commands: [
       {
         name: "tips.toggle",
-        title: props.hidden ? "Show tips" : "Hide tips",
-        category: "System",
+        title: props.hidden ? t("tips.show") : t("tips.hide"),
+        category: t("system.category"),
         namespace: "palette",
         run() {
           props.api.kv.set("tips_hidden", !props.api.kv.get("tips_hidden", false))

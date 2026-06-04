@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import { ProviderTransform } from "@/provider/transform"
 import { ProviderV2 } from "@miko-ai/core/provider"
+import { decodeMimoMediaSentinel, rewriteMimoRequestBody } from "@miko-ai/core/plugin/provider/mimo-media"
 
 describe("ProviderTransform.options - setCacheKey", () => {
   const sessionID = "test-session-123"
@@ -1439,6 +1440,53 @@ describe("ProviderTransform.message - empty image handling", () => {
     })
   })
 
+  test("should encode MiMo native audio and video for provider request rewriting", () => {
+    const msgs = [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "describe these" },
+          { type: "file", mediaType: "audio/wav", filename: "voice.wav", data: "https://x/voice.wav" },
+          { type: "file", mediaType: "video/mp4", filename: "clip.mp4", data: "https://x/clip.mp4" },
+        ],
+      },
+    ] as any[]
+    const model = {
+      ...mockModel,
+      id: "mimo-v2.5",
+      providerID: "xiaomi-token-plan-cn",
+      api: { ...mockModel.api, id: "mimo-v2.5", npm: "@ai-sdk/openai-compatible" },
+      capabilities: {
+        ...mockModel.capabilities,
+        input: { ...mockModel.capabilities.input, audio: true, image: true, video: true },
+      },
+    }
+
+    const result = ProviderTransform.message(msgs, model, {})
+    const content = result[0].content as any[]
+
+    expect(content[0]).toEqual({ type: "text", text: "describe these" })
+    expect(decodeMimoMediaSentinel(content[1].text)).toEqual({
+      kind: "audio",
+      url: "https://x/voice.wav",
+      mediaType: "audio/wav",
+    })
+    expect(decodeMimoMediaSentinel(content[2].text)).toEqual({
+      kind: "video",
+      url: "https://x/clip.mp4",
+      mediaType: "video/mp4",
+    })
+
+    const body = JSON.parse(
+      rewriteMimoRequestBody(JSON.stringify({ model: "mimo-v2.5", messages: [{ role: "user", content }] })),
+    )
+    expect(body.messages[0].content).toEqual([
+      { type: "text", text: "describe these" },
+      { type: "input_audio", input_audio: { data: "https://x/voice.wav" } },
+      { type: "video_url", video_url: { url: "https://x/clip.mp4" }, fps: 2, media_resolution: "default" },
+    ])
+  })
+
   test("should handle mixed valid and empty images", () => {
     const validBase64 =
       "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
@@ -2445,6 +2493,22 @@ describe("ProviderTransform.variants", () => {
     headers: {},
     release_date: "2024-01-01",
     ...overrides,
+  })
+
+  test("MiMo does not inherit generic OpenAI-compatible reasoning effort variants", () => {
+    const result = ProviderTransform.variants(
+      createMockModel({
+        id: "mimo-v2.5",
+        providerID: "xiaomi-token-plan-cn",
+        api: {
+          id: "mimo-v2.5",
+          url: "https://token-plan-cn.xiaomimimo.com/v1",
+          npm: "@ai-sdk/openai-compatible",
+        },
+      }),
+    )
+
+    expect(result).toEqual({})
   })
 
   test("returns empty object when model has no reasoning capabilities", () => {

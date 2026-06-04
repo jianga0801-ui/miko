@@ -76,12 +76,9 @@ export const MimoPlugin = PluginV2.define({
         //  - mimo-v2.5-pro: text LLM, 1M context / 128K output
         //  - mimo-v2.5:     OMNI model, 1M context / 128K output
         // Modalities reflect what is *attachable* on the OpenAI-compatible chat
-        // path: only mimo-v2.5 takes image input (standard image_url, which the
-        // AI SDK emits natively). Audio/video are NOT declared here — the AI SDK
-        // openai-compatible provider throws on video and reshapes audio, so MiMo
-        // audio/video understanding is exposed via the mimo_analyze_media tool
-        // instead, not as message attachments. Both models are tiered by context
-        // length (<=256K vs 256K-1M).
+        // path: mimo-v2.5 takes image/audio/video input. Images are standard
+        // image_url; audio/video are carried as sentinel text parts through the
+        // AI SDK and rewritten to MiMo's official blocks by mimo-media fetch.
         const mimoModels = [
           {
             id: "mimo-v2.5-pro",
@@ -94,7 +91,7 @@ export const MimoPlugin = PluginV2.define({
           {
             id: "mimo-v2.5",
             name: "Xiaomi MiMo (Omni)",
-            input: ["text", "image"] as const,
+            input: ["text", "image", "audio", "video"] as const,
             context: 1_048_576,
             output: 131_072,
             price: { input: 0.14, cache: 0.0028, output: 0.28 },

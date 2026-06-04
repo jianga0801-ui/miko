@@ -8,6 +8,7 @@ import { Tool } from "@/tool/tool"
 import { ToolJsonSchema } from "@/tool/json-schema"
 import { ToolRegistry } from "@/tool/registry"
 import { Truncate } from "@/tool/truncate"
+import { MimoAnalyzeMediaTool } from "@/tool/mimo_analyze_media"
 
 import { Plugin } from "@/plugin"
 import type { TaskPromptOps } from "@/tool/task"
@@ -22,6 +23,25 @@ import { EffectBridge } from "@/effect/bridge"
 import { ProviderV2 } from "@miko-ai/core/provider"
 
 const log = Log.create({ service: "session.tools" })
+
+function mediaModality(mime: string): "image" | "audio" | "video" | undefined {
+  if (mime.startsWith("image/")) return "image"
+  if (mime.startsWith("audio/")) return "audio"
+  if (mime.startsWith("video/")) return "video"
+  return undefined
+}
+
+export function shouldExposeMimoAnalyzeMediaTool(model: Provider.Model, messages: SessionLegacy.WithParts[]): boolean {
+  for (const message of messages) {
+    for (const part of message.parts) {
+      if (part.type !== "file") continue
+      const modality = mediaModality(part.mime)
+      if (!modality) continue
+      if (!model.capabilities.input[modality]) return true
+    }
+  }
+  return false
+}
 
 export const resolve = Effect.fn("SessionTools.resolve")(function* (input: {
   agent: Agent.Info
@@ -79,6 +99,10 @@ export const resolve = Effect.fn("SessionTools.resolve")(function* (input: {
     providerID: input.model.providerID,
     agent: input.agent,
   })) {
+    if (item.id === MimoAnalyzeMediaTool.id && !shouldExposeMimoAnalyzeMediaTool(input.model, input.messages)) {
+      continue
+    }
+
     const schema = ProviderTransform.schema(input.model, ToolJsonSchema.fromTool(item))
     tools[item.id] = tool({
       description: item.description,

@@ -2,13 +2,8 @@ name: publish
 run-name: "${{ format('release {0}', inputs.bump) }}"
 
 on:
-  push:
-    branches:
-      - ci
-      - main
-      - beta
-      - fix/npm-native-binary-install
-      - snapshot-*
+  # Manual-only: this fork does not publish to npm/AUR/Homebrew/ghcr. Run from the
+  # Actions tab when an intentional release is wanted (and the required secrets exist).
   workflow_dispatch:
     inputs:
       bump:
@@ -34,7 +29,7 @@ permissions:
 jobs:
   version:
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    if: github.repository == 'anomalyco/miko'
+    if: github.repository == 'jianga0801-ui/miko'
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -61,7 +56,7 @@ jobs:
           MIKO_BUMP: ${{ inputs.bump }}
           MIKO_VERSION: ${{ inputs.version }}
           MIKO_API_KEY: ${{ secrets.MIKO_API_KEY }}
-          GH_REPO: ${{ (github.ref_name == 'beta' && 'anomalyco/miko-beta') || github.repository }}
+          GH_REPO: ${{ (github.ref_name == 'beta' && 'jianga0801-ui/miko-beta') || github.repository }}
     outputs:
       version: ${{ steps.version.outputs.version }}
       release: ${{ steps.version.outputs.release }}
@@ -71,7 +66,7 @@ jobs:
   build-cli:
     needs: version
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    if: github.repository == 'anomalyco/miko'
+    if: github.repository == 'jianga0801-ui/miko'
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -115,7 +110,7 @@ jobs:
       - build-cli
       - version
     runs-on: blacksmith-4vcpu-windows-2025
-    if: github.repository == 'anomalyco/miko'
+    if: github.repository == 'jianga0801-ui/miko'
     env:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}

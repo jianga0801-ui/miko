@@ -61,6 +61,7 @@ import { ArgsProvider, useArgs, type Args } from "./context/args"
 import open from "open"
 import { PromptRefProvider, usePromptRef } from "./context/prompt"
 import { TuiConfigProvider, useTuiConfig } from "./context/tui-config"
+import { useTuiI18n } from "./context/i18n"
 import { TuiConfig } from "@/cli/cmd/tui/config/tui"
 import { TuiPluginRuntime } from "@/cli/cmd/tui/plugin/runtime"
 import { createTuiApi } from "@/cli/cmd/tui/plugin/api"
@@ -68,6 +69,7 @@ import type { RouteMap } from "@/cli/cmd/tui/plugin/api"
 import { createTuiAttention } from "@/cli/cmd/tui/attention"
 import { FormatError, FormatUnknownError } from "@/cli/error"
 import { CommandPaletteDialog } from "./component/command-palette"
+import { TuiLanguageKVKey } from "./i18n"
 import {
   COMMAND_PALETTE_COMMAND,
   MIKO_BASE_MODE,
@@ -371,6 +373,7 @@ async function waitUntilDone(ready: Promise<void>, exited: Promise<void>) {
 
 function App(props: { onSnapshot?: () => Promise<string[]> }) {
   const tuiConfig = useTuiConfig()
+  const i18n = useTuiI18n()
   const route = useRoute()
   const dimensions = useTerminalDimensions()
   const renderer = useRenderer()
@@ -802,6 +805,22 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
           dialog.clear()
         },
         category: "System",
+      },
+      {
+        name: "app.language.toggle",
+        title: i18n.language === "zh-CN" ? i18n.t("app.switchToEnglish") : i18n.t("app.switchToChinese"),
+        run: () => {
+          const next = i18n.language === "zh-CN" ? "en" : "zh-CN"
+          kv.set(TuiLanguageKVKey, next)
+          toast.show({
+            variant: "info",
+            message: i18n.t("app.languageChanged", {
+              language: next === "zh-CN" ? i18n.t("language.chinese") : i18n.t("language.english"),
+            }),
+          })
+          dialog.clear()
+        },
+        category: i18n.t("system.category"),
       },
       {
         name: "theme.mode.lock",

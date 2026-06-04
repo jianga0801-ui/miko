@@ -3,7 +3,9 @@ import { mergeDeep, unique } from "remeda"
 import type { JSONSchema7 } from "@ai-sdk/provider"
 import type * as Provider from "./provider"
 import type * as ModelsDev from "@miko-ai/core/models-dev"
+import { encodeMimoMediaSentinel } from "@miko-ai/core/plugin/provider/mimo-media"
 import { iife } from "@/util/iife"
+import { isMimoProviderID } from "./mimo-setup"
 
 type Modality = NonNullable<ModelsDev.Model["modalities"]>["input"][number]
 
@@ -418,6 +420,21 @@ function unsupportedParts(msgs: ModelMessage[], model: Provider.Model): ModelMes
       const filename = part.type === "file" ? part.filename : undefined
       const modality = mimeToModality(mime)
       if (!modality) return part
+      if (
+        part.type === "file" &&
+        isMimoProviderID(model.providerID) &&
+        model.capabilities.input[modality] &&
+        (modality === "audio" || modality === "video")
+      ) {
+        return {
+          type: "text" as const,
+          text: encodeMimoMediaSentinel({
+            kind: modality,
+            mediaType: part.mediaType,
+            url: String(part.data),
+          }),
+        }
+      }
       if (model.capabilities.input[modality]) return part
 
       const name = filename ? `"${filename}"` : modality
@@ -638,6 +655,7 @@ function googleThinkingBudgetMax(apiId: string) {
 
 export function variants(model: Provider.Model): Record<string, Record<string, any>> {
   if (!model.capabilities.reasoning) return {}
+  if (isMimoProviderID(model.providerID)) return {}
 
   const id = model.id.toLowerCase()
   const adaptiveOpus = anthropicOpus47OrLater(model.api.id)

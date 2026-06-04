@@ -1,9 +1,8 @@
 name: generate
 
 on:
-  push:
-    branches:
-      - main
+  # Manual-only: don't auto-regenerate/commit SDK on every push to main.
+  workflow_dispatch:
 
 jobs:
   generate:

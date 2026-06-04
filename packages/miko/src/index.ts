@@ -104,8 +104,6 @@ const cli = yargs(args)
     process.env.AGENT = "1"
     process.env.MIKO = "1"
     process.env.MIKO_PID = String(process.pid)
-    process.env.MIKO = "1"
-    process.env.MIKO_PID = String(process.pid)
 
     Log.Default.info("miko", {
       version: InstallationVersion,

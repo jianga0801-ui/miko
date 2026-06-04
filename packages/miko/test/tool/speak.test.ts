@@ -94,4 +94,20 @@ describe("speak.selectPlaybackCommand", () => {
   test("returns undefined when no player command is available", () => {
     expect(selectPlaybackCommand("wav", () => false)).toBeUndefined()
   })
+
+  test("uses Windows PowerShell as a wav fallback for WSL terminals", () => {
+    const player = selectPlaybackCommand(
+      "wav",
+      (cmd) => cmd === "powershell.exe",
+      () => "\\\\wsl.localhost\\Ubuntu-26.04\\tmp\\a.wav",
+    )
+
+    expect(player?.cmd).toBe("powershell.exe")
+    const args = player!.args("/tmp/a.wav")
+    expect(args).toContain("-EncodedCommand")
+    const encoded = args[args.indexOf("-EncodedCommand") + 1]
+    expect(Buffer.from(encoded, "base64").toString("utf16le")).toContain(
+      "\\\\wsl.localhost\\Ubuntu-26.04\\tmp\\a.wav",
+    )
+  })
 })

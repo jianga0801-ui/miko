@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { sortModelOptions } from "../../../../src/cli/cmd/tui/component/dialog-model"
+import { isSelectableModel, sortModelOptions } from "../../../../src/cli/cmd/tui/component/dialog-model"
 
 describe("sortModelOptions", () => {
   test("orders provider-scoped model choices by newest release first", () => {
@@ -19,12 +19,23 @@ describe("sortModelOptions", () => {
     const sorted = sortModelOptions(
       [
         { title: "Beta", releaseDate: "2026-01-01" },
-        { title: "Alpha", releaseDate: "2025-01-01", footer: "Free" },
-        { title: "Gamma", releaseDate: "2024-01-01", footer: "Free" },
+        { title: "Alpha", releaseDate: "2025-01-01", free: true },
+        { title: "Gamma", releaseDate: "2024-01-01", free: true },
       ],
       false,
     )
 
     expect(sorted.map((model) => model.title)).toEqual(["Alpha", "Gamma", "Beta"])
+  })
+})
+
+describe("isSelectableModel", () => {
+  test("excludes non-text-output models from chat model choices", () => {
+    expect(
+      isSelectableModel({
+        status: "active",
+        capabilities: { output: { text: false } },
+      }),
+    ).toBe(false)
   })
 })

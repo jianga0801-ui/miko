@@ -88,7 +88,7 @@ This will walk you through installing the GitHub app, creating the workflow, and
               persist-credentials: false
 
           - name: Run miko
-           uses: anomalyco/miko/github@latest
+           uses: jianga0801-ui/miko/github@latest
            env:
              ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -101,7 +101,7 @@ This will walk you through installing the GitHub app, creating the workflow, and
 
 ## Support
 
-This is an early release. If you encounter issues or have feedback, please create an issue at https://github.com/anomalyco/miko/issues.
+This is an early release. If you encounter issues or have feedback, please create an issue at https://github.com/jianga0801-ui/miko/issues.
 
 ## Development
 

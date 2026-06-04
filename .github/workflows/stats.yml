@@ -1,15 +1,15 @@
 name: stats
 
 on:
-  schedule:
-    - cron: "0 12 * * *" # Run daily at 12:00 UTC
+  # Manual-only: disabled the daily cron so this fork does not auto-commit
+  # download stats. Run from the Actions tab if wanted.
   workflow_dispatch: # Allow manual trigger
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   stats:
-    if: github.repository == 'anomalyco/miko'
+    if: github.repository == 'jianga0801-ui/miko'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: write

@@ -405,7 +405,7 @@ jobs:
           persist-credentials: false
 
       - name: Run miko
-        uses: anomalyco/miko/github@latest${envStr}
+        uses: jianga0801-ui/miko/github@latest${envStr}
         with:
           model: ${provider}/${model}`,
           )

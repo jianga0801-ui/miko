@@ -192,25 +192,47 @@ describe("makeMimoFetch web_search degradation", () => {
 })
 
 describe("rewriteMimoRequestBody reasoning and temperature", () => {
-  test("injects thinking: enabled and clamps temperature for mimo models", () => {
+  test("injects top-level thinking and clamps temperature for mimo models", () => {
     const body = JSON.stringify({
       model: "mimo-v2.5-pro",
       temperature: 0.7,
       messages: [{ role: "user", content: "hello" }],
     })
     const out = JSON.parse(rewriteMimoRequestBody(body))
-    expect(out.extra_body).toEqual({ thinking: { type: "enabled" } })
+    expect(out.thinking).toEqual({ type: "enabled" })
+    expect(out.extra_body).toBeUndefined()
     expect(out.temperature).toBe(0.2) // Clamped to max 0.2
   })
 
-  test("injects thinking: enabled and defaults temperature to 0.1 for xiaomi models", () => {
+  test("injects top-level thinking and defaults temperature to 0.1 for xiaomi models", () => {
     const body = JSON.stringify({
       model: "xiaomi-token-plan-cn",
       messages: [{ role: "user", content: "hello" }],
     })
     const out = JSON.parse(rewriteMimoRequestBody(body))
-    expect(out.extra_body).toEqual({ thinking: { type: "enabled" } })
+    expect(out.thinking).toEqual({ type: "enabled" })
+    expect(out.extra_body).toBeUndefined()
     expect(out.temperature).toBe(0.1) // Defaulted to 0.1
+  })
+
+  test("normalizes SDK-only extra_body and max_tokens into MiMo chat fields", () => {
+    const body = JSON.stringify({
+      model: "mimo-v2.5",
+      max_tokens: 123,
+      reasoning_effort: "high",
+      reasoning: { effort: "high" },
+      enable_thinking: true,
+      extra_body: { thinking: { type: "enabled" } },
+      messages: [{ role: "user", content: "hello" }],
+    })
+    const out = JSON.parse(rewriteMimoRequestBody(body))
+    expect(out.max_tokens).toBeUndefined()
+    expect(out.max_completion_tokens).toBe(123)
+    expect(out.reasoning_effort).toBeUndefined()
+    expect(out.reasoning).toBeUndefined()
+    expect(out.enable_thinking).toBeUndefined()
+    expect(out.thinking).toEqual({ type: "enabled" })
+    expect(out.extra_body).toBeUndefined()
   })
 
   test("extracts assistant reasoning_content and sets it on the message object", () => {

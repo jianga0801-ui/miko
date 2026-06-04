@@ -4,6 +4,7 @@ import { Schema } from "effect"
 import { isRecord } from "@/util/record"
 import { Filesystem } from "@/util/filesystem"
 import { TuiAttentionSoundNames, type TuiAttentionSoundName } from "@miko-ai/plugin/tui"
+import { TuiLanguageValues } from "../i18n"
 
 export type TuiAttentionSoundPaths = Partial<Record<TuiAttentionSoundName, string>>
 
@@ -52,6 +53,10 @@ export const DiffStyle = Schema.Literals(["auto", "stacked"]).annotate({
   description: "Control diff rendering style: 'auto' adapts to terminal width, 'stacked' always shows single column",
 })
 
+export const TuiLanguage = Schema.Literals([...TuiLanguageValues]).annotate({
+  description: "TUI display language: 'auto' follows the system locale, 'en' forces English, 'zh-CN' forces Chinese",
+})
+
 export const Attention = Schema.Struct({
   enabled: Schema.optional(Schema.Boolean),
   notifications: Schema.optional(Schema.Boolean),
@@ -78,6 +83,7 @@ export const TuiInfo = Schema.Struct({
   plugin_enabled: Schema.optional(Schema.Record(Schema.String, Schema.Boolean)),
   leader_timeout: Schema.optional(KeymapLeaderTimeout),
   attention: Schema.optional(Attention),
+  language: Schema.optional(TuiLanguage),
   prompt: Schema.optional(Prompt),
   scroll_speed: Schema.optional(ScrollSpeed).annotate({
     description: "TUI scroll speed",

@@ -670,7 +670,7 @@ export function RunModelSelectBody(props: {
     (props.providers() ?? [])
       .flatMap((provider) =>
         Object.entries(provider.models)
-          .filter(([, model]) => model.status !== "deprecated")
+          .filter(([, model]) => model.status !== "deprecated" && model.capabilities.output.text)
           .map(([modelID, model]) => {
             const title = model.name ?? modelID
             const current = props.current()?.providerID === provider.id && props.current()?.modelID === modelID

@@ -15,6 +15,7 @@ import { useToast } from "../ui/toast"
 import { isConsoleManagedProvider } from "@tui/util/provider-origin"
 import { useConnected } from "./use-connected"
 import { useBindings } from "../keymap"
+import { useTuiI18n } from "../context/i18n"
 
 const PROVIDER_PRIORITY: Record<string, number> = {
   "xiaomi-token-plan-cn": 0,
@@ -36,7 +37,10 @@ type ProviderOption =
     providerID: string
   }
 
-export function providerOptions(list: { id: string; name: string }[]): ProviderOption[] {
+export function providerOptions(
+  list: { id: string; name: string }[],
+  labels = { recommended: "(Recommended)", popular: "Popular", providers: "Providers" },
+): ProviderOption[] {
   return pipe(
     list,
     sortBy((x) => PROVIDER_PRIORITY[x.id] ?? 99),
@@ -45,8 +49,8 @@ export function providerOptions(list: { id: string; name: string }[]): ProviderO
       title: provider.name,
       value: provider.id,
       providerID: provider.id,
-      description: provider.id === "xiaomi-token-plan-cn" ? "(Recommended)" : undefined,
-      category: provider.id in PROVIDER_PRIORITY ? "Popular" : "Providers",
+      description: provider.id === "xiaomi-token-plan-cn" ? labels.recommended : undefined,
+      category: provider.id in PROVIDER_PRIORITY ? labels.popular : labels.providers,
     })),
   )
 }
@@ -58,10 +62,15 @@ export function createDialogProviderOptions() {
   const toast = useToast()
   const { theme } = useTheme()
   const onboarded = useConnected()
+  const i18n = useTuiI18n()
 
   const options = createMemo(() => {
     return pipe(
-      providerOptions(sync.data.provider_next.all),
+      providerOptions(sync.data.provider_next.all, {
+        recommended: i18n.t("provider.recommended"),
+        popular: i18n.t("provider.popular"),
+        providers: i18n.t("provider.providers"),
+      }),
       map((provider) => {
         const providerID = provider.providerID
         const consoleManaged = isConsoleManagedProvider(sync.data.console_state.consoleManagedProviders, providerID)
@@ -80,7 +89,7 @@ export function createDialogProviderOptions() {
             const methods = sync.data.provider_auth[providerID] ?? [
               {
                 type: "api",
-                label: "API key",
+                label: i18n.t("provider.apiKey"),
               },
             ]
             let index: number | null = 0
@@ -89,7 +98,7 @@ export function createDialogProviderOptions() {
                 dialog.replace(
                   () => (
                     <DialogSelect
-                      title="Select auth method"
+                      title={i18n.t("provider.selectAuthMethod")}
                       options={methods.map((x, index) => ({
                         title: x.label,
                         value: index,
@@ -159,7 +168,8 @@ export function createDialogProviderOptions() {
 
 export function DialogProvider() {
   const options = createDialogProviderOptions()
-  return <DialogSelect title="Connect a provider" options={options()} />
+  const i18n = useTuiI18n()
+  return <DialogSelect title={i18n.t("provider.connect")} options={options()} />
 }
 
 interface AutoMethodProps {
@@ -174,18 +184,19 @@ function AutoMethod(props: AutoMethodProps) {
   const dialog = useDialog()
   const sync = useSync()
   const toast = useToast()
+  const i18n = useTuiI18n()
 
   useBindings(() => ({
     bindings: [
       {
         key: "c",
-        desc: "Copy provider code",
-        group: "Dialog",
+        desc: i18n.t("provider.copyCode"),
+        group: i18n.t("dialog.category"),
         cmd: () => {
           const code =
             props.authorization.instructions.match(/[A-Z0-9]{4}-[A-Z0-9]{4,5}/)?.[0] ?? props.authorization.url
           Clipboard.copy(code)
-            .then(() => toast.show({ message: "Copied to clipboard", variant: "info" }))
+            .then(() => toast.show({ message: i18n.t("provider.copied"), variant: "info" }))
             .catch(toast.error)
         },
       },
@@ -201,8 +212,8 @@ function AutoMethod(props: AutoMethodProps) {
       toast.show({
         variant: "error",
         message:
-          "name" in result.error && result.error.name === "ProviderAuthOauthCallbackFailed"
-            ? "OAuth authorization failed. Try /connect again."
+            "name" in result.error && result.error.name === "ProviderAuthOauthCallbackFailed"
+            ? i18n.t("provider.oauthFailed")
             : JSON.stringify(result.error),
       })
       dialog.clear()
@@ -227,9 +238,9 @@ function AutoMethod(props: AutoMethodProps) {
         <Link href={props.authorization.url} fg={theme.primary} />
         <text fg={theme.textMuted}>{props.authorization.instructions}</text>
       </box>
-      <text fg={theme.textMuted}>Waiting for authorization...</text>
+      <text fg={theme.textMuted}>{i18n.t("provider.waitingAuthorization")}</text>
       <text fg={theme.text}>
-        c <span style={{ fg: theme.textMuted }}>copy</span>
+        c <span style={{ fg: theme.textMuted }}>{i18n.t("provider.copy")}</span>
       </text>
     </box>
   )
@@ -247,11 +258,12 @@ function CodeMethod(props: CodeMethodProps) {
   const sync = useSync()
   const dialog = useDialog()
   const [error, setError] = createSignal(false)
+  const i18n = useTuiI18n()
 
   return (
     <DialogPrompt
       title={props.title}
-      placeholder="Authorization code"
+      placeholder={i18n.t("provider.authorizationCode")}
       onConfirm={async (value) => {
         const { error } = await sdk.client.provider.oauth.callback({
           providerID: props.providerID,
@@ -271,7 +283,7 @@ function CodeMethod(props: CodeMethodProps) {
           <text fg={theme.textMuted}>{props.authorization.instructions}</text>
           <Link href={props.authorization.url} fg={theme.primary} />
           <Show when={error()}>
-            <text fg={theme.error}>Invalid code</text>
+            <text fg={theme.error}>{i18n.t("provider.invalidCode")}</text>
           </Show>
         </box>
       )}
@@ -290,11 +302,12 @@ function ApiMethod(props: ApiMethodProps) {
   const sync = useSync()
   const toast = useToast()
   const { theme } = useTheme()
+  const i18n = useTuiI18n()
 
   return (
     <DialogPrompt
       title={props.title}
-      placeholder="API key"
+      placeholder={i18n.t("provider.apiKey")}
       onConfirm={async (value) => {
         if (!value) return
         await sdk.client.auth.set({

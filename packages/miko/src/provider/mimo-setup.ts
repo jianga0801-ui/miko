@@ -49,8 +49,14 @@ export const MIMO_PROVIDER_IDS = [
   "mimo",
 ]
 
+export const MIMO_MODEL_IDS = ["mimo-v2.5-pro", "mimo-v2.5"]
+
 export function isMimoProviderID(providerID: string): boolean {
   return MIMO_PROVIDER_IDS.includes(providerID)
+}
+
+export function isSupportedMimoModelID(modelID: string): boolean {
+  return MIMO_MODEL_IDS.includes(modelID)
 }
 
 export function filterMimoProviders<T>(providers: Record<string, T>): Record<string, T> {

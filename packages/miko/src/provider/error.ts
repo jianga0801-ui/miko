@@ -61,6 +61,21 @@ function isOverflow(message: string) {
   return /^4(00|13)\s*(status code)?\s*\(no body\)/i.test(message)
 }
 
+function responseErrorDetail(body: unknown) {
+  if (!body || typeof body !== "object") return undefined
+  const record = body as Record<string, any>
+  const error = record.error && typeof record.error === "object" ? record.error : undefined
+  const message = record.message ?? (typeof record.error === "string" ? record.error : error?.message)
+  const param = error?.param ?? record.param
+
+  if (typeof message === "string" && typeof param === "string" && param.trim()) {
+    return message === param ? message : `${message}: ${param}`
+  }
+  if (typeof message === "string" && message.trim()) return message
+  if (typeof param === "string" && param.trim()) return param
+  return undefined
+}
+
 function message(providerID: ProviderV2.ID, e: APICallError) {
   return iife(() => {
     const msg = e.message
@@ -74,13 +89,22 @@ function message(providerID: ProviderV2.ID, e: APICallError) {
     }
 
     if (!e.responseBody || (e.statusCode && msg !== STATUS_CODES[e.statusCode])) {
+      if (e.responseBody) {
+        const body = json(e.responseBody)
+        const detail = responseErrorDetail(body)
+        if (detail) {
+          if (detail === msg) return msg
+          const prefix = `${msg}: `
+          return detail.startsWith(prefix) ? detail : `${msg}: ${detail}`
+        }
+      }
       return msg
     }
 
     try {
       const body = JSON.parse(e.responseBody)
       // try to extract common error message fields
-      const errMsg = body.message || body.error || body.error?.message
+      const errMsg = responseErrorDetail(body)
       if (errMsg && typeof errMsg === "string") {
         return `${msg}: ${errMsg}`
       }

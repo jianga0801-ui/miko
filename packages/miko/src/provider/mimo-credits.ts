@@ -28,9 +28,7 @@ export interface MimoCreditRate {
 /** Per-token Credit rates by model id. Models not listed (e.g. TTS) are free. */
 export const MIMO_CREDIT_RATES: Record<string, MimoCreditRate> = {
   "mimo-v2.5-pro": { cache: 2.5, input: 300, output: 600 },
-  "mimo-v2-pro": { cache: 2.5, input: 300, output: 600 },
   "mimo-v2.5": { cache: 2, input: 100, output: 200 },
-  "mimo-v2-omni": { cache: 2, input: 100, output: 200 },
 }
 
 /** Token Plan provider ids look like `xiaomi-token-plan-{cn,sgp,ams}`. */

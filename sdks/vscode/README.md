@@ -15,7 +15,7 @@ This extension requires the [miko CLI](https://miko.dev) to be installed on your
 
 ## Support
 
-This is an early release. If you encounter issues or have feedback, please create an issue at https://github.com/anomalyco/miko/issues.
+This is an early release. If you encounter issues or have feedback, please create an issue at https://github.com/jianga0801-ui/miko/issues.
 
 ## Development
 

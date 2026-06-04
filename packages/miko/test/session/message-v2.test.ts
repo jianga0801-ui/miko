@@ -318,7 +318,7 @@ describe("session.message-v2.toModelMessage", () => {
     ])
   })
 
-  test("keeps MiMo media as files so provider transform can route them through the media tool", async () => {
+  test("keeps MiMo media as files so provider transform can route them through MiMo media handling", async () => {
     const messageID = "m-user"
     const mimoModel: Provider.Model = { ...model, providerID: ProviderV2.ID.make("xiaomi-token-plan-cn") }
 
@@ -342,6 +342,44 @@ describe("session.message-v2.toModelMessage", () => {
           { type: "file", mediaType: "audio/wav", filename: "a.wav", data: "https://x/a.wav" },
           { type: "file", mediaType: "video/mp4", filename: "v.mp4", data: "https://x/v.mp4" },
           { type: "file", mediaType: "image/png", filename: "i.png", data: "https://x/i.png" },
+        ],
+      },
+    ])
+  })
+
+  test("strips stale MiMo media while keeping the latest media attachment", async () => {
+    const mimoModel: Provider.Model = { ...model, providerID: ProviderV2.ID.make("xiaomi-token-plan-cn") }
+
+    const input: SessionLegacy.WithParts[] = [
+      {
+        info: userInfo("m-old"),
+        parts: [
+          { ...basePart("m-old", "p1"), type: "text", text: "old audio" },
+          { ...basePart("m-old", "p2"), type: "file", mime: "audio/wav", filename: "old.wav", url: "data:audio/wav;base64,old" },
+        ] as SessionLegacy.Part[],
+      },
+      {
+        info: userInfo("m-new"),
+        parts: [
+          { ...basePart("m-new", "p3"), type: "text", text: "new audio" },
+          { ...basePart("m-new", "p4"), type: "file", mime: "audio/wav", filename: "new.wav", url: "data:audio/wav;base64,new" },
+        ] as SessionLegacy.Part[],
+      },
+    ]
+
+    expect(await MessageV2.toModelMessages(input, mimoModel, { stripStaleMedia: true })).toStrictEqual([
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "old audio" },
+          { type: "text", text: "[Attached audio/wav: old.wav]" },
+        ],
+      },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "new audio" },
+          { type: "file", mediaType: "audio/wav", filename: "new.wav", data: "data:audio/wav;base64,new" },
         ],
       },
     ])
@@ -1529,6 +1567,48 @@ describe("session.message-v2.fromError", () => {
     )
     expect(SessionLegacy.ContextOverflowError.isInstance(result)).toBe(false)
     expect(SessionLegacy.APIError.isInstance(result)).toBe(true)
+  })
+
+  test("preserves provider error param details in APIError messages", () => {
+    const result = MessageV2.fromError(
+      new APICallError({
+        message: "Param Incorrect",
+        url: "https://token-plan-cn.xiaomimimo.com/v1/chat/completions",
+        requestBodyValues: {},
+        statusCode: 400,
+        responseHeaders: { "content-type": "application/json" },
+        responseBody: JSON.stringify({
+          error: {
+            code: "400",
+            message: "Param Incorrect",
+            param: "messages[2] user content: exceeded maximum size limit for audio base64 data (max: 50MB)",
+            type: "",
+          },
+        }),
+        isRetryable: false,
+      }),
+      { providerID },
+    )
+
+    expect(result).toStrictEqual({
+      name: "APIError",
+      data: {
+        message:
+          "Param Incorrect: messages[2] user content: exceeded maximum size limit for audio base64 data (max: 50MB)",
+        statusCode: 400,
+        isRetryable: false,
+        responseHeaders: { "content-type": "application/json" },
+        responseBody: JSON.stringify({
+          error: {
+            code: "400",
+            message: "Param Incorrect",
+            param: "messages[2] user content: exceeded maximum size limit for audio base64 data (max: 50MB)",
+            type: "",
+          },
+        }),
+        metadata: { url: "https://token-plan-cn.xiaomimimo.com/v1/chat/completions" },
+      },
+    })
   })
 
   test("serializes unknown inputs", () => {

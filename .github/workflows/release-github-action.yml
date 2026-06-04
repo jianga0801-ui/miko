@@ -1,11 +1,8 @@
 name: release-github-action
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "github/**"
+  # Manual-only: this fork does not publish the GitHub Action release.
+  workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 

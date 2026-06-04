@@ -1,10 +1,8 @@
 name: deploy
 
 on:
-  push:
-    branches:
-      - main
-      - production
+  # Manual-only: this fork does not deploy the hosted SST/Cloudflare backend.
+  # Run from the Actions tab if an intentional deploy is wanted.
   workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
@@ -15,7 +13,7 @@ permissions:
 
 jobs:
   deploy:
-    if: github.repository == 'anomalyco/miko' && (github.ref_name == 'main' || github.ref_name == 'production')
+    if: github.repository == 'jianga0801-ui/miko' && (github.ref_name == 'main' || github.ref_name == 'production')
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name }}
     steps:

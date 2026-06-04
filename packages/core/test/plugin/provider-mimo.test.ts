@@ -122,10 +122,10 @@ describe("MimoPlugin", () => {
       expect(proModel.cost).toHaveLength(1)
       expect(proModel.cost[0]).toEqual({ input: 0.435, output: 0.87, cache: { read: 0.0036, write: 0 } })
 
-      // mimo-v2.5 is the omni model; image is the attachable modality (audio/
-      // video go through the mimo_analyze_media tool, not message attachments).
+      // mimo-v2.5 is the omni model; audio/video are native but travel through
+      // the AI SDK as sentinel text parts before mimo-media rewrites them.
       const omniModel = yield* catalog.model.get(ProviderV2.ID.mimo, ModelV2.ID.make("mimo-v2.5"))
-      expect(omniModel.capabilities.input).toEqual(["text", "image"])
+      expect(omniModel.capabilities.input).toEqual(["text", "image", "audio", "video"])
       expect(omniModel.limit.context).toBe(1_048_576)
       expect(omniModel.cost[0]).toEqual({ input: 0.14, output: 0.28, cache: { read: 0.0028, write: 0 } })
     }),

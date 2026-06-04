@@ -30,11 +30,49 @@ const FORMAT_EXT: Record<string, string> = {
 // Audio players ranked per format. wav is self-describing; pcm16 is raw and
 // only players we can hand explicit format flags to can play it.
 const PLAYERS: Record<string, string[]> = {
-  wav: ["paplay", "aplay", "ffplay", "mpv"],
+  wav: ["paplay", "aplay", "ffplay", "mpv", "powershell.exe", "pwsh.exe"],
   pcm16: ["aplay", "paplay", "ffplay"],
 }
 
-function playerArgs(cmd: string, format: string, file: string): string[] {
+function wslpath(file: string): string {
+  if (process.platform !== "linux" || !process.env.WSL_DISTRO_NAME) return file
+  try {
+    const result = Bun.spawnSync(["wslpath", "-w", file], {
+      stdout: "pipe",
+      stderr: "ignore",
+    })
+    if (result.exitCode !== 0) return file
+    return Buffer.from(result.stdout).toString("utf8").trim() || file
+  } catch {
+    return file
+  }
+}
+
+export function toWindowsPlaybackPath(file: string): string {
+  return wslpath(file)
+}
+
+function powershellSoundPlayerArgs(file: string): string[] {
+  const quoted = file.replace(/'/g, "''")
+  const script = [
+    "$ErrorActionPreference = 'Stop'",
+    "Add-Type -AssemblyName System",
+    `$player = [System.Media.SoundPlayer]::new('${quoted}')`,
+    "$player.Load()",
+    "$player.PlaySync()",
+  ].join("; ")
+  const encoded = Buffer.from(script, "utf16le").toString("base64")
+  return [
+    "-NoProfile",
+    "-NonInteractive",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-EncodedCommand",
+    encoded,
+  ]
+}
+
+function playerArgs(cmd: string, format: string, file: string, convertPath: (file: string) => string): string[] {
   const raw = format === "pcm16"
   switch (cmd) {
     case "ffplay":
@@ -47,6 +85,9 @@ function playerArgs(cmd: string, format: string, file: string): string[] {
       return raw ? ["--raw", "--format=s16le", `--rate=${SAMPLE_RATE}`, "--channels=1", file] : [file]
     case "mpv":
       return ["--no-video", "--really-quiet", file]
+    case "powershell.exe":
+    case "pwsh.exe":
+      return powershellSoundPlayerArgs(convertPath(file))
     default:
       return [file]
   }
@@ -60,10 +101,11 @@ function playerArgs(cmd: string, format: string, file: string): string[] {
 export function selectPlaybackCommand(
   format: string,
   lookup: (cmd: string) => boolean,
+  convertPath: (file: string) => string = toWindowsPlaybackPath,
 ): { cmd: string; args: (file: string) => string[] } | undefined {
   const candidates = PLAYERS[format] ?? ["ffplay", "mpv"]
   for (const cmd of candidates) {
-    if (lookup(cmd)) return { cmd, args: (file: string) => playerArgs(cmd, format, file) }
+    if (lookup(cmd)) return { cmd, args: (file: string) => playerArgs(cmd, format, file, convertPath) }
   }
   return undefined
 }
@@ -233,12 +275,12 @@ export const SpeakTool = Tool.define(
             if (player) {
               played = yield* Effect.sync(() => {
                 try {
-                  Bun.spawn([player.cmd, ...player.args(filePath)], {
+                  const result = Bun.spawnSync([player.cmd, ...player.args(filePath)], {
                     stdout: "ignore",
                     stderr: "ignore",
                     stdin: "ignore",
                   })
-                  return true
+                  return result.exitCode === 0
                 } catch {
                   return false
                 }
