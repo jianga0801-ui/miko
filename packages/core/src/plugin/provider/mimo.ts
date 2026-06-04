@@ -64,14 +64,13 @@ export const MimoPlugin = PluginV2.define({
         // Cost is USD per 1M tokens (miko computes tokens * price / 1_000_000).
         // `tp-` (Token Plan) keys are flat-rate across every region (cn/sgp/ams),
         // so per-token cost is 0. `sk-` (pay-as-you-go) keys use MiMo's published
-        // *overseas* ($) pricing, which is tiered by context length (<=256K vs
-        // 256K-1M, the higher tier ~2x) and cache state; cache read is ~0.2x
-        // input and cache write is currently free. Domestic accounts are billed
-        // in CNY at ~7x these numbers — the ratio is preserved, so the USD figure
-        // stays a faithful relative estimate. Verified against
-        // platform.xiaomimimo.com/docs/zh-CN/pricing (2026-04-30).
+        // *overseas* ($) pricing — a single flat rate per model (the earlier
+        // <=256K / 256K-1M context tiers were removed in the 2026-05-27
+        // repricing); cached input is far cheaper than uncached and cache write
+        // is free. Domestic accounts are billed in CNY at a different per-model
+        // ratio, so the USD figure is a relative estimate. Verified against
+        // platform.xiaomimimo.com/docs/zh-CN/price/pay-as-you-go (2026-06-02).
         const isTokenPlan = resolvedApiKey.startsWith("tp-")
-        const TIER_HIGH = 262_144 // 256K — where the higher price tier begins
 
         // V2.5-series catalog only, matching the official platform docs:
         //  - mimo-v2.5-pro: text LLM, 1M context / 128K output
@@ -90,8 +89,7 @@ export const MimoPlugin = PluginV2.define({
             input: ["text"] as const,
             context: 1_048_576,
             output: 131_072,
-            price: { input: 1.0, cache: 0.2, output: 3.0 },
-            priceHigh: { input: 2.0, cache: 0.4, output: 6.0 } as { input: number; cache: number; output: number } | undefined,
+            price: { input: 0.435, cache: 0.0036, output: 0.87 },
           },
           {
             id: "mimo-v2.5",
@@ -99,8 +97,7 @@ export const MimoPlugin = PluginV2.define({
             input: ["text", "image"] as const,
             context: 1_048_576,
             output: 131_072,
-            price: { input: 0.4, cache: 0.08, output: 2.0 },
-            priceHigh: { input: 0.8, cache: 0.16, output: 4.0 } as { input: number; cache: number; output: number } | undefined,
+            price: { input: 0.14, cache: 0.0028, output: 0.28 },
           },
         ]
 
@@ -117,26 +114,15 @@ export const MimoPlugin = PluginV2.define({
               context: m.context,
               output: m.output,
             }
-            if (isTokenPlan) {
-              model.cost = [{ input: 0, output: 0, cache: { read: 0, write: 0 } }]
-            } else {
-              const base = {
-                input: m.price.input,
-                output: m.price.output,
-                cache: { read: m.price.cache, write: 0 },
-              }
-              model.cost = m.priceHigh
-                ? [
-                    base,
-                    {
-                      tier: { type: "context" as const, size: TIER_HIGH },
-                      input: m.priceHigh.input,
-                      output: m.priceHigh.output,
-                      cache: { read: m.priceHigh.cache, write: 0 },
-                    },
-                  ]
-                : [base]
-            }
+            model.cost = [
+              isTokenPlan
+                ? { input: 0, output: 0, cache: { read: 0, write: 0 } }
+                : {
+                    input: m.price.input,
+                    output: m.price.output,
+                    cache: { read: m.price.cache, write: 0 },
+                  },
+            ]
             model.enabled = true
             model.status = "active"
           })
