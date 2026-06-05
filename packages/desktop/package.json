@@ -19,7 +19,7 @@
     "@tsconfig/node22": "catalog:",
     "@types/bun": "catalog:",
     "electron": "33.2.0",
-    "electron-vite": "2.3.0",
+    "electron-vite": "5.0.0",
     "vite": "catalog:",
     "vite-plugin-solid": "catalog:"
   }
