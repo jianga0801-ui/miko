@@ -238,7 +238,7 @@ describe("SessionStatus.Info", () => {
         reason: "free_tier_limit",
         provider: "miko",
         title: "Free limit reached",
-        message: "Subscribe to Miko Go.",
+        message: "Subscribe.",
         label: "subscribe",
         link: "https://miko.dev/go",
       },

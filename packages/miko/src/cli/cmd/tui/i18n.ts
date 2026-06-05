@@ -403,7 +403,7 @@ const zhCN: Record<TuiMessageKey, string> = {
   "sidebar.context.usage": "当前用量: {count} tokens (已用 {percent}%)",
   "sidebar.context.cacheHit": "缓存命中: {count} tokens",
   "sidebar.context.cost": "会话消耗: {amount}",
-  "sidebar.balance.creditsUsed": "{amount} 积分",
+  "sidebar.balance.creditsUsed": "{amount} Credits",
   "sidebar.balance.accountSpent": "{amount}",
   "sidebar.mcp.summaryActive": "{count} 已连接",
   "sidebar.mcp.summaryWithErrors": "{active} 已连接，{errors} 个错误",
