@@ -36,3 +36,8 @@ app.whenReady().then(bootstrap).catch((err) => {
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit()
 })
+
+app.on("before-quit", () => {
+  server?.close()
+  server = undefined
+})
