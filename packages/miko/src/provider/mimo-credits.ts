@@ -17,14 +17,18 @@
  */
 
 export interface MimoCreditRate {
-  /** Credits per consumed token. */
-  token: number
+  /** Credits per uncached input token. */
+  input: number
+  /** Credits per output token. */
+  output: number
+  /** Credits per cached input token. */
+  cacheRead: number
 }
 
-/** Per-token Credit rates by model id. Models not listed (e.g. TTS) are free. */
+/** Credit rates (per token) by model id. Models not listed (e.g. TTS) are free. */
 export const MIMO_CREDIT_RATES: Record<string, MimoCreditRate> = {
-  "mimo-v2.5-pro": { token: 2 },
-  "mimo-v2.5": { token: 1 },
+  "mimo-v2.5-pro": { input: 300, output: 600, cacheRead: 2.5 },
+  "mimo-v2.5": { input: 100, output: 200, cacheRead: 2 },
 }
 
 /** Token Plan provider ids look like `xiaomi-token-plan-{cn,sgp,ams}`. */
@@ -65,12 +69,27 @@ export function computeMimoCredits(input: {
   tokens: MimoCreditTokens
   atMs: number
 }): number {
+  if (input.modelID === "mimo-v2.5-asr") {
+    // For ASR, audio duration in seconds is stored in input.tokens.input
+    const durationSec = input.tokens.input
+    const totalCredits = (durationSec * 30_000_000) / 3600
+    return totalCredits * mimoNighttimeCoefficient(input.atMs)
+  }
+
+  if (input.modelID.startsWith("mimo-v2.5-tts")) {
+    return 0
+  }
+
   const rate = MIMO_CREDIT_RATES[input.modelID]
   if (!rate) return 0
 
-  const tokens = input.tokens.input + input.tokens.output + input.tokens.reasoning + input.tokens.cache.read
+  const uncachedInputCredits = input.tokens.input * rate.input
+  const cachedInputCredits = input.tokens.cache.read * rate.cacheRead
+  const outputCredits = (input.tokens.output + input.tokens.reasoning) * rate.output
 
-  return tokens * rate.token * mimoNighttimeCoefficient(input.atMs)
+  const totalCredits = uncachedInputCredits + cachedInputCredits + outputCredits
+
+  return totalCredits * mimoNighttimeCoefficient(input.atMs)
 }
 
 export function parseMimoCreditAmount(input: string | undefined): number | undefined {

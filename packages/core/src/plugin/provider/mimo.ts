@@ -96,6 +96,42 @@ export const MimoPlugin = PluginV2.define({
             output: 131_072,
             price: { input: 0.14, cache: 0.0028, output: 0.28 },
           },
+          {
+            id: "mimo-v2.5-asr",
+            name: "Xiaomi MiMo ASR",
+            input: ["audio"] as const,
+            context: 1_048_576,
+            output: 131_072,
+            price: { input: 0, cache: 0, output: 0 },
+            capabilities: { tools: false, output: ["text"] as const },
+          },
+          {
+            id: "mimo-v2.5-tts",
+            name: "Xiaomi MiMo TTS",
+            input: ["text"] as const,
+            context: 1_048_576,
+            output: 131_072,
+            price: { input: 0, cache: 0, output: 0 },
+            capabilities: { tools: false, output: ["audio"] as const },
+          },
+          {
+            id: "mimo-v2.5-tts-voiceclone",
+            name: "Xiaomi MiMo TTS VoiceClone",
+            input: ["text"] as const,
+            context: 1_048_576,
+            output: 131_072,
+            price: { input: 0, cache: 0, output: 0 },
+            capabilities: { tools: false, output: ["audio"] as const },
+          },
+          {
+            id: "mimo-v2.5-tts-voicedesign",
+            name: "Xiaomi MiMo TTS VoiceDesign",
+            input: ["text"] as const,
+            context: 1_048_576,
+            output: 131_072,
+            price: { input: 0, cache: 0, output: 0 },
+            capabilities: { tools: false, output: ["audio"] as const },
+          },
         ]
 
         for (const m of mimoModels) {
@@ -103,9 +139,9 @@ export const MimoPlugin = PluginV2.define({
             model.name = m.name
             model.family = ModelV2.Family.make("mimo")
             model.capabilities = {
-              tools: true,
+              tools: ("capabilities" in m && m.capabilities && "tools" in m.capabilities) ? m.capabilities.tools : true,
               input: [...m.input],
-              output: ["text", "reasoning"],
+              output: ("capabilities" in m && m.capabilities && "output" in m.capabilities) ? [...m.capabilities.output] : ["text", "reasoning"],
             }
             model.limit = {
               context: m.context,

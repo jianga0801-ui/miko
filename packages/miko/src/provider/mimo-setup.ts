@@ -49,7 +49,14 @@ export const MIMO_PROVIDER_IDS = [
   "mimo",
 ]
 
-export const MIMO_MODEL_IDS = ["mimo-v2.5-pro", "mimo-v2.5"]
+export const MIMO_MODEL_IDS = [
+  "mimo-v2.5-pro",
+  "mimo-v2.5",
+  "mimo-v2.5-asr",
+  "mimo-v2.5-tts",
+  "mimo-v2.5-tts-voiceclone",
+  "mimo-v2.5-tts-voicedesign",
+]
 
 export function isMimoProviderID(providerID: string): boolean {
   return MIMO_PROVIDER_IDS.includes(providerID)

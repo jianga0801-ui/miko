@@ -433,6 +433,42 @@ export const getUsage = (input: { model: Provider.Model; usage: Usage; metadata?
     },
   }
 
+  const isAsr = input.model.id === "mimo-v2.5-asr"
+  const isTts = input.model.id.startsWith("mimo-v2.5-tts")
+  const isTokenPlan = input.model.providerID?.includes("token-plan") || false
+
+  if (isTts) {
+    return {
+      cost: 0,
+      tokens,
+    }
+  }
+
+  if (isAsr) {
+    let audioDuration = inputTokens
+    const rawDuration = (input.usage.providerMetadata?.openai as any)?.usage?.audio_duration ??
+                        (input.metadata?.openai as any)?.usage?.audio_duration ??
+                        (input.usage.providerMetadata?.mimo as any)?.audio_duration ??
+                        (input.metadata?.mimo as any)?.audio_duration
+    if (typeof rawDuration === "number") {
+      audioDuration = rawDuration
+    }
+    const cost = isTokenPlan ? 0 : safe(new Decimal(audioDuration).mul(0.074).div(3600).toNumber())
+    return {
+      cost,
+      tokens: {
+        total,
+        input: audioDuration,
+        output: safe(outputTokens - reasoningTokens),
+        reasoning: reasoningTokens,
+        cache: {
+          write: cacheWriteInputTokens,
+          read: cacheReadInputTokens,
+        },
+      },
+    }
+  }
+
   const contextTokens = inputTokens
   const costInfo =
     input.model.cost?.tiers

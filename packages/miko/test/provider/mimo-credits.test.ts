@@ -33,28 +33,35 @@ describe("mimoNighttimeCoefficient", () => {
 describe("computeMimoCredits", () => {
   const tokens = { input: 1000, output: 100, reasoning: 50, cache: { read: 500, write: 200 } }
 
-  test("pro: all consumed tokens * 2 credits", () => {
-    // (1000 + 100 + 50 + 500) * 2 = 3300
-    expect(computeMimoCredits({ modelID: "mimo-v2.5-pro", tokens, atMs: DAY })).toBe(3300)
+  test("pro: calculates based on official rates", () => {
+    // 1000 * 300 + 500 * 2.5 + (100 + 50) * 600 = 300000 + 1250 + 90000 = 391250
+    expect(computeMimoCredits({ modelID: "mimo-v2.5-pro", tokens, atMs: DAY })).toBe(391250)
   })
 
-  test("omni: all consumed tokens * 1 credit", () => {
-    // 1000 + 100 + 50 + 500 = 1650
-    expect(computeMimoCredits({ modelID: "mimo-v2.5", tokens, atMs: DAY })).toBe(1650)
+  test("omni: calculates based on official rates", () => {
+    // 1000 * 100 + 500 * 2 + (100 + 50) * 200 = 100000 + 1000 + 30000 = 131000
+    expect(computeMimoCredits({ modelID: "mimo-v2.5", tokens, atMs: DAY })).toBe(131000)
   })
 
   test("nighttime applies 0.8x", () => {
-    expect(computeMimoCredits({ modelID: "mimo-v2.5-pro", tokens, atMs: NIGHT })).toBe(3300 * 0.8)
+    expect(computeMimoCredits({ modelID: "mimo-v2.5-pro", tokens, atMs: NIGHT })).toBe(391250 * 0.8)
   })
 
   test("cache write is free (not counted)", () => {
     const noWrite = { ...tokens, cache: { read: 500, write: 0 } }
-    expect(computeMimoCredits({ modelID: "mimo-v2.5-pro", tokens: noWrite, atMs: DAY })).toBe(3300)
+    expect(computeMimoCredits({ modelID: "mimo-v2.5-pro", tokens: noWrite, atMs: DAY })).toBe(391250)
   })
 
   test("TTS / unknown models are free (0 credits)", () => {
     expect(computeMimoCredits({ modelID: "mimo-v2.5-tts", tokens, atMs: DAY })).toBe(0)
     expect(computeMimoCredits({ modelID: "gpt-4o", tokens, atMs: DAY })).toBe(0)
+  })
+
+  test("asr calculates based on duration", () => {
+    // 1800 seconds (30 mins) @ 30M credits/hr = 15,000,000 credits
+    const asrTokens = { input: 1800, output: 0, reasoning: 0, cache: { read: 0, write: 0 } }
+    expect(computeMimoCredits({ modelID: "mimo-v2.5-asr", tokens: asrTokens, atMs: DAY })).toBe(15000000)
+    expect(computeMimoCredits({ modelID: "mimo-v2.5-asr", tokens: asrTokens, atMs: NIGHT })).toBe(15000000 * 0.8)
   })
 })
 
