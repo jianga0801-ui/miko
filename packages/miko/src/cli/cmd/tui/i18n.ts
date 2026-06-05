@@ -467,7 +467,6 @@ const commandTextZhCN: Record<string, string> = {
   "Unlock theme mode": "解锁主题模式",
   "Lock theme mode": "锁定主题模式",
   Help: "帮助",
-  "Open docs": "打开文档",
   "Exit the app": "退出应用",
   "Toggle debug panel": "切换调试面板",
   "Toggle console": "切换控制台",
