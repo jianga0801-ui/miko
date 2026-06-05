@@ -5,17 +5,24 @@ import { fileURLToPath } from "url"
 import { DialogSelect, type DialogSelectOption } from "@tui/ui/dialog-select"
 import { Show, createEffect, createMemo, createSignal } from "solid-js"
 import { useBindings } from "../../keymap"
+import { createTuiI18n, resolveTuiLanguage, TuiLanguageKVKey, type TuiLanguageConfig } from "../../i18n"
 
 const id = "internal:plugin-manager"
 
+function tr(api: TuiPluginApi, ...args: Parameters<ReturnType<typeof createTuiI18n>["t"]>) {
+  return createTuiI18n(
+    resolveTuiLanguage(api.kv.get(TuiLanguageKVKey, api.tuiConfig.language) as TuiLanguageConfig | undefined),
+  ).t(...args)
+}
+
 function state(api: TuiPluginApi, item: TuiPluginStatus) {
   if (!item.enabled) {
-    return <span style={{ fg: api.theme.current.textMuted }}>disabled</span>
+    return <span style={{ fg: api.theme.current.textMuted }}>{tr(api, "plugin.state.disabled")}</span>
   }
 
   return (
     <span style={{ fg: item.active ? api.theme.current.success : api.theme.current.error }}>
-      {item.active ? "active" : "inactive"}
+      {item.active ? tr(api, "plugin.state.active") : tr(api, "plugin.state.inactive")}
     </span>
   )
 }
@@ -25,10 +32,10 @@ function source(spec: string) {
   return fileURLToPath(spec)
 }
 
-function meta(item: TuiPluginStatus, width: number) {
+function meta(api: TuiPluginApi, item: TuiPluginStatus, width: number) {
   if (item.source === "internal") {
-    if (width >= 120) return "Built-in plugin"
-    return "Built-in"
+    if (width >= 120) return tr(api, "plugin.builtin")
+    return tr(api, "plugin.builtinShort")
   }
   const next = source(item.spec)
   if (next) return next
@@ -41,23 +48,30 @@ function Install(props: { api: TuiPluginApi }) {
 
   useBindings(() => ({
     enabled: !busy(),
-    bindings: [{ key: "tab", desc: "Toggle install scope", group: "Plugins", cmd: () => setGlobal((value) => !value) }],
+    bindings: [
+      {
+        key: "tab",
+        desc: tr(props.api, "plugin.install.toggleScope"),
+        group: "Plugins",
+        cmd: () => setGlobal((value) => !value),
+      },
+    ],
   }))
 
   return (
     <props.api.ui.DialogPrompt
-      title="Install plugin"
-      placeholder="npm package name"
+      title={tr(props.api, "plugin.install.title")}
+      placeholder={tr(props.api, "plugin.install.placeholder")}
       busy={busy()}
-      busyText="Installing plugin..."
+      busyText={tr(props.api, "plugin.install.busy")}
       description={() => (
         <box flexDirection="row" gap={1}>
-          <text fg={props.api.theme.current.textMuted}>scope:</text>
+          <text fg={props.api.theme.current.textMuted}>{tr(props.api, "plugin.install.scope")}</text>
           <text fg={busy() ? props.api.theme.current.textMuted : props.api.theme.current.text}>
-            {global() ? "global" : "local"}
+            {global() ? tr(props.api, "plugin.install.global") : tr(props.api, "plugin.install.local")}
           </text>
           <Show when={!busy()}>
-            <text fg={props.api.theme.current.textMuted}>(tab toggle)</text>
+            <text fg={props.api.theme.current.textMuted}>{tr(props.api, "plugin.install.toggleHint")}</text>
           </Show>
         </box>
       )}
@@ -67,7 +81,7 @@ function Install(props: { api: TuiPluginApi }) {
         if (!mod) {
           props.api.ui.toast({
             variant: "error",
-            message: "Plugin package name is required",
+            message: tr(props.api, "plugin.install.nameRequired"),
           })
           return
         }
@@ -84,7 +98,7 @@ function Install(props: { api: TuiPluginApi }) {
               if (out.missing) {
                 props.api.ui.toast({
                   variant: "info",
-                  message: "Check npm registry/auth settings and try again.",
+                  message: tr(props.api, "plugin.install.checkRegistry"),
                 })
               }
               show(props.api)
@@ -93,12 +107,16 @@ function Install(props: { api: TuiPluginApi }) {
 
             props.api.ui.toast({
               variant: "success",
-              message: `Installed ${mod} (${global() ? "global" : "local"}: ${out.dir})`,
+              message: tr(props.api, "plugin.install.installed", {
+                mod,
+                scope: global() ? tr(props.api, "plugin.install.global") : tr(props.api, "plugin.install.local"),
+                dir: out.dir,
+              }),
             })
             if (!out.tui) {
               props.api.ui.toast({
                 variant: "info",
-                message: "Package has no TUI target to load in this app.",
+                message: tr(props.api, "plugin.install.noTui"),
               })
               show(props.api)
               return
@@ -108,7 +126,7 @@ function Install(props: { api: TuiPluginApi }) {
               if (!ok) {
                 props.api.ui.toast({
                   variant: "warning",
-                  message: "Installed plugin, but runtime load failed. See console/logs; restart TUI to retry.",
+                  message: tr(props.api, "plugin.install.loadFailed"),
                 })
                 show(props.api)
                 return
@@ -116,7 +134,7 @@ function Install(props: { api: TuiPluginApi }) {
 
               props.api.ui.toast({
                 variant: "success",
-                message: `Loaded ${mod} in current session.`,
+                message: tr(props.api, "plugin.install.loaded", { mod }),
               })
               show(props.api)
             })
@@ -137,7 +155,7 @@ function row(api: TuiPluginApi, item: TuiPluginStatus, width: number): DialogSel
     title: item.id,
     value: item.id,
     category: item.source === "internal" ? "Internal" : "External",
-    description: meta(item, width),
+    description: meta(api, item, width),
     footer: state(api, item),
     disabled: item.id === id,
   }
@@ -188,7 +206,7 @@ function View(props: { api: TuiPluginApi }) {
         if (!ok) {
           props.api.ui.toast({
             variant: "error",
-            message: `Failed to update plugin ${item.id}`,
+            message: tr(props.api, "plugin.updateFailed", { id: item.id }),
           })
         }
         setList(props.api.plugins.list())

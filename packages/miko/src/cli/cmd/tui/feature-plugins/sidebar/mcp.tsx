@@ -1,8 +1,15 @@
 import type { TuiPlugin, TuiPluginApi } from "@miko-ai/plugin/tui"
 import type { InternalTuiPlugin } from "../../plugin/internal"
 import { createMemo, For, Match, Show, Switch, createSignal } from "solid-js"
+import { createTuiI18n, resolveTuiLanguage, TuiLanguageKVKey, type TuiLanguageConfig } from "../../i18n"
 
 const id = "internal:sidebar-mcp"
+
+function tr(api: TuiPluginApi, ...args: Parameters<ReturnType<typeof createTuiI18n>["t"]>) {
+  return createTuiI18n(
+    resolveTuiLanguage(api.kv.get(TuiLanguageKVKey, api.tuiConfig.language) as TuiLanguageConfig | undefined),
+  ).t(...args)
+}
 
 function View(props: { api: TuiPluginApi }) {
   const [open, setOpen] = createSignal(true)
@@ -37,8 +44,11 @@ function View(props: { api: TuiPluginApi }) {
             <b>MCP</b>
             <Show when={!open()}>
               <span style={{ fg: theme().textMuted }}>
-                {" "}
-                ({on()} active{bad() > 0 ? `, ${bad()} error${bad() > 1 ? "s" : ""}` : ""})
+                {" "}(
+                {bad() > 0
+                  ? tr(props.api, "sidebar.mcp.summaryWithErrors", { active: on(), errors: bad() })
+                  : tr(props.api, "sidebar.mcp.summaryActive", { count: on() })}
+                )
               </span>
             </Show>
           </text>
@@ -59,13 +69,15 @@ function View(props: { api: TuiPluginApi }) {
                   {item.name}{" "}
                   <span style={{ fg: theme().textMuted }}>
                     <Switch fallback={item.status}>
-                      <Match when={item.status === "connected"}>Connected</Match>
+                      <Match when={item.status === "connected"}>{tr(props.api, "sidebar.mcp.connected")}</Match>
                       <Match when={item.status === "failed"}>
                         <i>{item.error}</i>
                       </Match>
-                      <Match when={item.status === "disabled"}>Disabled</Match>
-                      <Match when={item.status === "needs_auth"}>Needs auth</Match>
-                      <Match when={item.status === "needs_client_registration"}>Needs client ID</Match>
+                      <Match when={item.status === "disabled"}>{tr(props.api, "sidebar.mcp.disabled")}</Match>
+                      <Match when={item.status === "needs_auth"}>{tr(props.api, "sidebar.mcp.needsAuth")}</Match>
+                      <Match when={item.status === "needs_client_registration"}>
+                        {tr(props.api, "sidebar.mcp.needsClientId")}
+                      </Match>
                     </Switch>
                   </span>
                 </text>

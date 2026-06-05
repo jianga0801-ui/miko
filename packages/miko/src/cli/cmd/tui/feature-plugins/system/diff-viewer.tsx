@@ -5,6 +5,7 @@ import { TextAttributes, type BorderSides, type BoxRenderable, type ScrollBoxRen
 import { LANGUAGE_EXTENSIONS } from "@/lsp/language"
 import { useBindings, useCommandShortcut } from "@tui/keymap"
 import { useTheme } from "@tui/context/theme"
+import { useTuiI18n } from "@tui/context/i18n"
 import { useTerminalDimensions } from "@opentui/solid"
 import path from "path"
 import { createEffect, createMemo, createResource, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js"
@@ -78,6 +79,7 @@ function storedView(value: unknown): DiffView | undefined {
 function DiffViewer(props: { api: TuiPluginApi }) {
   const dimensions = useTerminalDimensions()
   const themeState = useTheme()
+  const i18n = useTuiI18n()
   const theme = () => props.api.theme.current
   const params = () =>
     ("params" in props.api.route.current ? props.api.route.current.params : undefined) as
@@ -605,14 +607,14 @@ function DiffViewer(props: { api: TuiPluginApi }) {
 
   const switchDiffOptions = createMemo(() => [
     {
-      title: "Working tree",
+      title: i18n.command("Working tree") ?? "Working tree",
       value: "git" as const,
-      description: "Show current git changes",
+      description: i18n.t("diff.source.workingTreeDesc"),
     },
     {
-      title: "Last turn",
+      title: i18n.command("Last turn") ?? "Last turn",
       value: "last-turn" as const,
-      description: "Show changes from the last assistant turn",
+      description: i18n.t("diff.source.lastTurnDesc"),
     },
   ])
 
@@ -746,7 +748,7 @@ function DiffViewer(props: { api: TuiPluginApi }) {
                             <Separator axis="x" start={showFileTree() ? "edge" : undefined} />
                             <Show
                               when={entry.file.patch}
-                              fallback={<text fg={theme().textMuted}>No patch available for this file.</text>}
+                              fallback={<text fg={theme().textMuted}>{i18n.t("diff.noPatch")}</text>}
                             >
                               {(patch) => (
                                 <box border={patchLeftBorder()} borderColor={theme().border}>
@@ -793,42 +795,42 @@ function DiffViewer(props: { api: TuiPluginApi }) {
           <Show when={switchFocusShortcut()}>
             {(shortcut) => (
               <text fg={theme().text}>
-                {shortcut()} <span style={{ fg: theme().textMuted }}>focus file tree</span>
+                {shortcut()} <span style={{ fg: theme().textMuted }}>{i18n.t("diff.hint.focusFileTree")}</span>
               </text>
             )}
           </Show>
           <Show when={nextFileShortcut()}>
             {(shortcut) => (
               <text fg={theme().text}>
-                {shortcut()} <span style={{ fg: theme().textMuted }}>next file</span>
+                {shortcut()} <span style={{ fg: theme().textMuted }}>{i18n.t("diff.hint.nextFile")}</span>
               </text>
             )}
           </Show>
           <Show when={previousFileShortcut()}>
             {(shortcut) => (
               <text fg={theme().text}>
-                {shortcut()} <span style={{ fg: theme().textMuted }}>previous file</span>
+                {shortcut()} <span style={{ fg: theme().textMuted }}>{i18n.t("diff.hint.previousFile")}</span>
               </text>
             )}
           </Show>
           <Show when={switchSourceShortcut()}>
             {(shortcut) => (
               <text fg={theme().text}>
-                {shortcut()} <span style={{ fg: theme().textMuted }}>switch source</span>
+                {shortcut()} <span style={{ fg: theme().textMuted }}>{i18n.t("diff.hint.switchSource")}</span>
               </text>
             )}
           </Show>
           <Show when={markReviewedShortcut()}>
             {(shortcut) => (
               <text fg={theme().text}>
-                {shortcut()} <span style={{ fg: theme().textMuted }}>mark reviewed</span>
+                {shortcut()} <span style={{ fg: theme().textMuted }}>{i18n.t("diff.hint.markReviewed")}</span>
               </text>
             )}
           </Show>
           <Show when={helpShortcut()}>
             {(shortcut) => (
               <text fg={theme().text}>
-                {shortcut()} <span style={{ fg: theme().textMuted }}>all</span>
+                {shortcut()} <span style={{ fg: theme().textMuted }}>{i18n.t("diff.hint.all")}</span>
               </text>
             )}
           </Show>
@@ -840,56 +842,57 @@ function DiffViewer(props: { api: TuiPluginApi }) {
 
 function DiffViewerHelpDialog() {
   const { theme } = useTheme()
+  const i18n = useTuiI18n()
   const rows = [
     {
       shortcut: () => "q",
-      action: "Close viewer",
-      description: "Quit the diff viewer",
+      action: i18n.t("diff.action.closeViewer"),
+      description: i18n.t("diff.desc.closeViewer"),
     },
     {
       shortcut: useCommandShortcut("diff.switch_focus"),
-      action: "Focus file tree",
-      description: "Move keyboard focus between the file tree and patch pane",
+      action: i18n.t("diff.action.focusFileTree"),
+      description: i18n.t("diff.desc.focusFileTree"),
     },
     {
       shortcut: useCommandShortcut("diff.next_file"),
-      action: "Next file",
-      description: "Select the next changed file in file-tree order",
+      action: i18n.t("diff.action.nextFile"),
+      description: i18n.t("diff.desc.nextFile"),
     },
     {
       shortcut: useCommandShortcut("diff.previous_file"),
-      action: "Previous file",
-      description: "Select the previous changed file in file-tree order",
+      action: i18n.t("diff.action.previousFile"),
+      description: i18n.t("diff.desc.previousFile"),
     },
     {
       shortcut: useCommandShortcut("diff.toggle_file_tree"),
-      action: "Toggle file tree",
-      description: "Show or hide the file tree sidebar",
+      action: i18n.t("diff.action.toggleFileTree"),
+      description: i18n.t("diff.desc.toggleFileTree"),
     },
     {
       shortcut: useCommandShortcut("diff.single_patch"),
-      action: "Toggle patches",
-      description: "Switch between one selected patch and all patches",
+      action: i18n.t("diff.action.togglePatches"),
+      description: i18n.t("diff.desc.togglePatches"),
     },
     {
       shortcut: useCommandShortcut("diff.switch_source"),
-      action: "Switch source",
-      description: "Choose working tree or last-turn changes",
+      action: i18n.t("diff.action.switchSource"),
+      description: i18n.t("diff.desc.switchSource"),
     },
     {
       shortcut: useCommandShortcut("diff.toggle_view"),
-      action: "Toggle view",
-      description: "Switch between split and unified diff layout",
+      action: i18n.t("diff.action.toggleView"),
+      description: i18n.t("diff.desc.toggleView"),
     },
     {
       shortcut: useCommandShortcut("diff.expand_all"),
-      action: "Expand all folders",
-      description: "Open every folder in the file tree",
+      action: i18n.t("diff.action.expandAll"),
+      description: i18n.t("diff.desc.expandAll"),
     },
     {
       shortcut: useCommandShortcut("diff.mark_reviewed"),
-      action: "Mark reviewed",
-      description: "Toggle reviewed state for the selected file",
+      action: i18n.t("diff.action.markReviewed"),
+      description: i18n.t("diff.desc.markReviewed"),
     },
   ]
 
@@ -897,18 +900,18 @@ function DiffViewerHelpDialog() {
     <box paddingLeft={2} paddingRight={2} paddingBottom={1} gap={1}>
       <box flexDirection="row" justifyContent="space-between">
         <text attributes={TextAttributes.BOLD} fg={theme.text}>
-          Diff shortcuts
+          {i18n.t("diff.shortcutsTitle")}
         </text>
         <text fg={theme.textMuted}>esc</text>
       </box>
       <box flexDirection="row">
         <text fg={theme.textMuted} width={5} wrapMode="none">
-          Key
+          {i18n.t("diff.col.key")}
         </text>
         <text fg={theme.textMuted} width={22} wrapMode="none">
-          Action
+          {i18n.t("diff.col.action")}
         </text>
-        <text fg={theme.textMuted}>Description</text>
+        <text fg={theme.textMuted}>{i18n.t("diff.col.description")}</text>
       </box>
       <For each={rows}>
         {(row) => (

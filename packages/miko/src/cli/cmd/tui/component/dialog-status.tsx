@@ -4,6 +4,7 @@ import { useTheme } from "../context/theme"
 import { useDialog } from "@tui/ui/dialog"
 import { useSync } from "@tui/context/sync"
 import { For, Match, Switch, Show, createMemo } from "solid-js"
+import { useTuiI18n } from "../context/i18n"
 
 export type DialogStatusProps = {}
 
@@ -11,6 +12,7 @@ export function DialogStatus() {
   const sync = useSync()
   const { theme } = useTheme()
   const dialog = useDialog()
+  const i18n = useTuiI18n()
 
   const enabledFormatters = createMemo(() => sync.data.formatter.filter((f) => f.enabled))
 
@@ -44,15 +46,15 @@ export function DialogStatus() {
     <box paddingLeft={2} paddingRight={2} gap={1} paddingBottom={1}>
       <box flexDirection="row" justifyContent="space-between">
         <text fg={theme.text} attributes={TextAttributes.BOLD}>
-          Status
+          {i18n.t("status.title")}
         </text>
         <text fg={theme.textMuted} onMouseUp={() => dialog.clear()}>
           esc
         </text>
       </box>
-      <Show when={Object.keys(sync.data.mcp).length > 0} fallback={<text fg={theme.text}>No MCP Servers</text>}>
+      <Show when={Object.keys(sync.data.mcp).length > 0} fallback={<text fg={theme.text}>{i18n.t("status.noMcp")}</text>}>
         <box>
-          <text fg={theme.text}>{Object.keys(sync.data.mcp).length} MCP Servers</text>
+          <text fg={theme.text}>{i18n.t("status.mcpCount", { count: Object.keys(sync.data.mcp).length })}</text>
           <For each={Object.entries(sync.data.mcp)}>
             {([key, item]) => (
               <box flexDirection="row" gap={1}>
@@ -76,11 +78,11 @@ export function DialogStatus() {
                   <b>{key}</b>{" "}
                   <span style={{ fg: theme.textMuted }}>
                     <Switch fallback={item.status}>
-                      <Match when={item.status === "connected"}>Connected</Match>
+                      <Match when={item.status === "connected"}>{i18n.t("status.connected")}</Match>
                       <Match when={item.status === "failed" && item}>{(val) => val().error}</Match>
-                      <Match when={item.status === "disabled"}>Disabled in configuration</Match>
+                      <Match when={item.status === "disabled"}>{i18n.t("status.disabledInConfig")}</Match>
                       <Match when={(item.status as string) === "needs_auth"}>
-                        Needs authentication (run: miko mcp auth {key})
+                        {i18n.t("status.needsAuth", { key })}
                       </Match>
                       <Match when={(item.status as string) === "needs_client_registration" && item}>
                         {(val) => (val() as { error: string }).error}
@@ -95,7 +97,7 @@ export function DialogStatus() {
       </Show>
       {sync.data.lsp.length > 0 && (
         <box>
-          <text fg={theme.text}>{sync.data.lsp.length} LSP Servers</text>
+          <text fg={theme.text}>{i18n.t("status.lspCount", { count: sync.data.lsp.length })}</text>
           <For each={sync.data.lsp}>
             {(item) => (
               <box flexDirection="row" gap={1}>
@@ -118,9 +120,9 @@ export function DialogStatus() {
           </For>
         </box>
       )}
-      <Show when={enabledFormatters().length > 0} fallback={<text fg={theme.text}>No Formatters</text>}>
+      <Show when={enabledFormatters().length > 0} fallback={<text fg={theme.text}>{i18n.t("status.noFormatters")}</text>}>
         <box>
-          <text fg={theme.text}>{enabledFormatters().length} Formatters</text>
+          <text fg={theme.text}>{i18n.t("status.formatterCount", { count: enabledFormatters().length })}</text>
           <For each={enabledFormatters()}>
             {(item) => (
               <box flexDirection="row" gap={1}>
@@ -140,9 +142,9 @@ export function DialogStatus() {
           </For>
         </box>
       </Show>
-      <Show when={plugins().length > 0} fallback={<text fg={theme.text}>No Plugins</text>}>
+      <Show when={plugins().length > 0} fallback={<text fg={theme.text}>{i18n.t("status.noPlugins")}</text>}>
         <box>
-          <text fg={theme.text}>{plugins().length} Plugins</text>
+          <text fg={theme.text}>{i18n.t("status.pluginCount", { count: plugins().length })}</text>
           <For each={plugins()}>
             {(item) => (
               <box flexDirection="row" gap={1}>

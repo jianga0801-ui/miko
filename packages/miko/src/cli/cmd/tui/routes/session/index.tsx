@@ -1593,6 +1593,7 @@ function ReasoningHeader(props: {
   duration?: string
 }) {
   const { theme } = useTheme()
+  const i18n = useTuiI18n()
   const fg = () =>
     props.open
       ? RGBA.fromValues(theme.warning.r, theme.warning.g, theme.warning.b, theme.thinkingOpacity)
@@ -1602,7 +1603,9 @@ function ReasoningHeader(props: {
     <Switch>
       <Match when={!props.done}>
         <box flexDirection="row">
-          <Spinner color={fg()}>{props.title ? "Thinking: " + props.title : "Thinking"}</Spinner>
+          <Spinner color={fg()}>
+            {props.title ? `${i18n.t("reasoning.thinking")}: ${props.title}` : i18n.t("reasoning.thinking")}
+          </Spinner>
         </box>
       </Match>
       <Match when={true}>
@@ -1610,7 +1613,7 @@ function ReasoningHeader(props: {
           <Show when={props.toggleable}>
             <span>{props.open ? "- " : "+ "}</span>
           </Show>
-          <span>Thought</span>
+          <span>{i18n.t("reasoning.thought")}</span>
           <Show when={props.title || props.duration}>
             <span>: </span>
           </Show>

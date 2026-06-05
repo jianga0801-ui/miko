@@ -1,8 +1,15 @@
 import type { TuiPlugin, TuiPluginApi } from "@miko-ai/plugin/tui"
 import type { InternalTuiPlugin } from "../../plugin/internal"
 import { createMemo, For, Show, createSignal } from "solid-js"
+import { createTuiI18n, resolveTuiLanguage, TuiLanguageKVKey, type TuiLanguageConfig } from "../../i18n"
 
 const id = "internal:sidebar-lsp"
+
+function tr(api: TuiPluginApi, ...args: Parameters<ReturnType<typeof createTuiI18n>["t"]>) {
+  return createTuiI18n(
+    resolveTuiLanguage(api.kv.get(TuiLanguageKVKey, api.tuiConfig.language) as TuiLanguageConfig | undefined),
+  ).t(...args)
+}
 
 export function View(props: { api: TuiPluginApi }) {
   const [open, setOpen] = createSignal(true)
@@ -22,7 +29,9 @@ export function View(props: { api: TuiPluginApi }) {
       </box>
       <Show when={list().length <= 2 || open()}>
         <Show when={list().length === 0}>
-          <text fg={theme().textMuted}>{off() ? "LSPs are disabled" : "LSPs will activate as files are read"}</text>
+          <text fg={theme().textMuted}>
+            {off() ? tr(props.api, "sidebar.lsp.disabled") : tr(props.api, "sidebar.lsp.pending")}
+          </text>
         </Show>
         <For each={list()}>
           {(item) => (

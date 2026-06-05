@@ -2,6 +2,7 @@ import { DialogSelect, type DialogSelectOption } from "@tui/ui/dialog-select"
 import { createResource, createMemo } from "solid-js"
 import { useDialog } from "@tui/ui/dialog"
 import { useSDK } from "@tui/context/sdk"
+import { useTuiI18n } from "../context/i18n"
 
 export type DialogSkillProps = {
   onSelect: (skill: string) => void
@@ -10,6 +11,7 @@ export type DialogSkillProps = {
 export function DialogSkill(props: DialogSkillProps) {
   const dialog = useDialog()
   const sdk = useSDK()
+  const i18n = useTuiI18n()
   dialog.setSize("large")
 
   const [skills] = createResource(async () => {
@@ -32,5 +34,5 @@ export function DialogSkill(props: DialogSkillProps) {
     }))
   })
 
-  return <DialogSelect title="Skills" placeholder="Search skills..." options={options()} />
+  return <DialogSelect title="Skills" placeholder={i18n.t("skill.searchPlaceholder")} options={options()} />
 }

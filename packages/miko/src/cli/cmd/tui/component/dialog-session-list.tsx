@@ -18,6 +18,20 @@ import { errorMessage } from "@/util/error"
 import { DialogSessionDeleteFailed } from "./dialog-session-delete-failed"
 import { WorkspaceLabel } from "./workspace-label"
 import { useCommandShortcut } from "../keymap"
+import { useTuiI18n } from "../context/i18n"
+
+function formatDateLabel(time: number, language: string) {
+  const date = new Date(time)
+  if (language === "zh-CN") {
+    return new Intl.DateTimeFormat("zh-CN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      weekday: "short",
+    }).format(date)
+  }
+  return date.toDateString()
+}
 
 export function DialogSessionList() {
   const dialog = useDialog()
@@ -28,6 +42,7 @@ export function DialogSessionList() {
   const sdk = useSDK()
   const local = useLocal()
   const toast = useToast()
+  const i18n = useTuiI18n()
   const [toDelete, setToDelete] = createSignal<string>()
   const [search, setSearch] = createDebouncedSignal("", 150)
   const deleteHint = useCommandShortcut("session.delete")
@@ -199,7 +214,7 @@ export function DialogSessionList() {
           ? () => <text fg={theme.accent}>{slot}</text>
           : undefined
       return {
-        title: isDeleting ? `Press ${deleteHint()} again to confirm` : x.title,
+        title: isDeleting ? i18n.t("session.confirmDelete", { shortcut: deleteHint() }) : x.title,
         bg: isDeleting ? theme.error : undefined,
         value: x.id,
         category,
@@ -213,8 +228,8 @@ export function DialogSessionList() {
       .map((id) => {
         const x = sessionMap.get(id)
         if (!x) return undefined
-        const label = new Date(x.time.updated).toDateString()
-        return buildOption(id, label === today ? "Today" : label)
+        const sameDay = new Date(x.time.updated).toDateString() === today
+        return buildOption(id, sameDay ? "Today" : formatDateLabel(x.time.updated, i18n.language))
       })
       .filter((x) => x !== undefined)
 
