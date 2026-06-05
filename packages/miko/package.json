@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "version": "2026.6.4",
+  "version": "2026.6.5",
   "name": "miko",
   "type": "module",
   "license": "MIT",
@@ -68,9 +68,6 @@
     "why-is-node-running": "3.2.2"
   },
   "dependencies": {
-    "detect-terminal": "2.0.0",
-    "node-notifier": "10.0.1",
-    "unique-names-generator": "4.7.1",
     "@actions/core": "1.11.1",
     "@actions/github": "6.0.1",
     "@agentclientprotocol/sdk": "0.21.0",
@@ -133,6 +130,7 @@
     "clipboardy": "4.0.0",
     "cross-spawn": "catalog:",
     "decimal.js": "10.5.0",
+    "detect-terminal": "2.0.0",
     "diff": "catalog:",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
@@ -147,6 +145,7 @@
     "jsonc-parser": "3.3.1",
     "mime-types": "3.0.2",
     "minimatch": "10.0.3",
+    "node-notifier": "10.0.1",
     "npm-package-arg": "13.0.2",
     "open": "10.1.2",
     "opentui-spinner": "catalog:",
@@ -160,6 +159,7 @@
     "tree-sitter-powershell": "0.25.10",
     "turndown": "7.2.0",
     "ulid": "catalog:",
+    "unique-names-generator": "4.7.1",
     "venice-ai-sdk-provider": "2.0.2",
     "vscode-jsonrpc": "8.2.1",
     "web-tree-sitter": "0.25.10",
