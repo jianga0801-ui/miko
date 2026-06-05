@@ -16,5 +16,5 @@ Windows 下若 electron 二进制下载失败（github.com 不可达），设镜
 
 ## 测试 / 类型
 
-    bun test packages/desktop/src
+    bun run --cwd packages/desktop test
     bun run --cwd packages/desktop typecheck

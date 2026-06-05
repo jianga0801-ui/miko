@@ -15,7 +15,7 @@ async function bootstrap() {
     width: 1280,
     height: 832,
     webPreferences: {
-      preload: join(__dirname, "../preload/index.js"),
+      preload: join(__dirname, "../preload/index.mjs"),
       contextIsolation: true,
       sandbox: true,
     },
