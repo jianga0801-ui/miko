@@ -1434,6 +1434,7 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
   const local = useLocal()
   const { theme } = useTheme()
   const sync = useSync()
+  const i18n = useTuiI18n()
   const messages = createMemo(() => sync.data.message[props.message.sessionID] ?? [])
   const model = createMemo(() => Model.name(ctx.providers(), props.message.providerID, props.message.modelID))
 
@@ -1472,7 +1473,7 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
         <box paddingTop={1} paddingLeft={3}>
           <text fg={theme.text}>
             {childShortcut()}
-            <span style={{ fg: theme.textMuted }}> view subagents</span>
+            <span style={{ fg: theme.textMuted }}>{i18n.t("session.viewSubagents")}</span>
           </text>
         </box>
       </Show>

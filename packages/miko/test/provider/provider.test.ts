@@ -611,6 +611,30 @@ it.instance(
 )
 
 it.instance(
+  "model modalities resolve correctly for TTS models",
+  Effect.gen(function* () {
+    const providers = yield* list
+    const model = providers[ProviderV2.ID.make("test-provider")].models["test-tts-model"]
+    expect(model.capabilities.input.text).toBe(true)
+    expect(model.capabilities.output.text).toBe(false)
+    expect(model.capabilities.output.audio).toBe(true)
+  }),
+  {
+    config: {
+      provider: {
+        "test-provider": {
+          name: "Test",
+          npm: "@ai-sdk/openai-compatible",
+          env: [],
+          models: { "test-tts-model": { name: "Test TTS Model", tool_call: true, limit: { context: 8000, output: 2000 } } },
+          options: { apiKey: "test" },
+        },
+      },
+    },
+  },
+)
+
+it.instance(
   "model with custom cost values",
   Effect.gen(function* () {
     const providers = yield* list

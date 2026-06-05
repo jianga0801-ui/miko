@@ -6,6 +6,14 @@ import { useBindings, useKeymapSelector } from "../../keymap"
 import type { ActiveKey } from "@opentui/keymap"
 import type { TuiPlugin, TuiPluginApi } from "@miko-ai/plugin/tui"
 import type { InternalTuiPlugin } from "../../plugin/internal"
+import {
+  createTuiI18n,
+  resolveTuiLanguage,
+  translateCommandText,
+  TuiLanguageKVKey,
+  type TuiLanguage,
+  type TuiLanguageConfig,
+} from "../../i18n"
 
 const command = {
   toggle: "which-key.toggle",
@@ -111,16 +119,28 @@ function skin(api: TuiPluginApi): Skin {
   }
 }
 
-function activeKeyLabel(active: ActiveKey<Renderable, KeyEvent>) {
-  if (active.continues) return text(active.tokenName) ?? text(active.display) ?? UNKNOWN
-  return (
-    text(active.commandAttrs?.title) ?? text(active.bindingAttrs?.desc) ?? text(active.commandAttrs?.desc) ?? UNKNOWN
-  )
+function language(api: TuiPluginApi): TuiLanguage {
+  return resolveTuiLanguage(api.kv.get(TuiLanguageKVKey, api.tuiConfig.language) as TuiLanguageConfig | undefined)
 }
 
-function activeKeyGroup(active: ActiveKey<Renderable, KeyEvent>) {
-  if (active.continues) return "System"
-  return text(active.commandAttrs?.category) ?? text(active.bindingAttrs?.group) ?? UNKNOWN
+function t(api: TuiPluginApi, ...args: Parameters<ReturnType<typeof createTuiI18n>["t"]>) {
+  return createTuiI18n(language(api)).t(...args)
+}
+
+function translate(api: TuiPluginApi, value: string) {
+  return translateCommandText(value, language(api)) ?? value
+}
+
+function activeKeyLabel(api: TuiPluginApi, active: ActiveKey<Renderable, KeyEvent>) {
+  if (active.continues) return translate(api, text(active.tokenName) ?? text(active.display) ?? UNKNOWN)
+  const label =
+    text(active.commandAttrs?.title) ?? text(active.bindingAttrs?.desc) ?? text(active.commandAttrs?.desc) ?? UNKNOWN
+  return translate(api, label)
+}
+
+function activeKeyGroup(api: TuiPluginApi, active: ActiveKey<Renderable, KeyEvent>) {
+  if (active.continues) return translate(api, "System")
+  return translate(api, text(active.commandAttrs?.category) ?? text(active.bindingAttrs?.group) ?? UNKNOWN)
 }
 
 function activeKeyEntry(api: TuiPluginApi, active: ActiveKey<Renderable, KeyEvent>): Entry {
@@ -131,12 +151,12 @@ function activeKeyEntry(api: TuiPluginApi, active: ActiveKey<Renderable, KeyEven
       tokenName: active.tokenName,
     },
   ])
-  const label = activeKeyLabel(active)
+  const label = activeKeyLabel(api, active)
   return {
     type: "entry",
     key,
     label: active.continues ? `+${label}` : label,
-    group: activeKeyGroup(active),
+    group: activeKeyGroup(api, active),
     continues: active.continues,
   }
 }
@@ -168,19 +188,6 @@ function layout(value: unknown): Layout {
   return "dock"
 }
 
-function HomeHint(props: { api: TuiPluginApi }) {
-  const trigger = commandShortcut(props.api, command.toggle)
-  const look = createMemo(() => skin(props.api))
-
-  return (
-    <box width="100%" maxWidth={75} alignItems="center" paddingTop={1} flexShrink={0}>
-      <text fg={look().muted} wrapMode="none">
-        Show keyboard shortcuts with <span style={{ fg: look().subtle }}>{trigger() || command.toggle}</span>
-      </text>
-    </box>
-  )
-}
-
 function WhichKeyPanel(props: {
   api: TuiPluginApi
   layout: Layout
@@ -194,7 +201,7 @@ function WhichKeyPanel(props: {
   const pending = useKeymapSelector((keymap) => keymap.getPendingSequence())
   const active = useKeymapSelector((keymap) => keymap.getActiveKeys({ includeMetadata: true }))
   const pendingActive = createMemo(() => pending().length > 0 && active().length > 0)
-  const pendingAutoVisible = createMemo(() => props.mode() === "overlay" && props.pendingPreview() && pendingActive())
+  const pendingAutoVisible = createMemo(() => props.pendingPreview() && pendingActive())
   const visible = createMemo(() => props.pinned() || pendingAutoVisible())
   const pendingMode = createMemo(() => visible() && pendingActive())
   const left = 0
@@ -514,12 +521,14 @@ function WhichKeyPanel(props: {
           <box width="100%" flexDirection="row" justifyContent="space-between" flexShrink={0}>
             <box>
               <text fg={look().text} wrapMode="none">
-                toggle <span style={{ fg: look().subtle }}>{trigger() || command.toggle}</span>
+                {t(props.api, "whichKey.toggle")}{" "}
+                <span style={{ fg: look().subtle }}>{trigger() || command.toggle}</span>
               </text>
             </box>
             <box>
               <text fg={look().text} wrapMode="none">
-                {nextMode()} <span style={{ fg: look().subtle }}>{modeTrigger() || command.toggleLayout}</span>
+                {nextMode() === "dock" ? t(props.api, "whichKey.dock") : t(props.api, "whichKey.overlay")}{" "}
+                <span style={{ fg: look().subtle }}>{modeTrigger() || command.toggleLayout}</span>
               </text>
             </box>
           </box>
@@ -532,7 +541,7 @@ function WhichKeyPanel(props: {
 const tui: TuiPlugin = async (api) => {
   const [pinned, setPinned] = createSignal(false)
   const [mode, setMode] = createSignal(layout(api.kv.get(KV_LAYOUT, "dock")))
-  const [pendingPreview, setPendingPreview] = createSignal(api.kv.get(KV_PENDING_PREVIEW, false))
+  const [pendingPreview, setPendingPreview] = createSignal(api.kv.get(KV_PENDING_PREVIEW, true))
 
   api.keymap.registerLayer({
     priority: LAYER_PRIORITY,
@@ -578,9 +587,6 @@ const tui: TuiPlugin = async (api) => {
   api.slots.register({
     order: 200,
     slots: {
-      home_bottom() {
-        return <HomeHint api={api} />
-      },
       app() {
         return (
           <Show when={mode() === "overlay"}>

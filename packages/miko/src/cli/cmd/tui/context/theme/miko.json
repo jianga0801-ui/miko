@@ -7,12 +7,12 @@
     "darkText": "#eef5ff",
     "darkTextMuted": "#9fb3dd",
     "darkPrimary": "#ddbb88",
-    "darkSecondary": "#ffeebb",
-    "darkAccent": "#f280d0",
-    "darkRed": "#A22D44",
-    "darkGreen": "#22aa44",
-    "darkYellow": "#cb4b16",
-    "darkCyan": "#219186",
+    "darkSecondary": "#f0d4a0",
+    "darkAccent": "#e8a98f",
+    "darkRed": "#d2475f",
+    "darkGreen": "#5fb07e",
+    "darkYellow": "#dd9544",
+    "darkCyan": "#4bb3a6",
     "darkBorder": "#2b2b4a",
     "darkBorderActive": "#596F99",
 
@@ -20,14 +20,14 @@
     "lightPanel": "#e8dcbe",
     "lightElement": "#dccda6",
     "lightText": "#005661",
-    "lightTextMuted": "#8ca6a6",
-    "lightPrimary": "#0099ad",
-    "lightSecondary": "#ff5792",
-    "lightAccent": "#5842ff",
-    "lightRed": "#e64100",
-    "lightGreen": "#00b368",
-    "lightYellow": "#e69533",
-    "lightCyan": "#00bdd6",
+    "lightTextMuted": "#5d7878",
+    "lightPrimary": "#007d8c",
+    "lightSecondary": "#a8741f",
+    "lightAccent": "#b0542f",
+    "lightRed": "#d83a00",
+    "lightGreen": "#00855a",
+    "lightYellow": "#b87519",
+    "lightCyan": "#0090a3",
     "lightBorder": "#cbbda0",
     "lightBorderActive": "#b5a687"
   },
@@ -106,11 +106,11 @@
     },
     "diffContext": {
       "dark": "darkTextMuted",
-      "light": "#8ca6a6"
+      "light": "#6d8585"
     },
     "diffHunkHeader": {
       "dark": "darkTextMuted",
-      "light": "#8ca6a6"
+      "light": "#6d8585"
     },
     "diffHighlightAdded": {
       "dark": "#d1f1a9",

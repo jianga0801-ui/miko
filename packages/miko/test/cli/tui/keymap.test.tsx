@@ -58,6 +58,49 @@ test("legacy page key aliases compile as page keys", async () => {
   }
 })
 
+test("leader key sequences dispatch registered commands", async () => {
+  let calls = 0
+
+  function Harness() {
+    const renderer = useRenderer()
+    const keymap = createDefaultOpenTuiKeymap(renderer)
+    const config = createTuiResolvedConfig()
+    const offKeymap = registerMikoKeymap(keymap, renderer, config)
+    const offLayer = keymap.registerLayer({
+      mode: MIKO_BASE_MODE,
+      commands: [
+        {
+          name: "model.list",
+          run() {
+            calls++
+          },
+        },
+      ],
+      bindings: config.keybinds.gather("test.leader", ["model.list"]),
+    })
+
+    onCleanup(() => {
+      offLayer()
+      offKeymap()
+    })
+
+    return (
+      <MikoKeymapProvider keymap={keymap}>
+        <box />
+      </MikoKeymapProvider>
+    )
+  }
+
+  const app = await testRender(() => <Harness />)
+  try {
+    app.mockInput.pressKey("x", { ctrl: true })
+    app.mockInput.pressKey("m")
+    expect(calls).toBe(1)
+  } finally {
+    app.renderer.destroy()
+  }
+})
+
 test("mode-less bindings stay active when miko mode changes", async () => {
   const counts: Record<string, Record<string, number>> = {}
 

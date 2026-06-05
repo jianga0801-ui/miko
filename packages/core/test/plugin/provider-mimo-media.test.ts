@@ -235,6 +235,16 @@ describe("rewriteMimoRequestBody reasoning and temperature", () => {
     expect(out.extra_body).toBeUndefined()
   })
 
+  test("preserves explicit disabled thinking mode", () => {
+    const body = JSON.stringify({
+      model: "mimo-v2.5-pro",
+      thinking: { type: "disabled" },
+      messages: [{ role: "user", content: "hello" }],
+    })
+    const out = JSON.parse(rewriteMimoRequestBody(body))
+    expect(out.thinking).toEqual({ type: "disabled" })
+  })
+
   test("extracts assistant reasoning_content and sets it on the message object", () => {
     const body = JSON.stringify({
       model: "mimo-v2.5-pro",

@@ -1351,6 +1351,7 @@ export const layer = Layer.effect(
           for (const [modelID, model] of Object.entries(provider.models ?? {})) {
             const existingModel = parsed.models[model.id ?? modelID]
             const apiID = model.id ?? existingModel?.api.id ?? modelID
+            const isTtsModel = apiID.toLowerCase().includes("tts")
             if (!isAllowedProviderModel(providerID, apiID)) continue
             const apiNpm =
               model.provider?.npm ??
@@ -1394,9 +1395,13 @@ export const layer = Layer.effect(
                     : (model.modalities?.input?.includes("pdf") ?? existingModel?.capabilities.input.pdf ?? false),
                 },
                 output: {
-                  text: model.modalities?.output?.includes("text") ?? existingModel?.capabilities.output.text ?? true,
+                  text: model.modalities?.output?.includes("text") ??
+                    existingModel?.capabilities.output.text ??
+                    !isTtsModel,
                   audio:
-                    model.modalities?.output?.includes("audio") ?? existingModel?.capabilities.output.audio ?? false,
+                    model.modalities?.output?.includes("audio") ??
+                    existingModel?.capabilities.output.audio ??
+                    isTtsModel,
                   image:
                     model.modalities?.output?.includes("image") ?? existingModel?.capabilities.output.image ?? false,
                   video:

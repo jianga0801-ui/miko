@@ -10,6 +10,7 @@ import {
 } from "../keymap"
 import { useTuiConfig } from "../context/tui-config"
 import { useTuiI18n } from "../context/i18n"
+import { useLocal } from "@tui/context/local"
 
 type PaletteCommandEntry = ReturnType<OpenTuiKeymap["getCommandEntries"]>[number]
 
@@ -28,6 +29,20 @@ export function CommandPaletteDialog() {
   const config = useTuiConfig()
   const i18n = useTuiI18n()
   const keymap = useMikoKeymap()
+  const local = useLocal()
+
+  // The thinking-mode toggle reflects its current state: when thinking is on we
+  // offer to turn it off, and vice versa. Only applies to on/off style variants.
+  function commandTitle(entry: PaletteCommandEntry) {
+    if (entry.command.name === "variant.cycle" && local.model.variant.list().includes("disabled")) {
+      const on = local.model.variant.effective() !== "disabled"
+      return i18n.t(on ? "commands.thinkingModeDisable" : "commands.thinkingModeEnable")
+    }
+    return (
+      i18n.command(typeof entry.command.title === "string" ? entry.command.title : entry.command.name) ??
+      entry.command.name
+    )
+  }
   const entries = useKeymapSelector((keymap: OpenTuiKeymap) => {
     const query = {
       namespace: "palette",
@@ -49,9 +64,7 @@ export function CommandPaletteDialog() {
   })
   const options = createMemo(() =>
     entries().map((entry) => ({
-      title:
-        i18n.command(typeof entry.command.title === "string" ? entry.command.title : entry.command.name) ??
-        entry.command.name,
+      title: commandTitle(entry),
       description: i18n.command(typeof entry.command.desc === "string" ? entry.command.desc : undefined),
       category: i18n.command(typeof entry.command.category === "string" ? entry.command.category : undefined),
       footer: formatKeyBindings(entry.bindings, config),

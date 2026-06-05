@@ -161,6 +161,7 @@ export function Prompt(props: PromptProps) {
   const keymap = useMikoKeymap()
   const agentShortcut = useCommandShortcut("agent.cycle")
   const paletteShortcut = useCommandShortcut("command.palette.show")
+  const variantShortcut = useCommandShortcut("variant.cycle")
   const renderer = useRenderer()
   const dimensions = useTerminalDimensions()
   const { theme, syntax } = useTheme()
@@ -1618,11 +1619,9 @@ export function Prompt(props: PromptProps) {
     return local.agent.color(agent.name)
   })
 
+  const canSwitchVariant = createMemo(() => local.model.variant.list().length > 0)
   const showVariant = createMemo(() => {
-    const variants = local.model.variant.list()
-    if (variants.length === 0) return false
-    const current = local.model.variant.current()
-    return !!current
+    return local.model.parsed().reasoning && local.model.variant.effective() !== "disabled"
   })
 
   const agentMetaAlpha = createFadeIn(() => !!local.agent.current(), animationsEnabled)
@@ -1808,8 +1807,8 @@ export function Prompt(props: PromptProps) {
                           <Show when={showVariant()}>
                             <text fg={fadeColor(theme.textMuted, variantMetaAlpha())}>·</text>
                             <text>
-                              <span style={{ fg: fadeColor(theme.warning, variantMetaAlpha()), bold: true }}>
-                                {local.model.variant.current()}
+                              <span style={{ fg: fadeColor(theme.info, variantMetaAlpha()), bold: true }}>
+                                {i18n.t("model.thinkingMode")}
                               </span>
                             </text>
                           </Show>
@@ -1854,144 +1853,158 @@ export function Prompt(props: PromptProps) {
           />
         </box>
         <box width="100%" flexDirection="row" justifyContent="space-between">
-          <Switch>
-            <Match when={voiceRecording()}>
-              <box paddingLeft={3} flexDirection="row" gap={1}>
-                <text fg={theme.error}>● {i18n.t("prompt.voiceRecord")}</text>
-                <text fg={theme.textMuted}>alt+v {i18n.t("prompt.voiceStop")}</text>
-                <text fg={theme.textMuted}>esc {i18n.t("prompt.voiceCancel")}</text>
-              </box>
-            </Match>
-            <Match when={voiceError()}>
-              {(message) => (
-                <box paddingLeft={3}>
-                  <text fg={theme.error}>{message()}</text>
-                </box>
-              )}
-            </Match>
-            <Match when={status().type !== "idle"}>
-              <box
-                flexDirection="row"
-                gap={1}
-                flexGrow={1}
-                justifyContent={status().type === "retry" ? "space-between" : "flex-start"}
-              >
-                <box flexShrink={0} flexDirection="row" gap={1}>
-                  <box marginLeft={1}>
-                    <Show when={kv.get("animations_enabled", true)} fallback={<text fg={theme.textMuted}>[⋯]</text>}>
-                      <spinner color={spinnerDef().color} frames={spinnerDef().frames} interval={40} />
-                    </Show>
-                  </box>
-                  <box flexDirection="row" gap={1} flexShrink={0}>
-                    {(() => {
-                      const retry = createMemo(() => {
-                        const s = status()
-                        if (s.type !== "retry") return
-                        return s
-                      })
-                      const message = createMemo(() => {
-                        const r = retry()
-                        if (!r) return
-                        if (r.message.includes("exceeded your current quota") && r.message.includes("gemini"))
-                          return "gemini is way too hot right now"
-                        if (r.message.length > 80) return r.message.slice(0, 80) + "..."
-                        return r.message
-                      })
-                      const isTruncated = createMemo(() => {
-                        const r = retry()
-                        if (!r) return false
-                        return r.message.length > 120
-                      })
-                      const [seconds, setSeconds] = createSignal(0)
-                      onMount(() => {
-                        const timer = setInterval(() => {
-                          const next = retry()?.next
-                          if (next) setSeconds(Math.round((next - Date.now()) / 1000))
-                        }, 1000)
-
-                        onCleanup(() => {
-                          clearInterval(timer)
-                        })
-                      })
-                      const handleMessageClick = () => {
-                        const r = retry()
-                        if (!r) return
-                        if (isTruncated()) {
-                          void DialogAlert.show(dialog, i18n.t("prompt.retryError"), r.message)
-                        }
-                      }
-
-                      const retryText = () => {
-                        const r = retry()
-                        if (!r) return ""
-                        const baseMessage = message()
-                        const truncatedHint = isTruncated() ? " (click to expand)" : ""
-                        const duration = formatDuration(seconds())
-                        const retryInfo = ` [retrying ${duration ? `in ${duration} ` : ""}attempt #${r.attempt}]`
-                        return baseMessage + truncatedHint + retryInfo
-                      }
-
-                      return (
-                        <Show when={retry()}>
-                          <box onMouseUp={handleMessageClick}>
-                            <text fg={theme.error}>{retryText()}</text>
-                          </box>
-                        </Show>
-                      )
-                    })()}
-                  </box>
-                </box>
-                <text fg={store.interrupt > 0 ? theme.primary : theme.text}>
-                  esc{" "}
-                  <span style={{ fg: store.interrupt > 0 ? theme.primary : theme.textMuted }}>
-                    {store.interrupt > 0 ? i18n.t("prompt.interruptAgain") : i18n.t("prompt.interrupt")}
-                  </span>
-                </text>
-              </box>
-            </Match>
-            <Match when={warpNotice()}>
-              {(notice) => (
-                <box paddingLeft={3}>
-                  <text fg={theme.accent}>{notice()}</text>
-                </box>
-              )}
-            </Match>
-            <Match when={workspaceLabel()}>
-              {(workspace) => (
+          <box flexDirection="row" gap={2}>
+            <Switch>
+              <Match when={voiceRecording()}>
                 <box paddingLeft={3} flexDirection="row" gap={1}>
-                  <Show when={workspaceCreating()}>
-                    <Spinner color={theme.accent} />
-                  </Show>
-                  <text fg={workspaceCreating() ? theme.accent : theme.text}>
-                    {(() => {
-                      const item = workspace()
-                      if (item.type === "new") {
-                        if (workspaceCreating())
-                          return i18n.t("prompt.creatingWorkspace", {
-                            type: item.workspaceType,
-                            dots: ".".repeat(workspaceCreatingDots()),
+                  <text fg={theme.error}>● {i18n.t("prompt.voiceRecord")}</text>
+                  <text fg={theme.textMuted}>alt+v {i18n.t("prompt.voiceStop")}</text>
+                  <text fg={theme.textMuted}>esc {i18n.t("prompt.voiceCancel")}</text>
+                </box>
+              </Match>
+              <Match when={voiceError()}>
+                {(message) => (
+                  <box paddingLeft={3}>
+                    <text fg={theme.error}>{message()}</text>
+                  </box>
+                )}
+              </Match>
+              <Match when={status().type !== "idle"}>
+                <box
+                  flexDirection="row"
+                  gap={1}
+                  flexGrow={1}
+                  justifyContent={status().type === "retry" ? "space-between" : "flex-start"}
+                >
+                  <box flexShrink={0} flexDirection="row" gap={1}>
+                    <box marginLeft={1}>
+                      <Show
+                        when={kv.get("animations_enabled", true)}
+                        fallback={<text fg={theme.textMuted}>[⋯]</text>}
+                      >
+                        <spinner color={spinnerDef().color} frames={spinnerDef().frames} interval={40} />
+                      </Show>
+                    </box>
+                    <box flexDirection="row" gap={1} flexShrink={0}>
+                      {(() => {
+                        const retry = createMemo(() => {
+                          const s = status()
+                          if (s.type !== "retry") return
+                          return s
+                        })
+                        const message = createMemo(() => {
+                          const r = retry()
+                          if (!r) return
+                          if (r.message.includes("exceeded your current quota") && r.message.includes("gemini"))
+                            return "gemini is way too hot right now"
+                          if (r.message.length > 80) return r.message.slice(0, 80) + "..."
+                          return r.message
+                        })
+                        const isTruncated = createMemo(() => {
+                          const r = retry()
+                          if (!r) return false
+                          return r.message.length > 120
+                        })
+                        const [seconds, setSeconds] = createSignal(0)
+                        onMount(() => {
+                          const timer = setInterval(() => {
+                            const next = retry()?.next
+                            if (next) setSeconds(Math.round((next - Date.now()) / 1000))
+                          }, 1000)
+
+                          onCleanup(() => {
+                            clearInterval(timer)
                           })
+                        })
+                        const handleMessageClick = () => {
+                          const r = retry()
+                          if (!r) return
+                          if (isTruncated()) {
+                            void DialogAlert.show(dialog, i18n.t("prompt.retryError"), r.message)
+                          }
+                        }
+
+                        const retryText = () => {
+                          const r = retry()
+                          if (!r) return ""
+                          const baseMessage = message()
+                          const truncatedHint = isTruncated() ? " (click to expand)" : ""
+                          const duration = formatDuration(seconds())
+                          const retryInfo = ` [retrying ${duration ? `in ${duration} ` : ""}attempt #${r.attempt}]`
+                          return baseMessage + truncatedHint + retryInfo
+                        }
+
+                        return (
+                          <Show when={retry()}>
+                            <box onMouseUp={handleMessageClick}>
+                              <text fg={theme.error}>{retryText()}</text>
+                            </box>
+                          </Show>
+                        )
+                      })()}
+                    </box>
+                  </box>
+                  <text fg={store.interrupt > 0 ? theme.primary : theme.text}>
+                    esc{" "}
+                    <span style={{ fg: store.interrupt > 0 ? theme.primary : theme.textMuted }}>
+                      {store.interrupt > 0 ? i18n.t("prompt.interruptAgain") : i18n.t("prompt.interrupt")}
+                    </span>
+                  </text>
+                </box>
+              </Match>
+              <Match when={warpNotice()}>
+                {(notice) => (
+                  <box paddingLeft={3}>
+                    <text fg={theme.accent}>{notice()}</text>
+                  </box>
+                )}
+              </Match>
+              <Match when={workspaceLabel()}>
+                {(workspace) => (
+                  <box paddingLeft={3} flexDirection="row" gap={1}>
+                    <Show when={workspaceCreating()}>
+                      <Spinner color={theme.accent} />
+                    </Show>
+                    <text fg={workspaceCreating() ? theme.accent : theme.text}>
+                      {(() => {
+                        const item = workspace()
+                        if (item.type === "new") {
+                          if (workspaceCreating())
+                            return i18n.t("prompt.creatingWorkspace", {
+                              type: item.workspaceType,
+                              dots: ".".repeat(workspaceCreatingDots()),
+                            })
+                          return (
+                            <>
+                              {i18n.t("prompt.workspace")}{" "}
+                              <span style={{ fg: theme.textMuted }}>
+                                {i18n.t("prompt.newWorkspace", { type: item.workspaceType })}
+                              </span>
+                            </>
+                          )
+                        }
                         return (
                           <>
                             {i18n.t("prompt.workspace")}{" "}
-                            <span style={{ fg: theme.textMuted }}>
-                              {i18n.t("prompt.newWorkspace", { type: item.workspaceType })}
-                            </span>
+                            <span style={{ fg: theme.textMuted }}>{item.workspaceName}</span>
                           </>
                         )
-                      }
-                      return (
-                        <>
-                          {i18n.t("prompt.workspace")} <span style={{ fg: theme.textMuted }}>{item.workspaceName}</span>
-                        </>
-                      )
-                    })()}
-                  </text>
-                </box>
-              )}
-            </Match>
-            <Match when={true}>{props.hint ?? <text />}</Match>
-          </Switch>
+                      })()}
+                    </text>
+                  </box>
+                )}
+              </Match>
+              <Match when={true}>{props.hint ?? <text />}</Match>
+            </Switch>
+            <Show when={status().type !== "retry" && store.mode === "normal"}>
+              <text fg={theme.text}>
+                tab{" "}
+                <span style={{ fg: permissionMode() === "auto-approve" ? theme.error : theme.textMuted }}>
+                  {permissionMode() === "auto-approve" ? i18n.t("prompt.autoApproveOn") : i18n.t("prompt.autoApprove")}
+                </span>
+              </text>
+            </Show>
+          </box>
           <Show when={status().type !== "retry"}>
             <box gap={2} flexDirection="row">
               <Show when={editorContextLabelState() !== "none" ? editorFileLabelDisplay() : undefined}>
@@ -2001,21 +2014,20 @@ export function Prompt(props: PromptProps) {
               </Show>
               <Switch>
                 <Match when={store.mode === "normal"}>
-                  <text fg={permissionMode() === "auto-approve" ? theme.success : theme.text}>
-                    tab{" "}
-                    <span style={{ fg: permissionMode() === "auto-approve" ? theme.success : theme.textMuted }}>
-                      {permissionMode() === "auto-approve"
-                        ? i18n.t("prompt.autoApproveOn")
-                        : i18n.t("prompt.autoApprove")}
-                    </span>
-                  </text>
                   <text fg={theme.text}>
-                  {paletteShortcut()} <span style={{ fg: theme.textMuted }}>{i18n.t("prompt.commands")}</span>
+                    {paletteShortcut()} <span style={{ fg: theme.textMuted }}>{i18n.t("prompt.commands")}</span>
                   </text>
+                  <Show when={canSwitchVariant() && variantShortcut()}>
+                    {(shortcut) => (
+                      <text fg={theme.text}>
+                        {shortcut()} <span style={{ fg: theme.textMuted }}>{i18n.t("prompt.variant")}</span>
+                      </text>
+                    )}
+                  </Show>
                 </Match>
                 <Match when={store.mode === "shell"}>
                   <text fg={theme.text}>
-                  esc <span style={{ fg: theme.textMuted }}>{i18n.t("prompt.exitShellMode")}</span>
+                    esc <span style={{ fg: theme.textMuted }}>{i18n.t("prompt.exitShellMode")}</span>
                   </text>
                 </Match>
               </Switch>

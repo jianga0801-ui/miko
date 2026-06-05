@@ -2495,7 +2495,7 @@ describe("ProviderTransform.variants", () => {
     ...overrides,
   })
 
-  test("MiMo does not inherit generic OpenAI-compatible reasoning effort variants", () => {
+  test("MiMo uses official thinking.type variants", () => {
     const result = ProviderTransform.variants(
       createMockModel({
         id: "mimo-v2.5",
@@ -2508,7 +2508,10 @@ describe("ProviderTransform.variants", () => {
       }),
     )
 
-    expect(result).toEqual({})
+    expect(result).toEqual({
+      enabled: { thinking: { type: "enabled" } },
+      disabled: { thinking: { type: "disabled" } },
+    })
   })
 
   test("returns empty object when model has no reasoning capabilities", () => {

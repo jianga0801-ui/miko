@@ -35,6 +35,13 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
       return !!provider?.models[model.modelID]
     }
 
+    /** Model exists, has text output, and is not deprecated — safe for chat selection. */
+    function isModelSelectable(model: { providerID: string; modelID: string }) {
+      const provider = sync.data.provider.find((x) => x.id === model.providerID)
+      const info = provider?.models[model.modelID]
+      return !!info && info.capabilities.output.text && info.status !== "deprecated"
+    }
+
     function getFirstValidModel(...modelFns: (() => { providerID: string; modelID: string } | undefined)[]) {
       for (const modelFn of modelFns) {
         const model = modelFn()
@@ -182,7 +189,7 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
         }
 
         for (const item of modelStore.recent) {
-          if (isModelValid(item)) {
+          if (isModelSelectable(item)) {
             return item
           }
         }
@@ -241,20 +248,24 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
         cycle(direction: 1 | -1) {
           const current = currentModel()
           if (!current) return
-          const recent = modelStore.recent
-          const index = recent.findIndex((x) => x.providerID === current.providerID && x.modelID === current.modelID)
-          if (index === -1) return
-          let next = index + direction
-          if (next < 0) next = recent.length - 1
-          if (next >= recent.length) next = 0
-          const val = recent[next]
+          const selectableRecent = modelStore.recent.filter((item) => {
+            const provider = sync.data.provider.find((x) => x.id === item.providerID)
+            const model = provider?.models[item.modelID]
+            return model && model.capabilities.output.text && model.status !== "deprecated"
+          })
+          if (selectableRecent.length === 0) return
+          const index = selectableRecent.findIndex((x) => x.providerID === current.providerID && x.modelID === current.modelID)
+          let next = index === -1 ? 0 : index + direction
+          if (next < 0) next = selectableRecent.length - 1
+          if (next >= selectableRecent.length) next = 0
+          const val = selectableRecent[next]
           if (!val) return
           const a = agent.current()
           if (!a) return
           setModelStore("model", a.name, { ...val })
         },
         cycleFavorite(direction: 1 | -1) {
-          const favorites = modelStore.favorite.filter((item) => isModelValid(item))
+          const favorites = modelStore.favorite.filter((item) => isModelSelectable(item))
           if (!favorites.length) {
             toast.show({
               variant: "info",
@@ -348,6 +359,14 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
             if (!this.list().includes(v)) return undefined
             return v
           },
+          effective() {
+            const variants = this.list()
+            if (variants.length === 0) return undefined
+            const current = this.current()
+            if (current) return current
+            if (variants.includes("default")) return "default"
+            return variants[0]
+          },
           list() {
             const m = currentModel()
             if (!m) return []
@@ -366,17 +385,10 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
           cycle() {
             const variants = this.list()
             if (variants.length === 0) return
-            const current = this.current()
-            if (!current) {
-              this.set(variants[0])
-              return
-            }
-            const index = variants.indexOf(current)
-            if (index === -1 || index === variants.length - 1) {
-              this.set(undefined)
-              return
-            }
-            this.set(variants[index + 1])
+            const current = this.effective()
+            const index = current ? variants.indexOf(current) : -1
+            const next = variants[(index + 1 + variants.length) % variants.length]
+            this.set(next === "default" ? undefined : next)
           },
         },
       }

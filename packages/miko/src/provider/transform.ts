@@ -655,7 +655,12 @@ function googleThinkingBudgetMax(apiId: string) {
 
 export function variants(model: Provider.Model): Record<string, Record<string, any>> {
   if (!model.capabilities.reasoning) return {}
-  if (isMimoProviderID(model.providerID)) return {}
+  if (isMimoProviderID(model.providerID)) {
+    return {
+      enabled: { thinking: { type: "enabled" } },
+      disabled: { thinking: { type: "disabled" } },
+    }
+  }
 
   const id = model.id.toLowerCase()
   const adaptiveOpus = anthropicOpus47OrLater(model.api.id)

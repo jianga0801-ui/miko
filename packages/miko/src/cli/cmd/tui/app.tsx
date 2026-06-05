@@ -719,7 +719,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       },
       {
         name: "variant.cycle",
-        title: "Variant cycle",
+        title: "Toggle thinking mode",
         category: "Agent",
         run: () => {
           local.model.variant.cycle()
@@ -727,9 +727,9 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       },
       {
         name: "variant.list",
-        title: "Switch model variant",
+        title: "Switch effort",
         category: "Agent",
-        hidden: local.model.variant.list().length === 0,
+        hidden: true,
         slashName: "variants",
         run: () => {
           dialog.replace(() => <DialogVariant />)

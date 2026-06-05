@@ -167,12 +167,12 @@ export function Tips(props: { api: TuiPluginApi; connected?: boolean }) {
 
   return (
     <box flexDirection="row" maxWidth="100%">
-      <text flexShrink={0} style={{ fg: theme.warning }}>
-        ● Tip{" "}
+      <text flexShrink={0} style={{ fg: theme.primary }}>
+        ● {language() === "zh-CN" ? "提示" : "Tip"}{" "}
       </text>
       <text flexShrink={1} wrapMode="word">
         <For each={parts()}>
-          {(part) => <span style={{ fg: part.highlight ? theme.text : theme.textMuted }}>{part.text}</span>}
+          {(part) => <span style={{ fg: part.highlight ? theme.primary : theme.textMuted }}>{part.text}</span>}
         </For>
       </text>
     </box>

@@ -223,7 +223,7 @@ export const Definitions = {
   plugin_manager: keybind("none", "Open plugin manager dialog"),
   plugin_install: keybind("none", "Install plugin"),
 
-  which_key_toggle: keybind("ctrl+alt+k", "Toggle which-key panel"),
+  which_key_toggle: keybind("f1", "Toggle which-key panel"),
   which_key_layout_toggle: keybind("ctrl+alt+shift+k", "Switch which-key layout"),
   which_key_pending_toggle: keybind("ctrl+alt+shift+p", "Toggle which-key pending preview"),
   which_key_group_previous: keybind("ctrl+alt+left,ctrl+alt+[", "Previous which-key group"),
