@@ -48,10 +48,10 @@ export const dict = {
   "ui.sessionTurn.retry.attemptLine": "{{line}} - 第 {{attempt}} 次",
   "ui.sessionTurn.retry.geminiHot": "gemini 当前过载",
   "ui.sessionTurn.error.freeUsageExceeded": "免费使用额度已用完",
-  "ui.sessionTurn.error.addCredits": "添加积分",
+  "ui.sessionTurn.error.addCredits": "添加 Credits",
 
   "dialog.usageExceeded.freeTier.title": "免费额度已用完",
-  "dialog.usageExceeded.freeTier.description": "订阅 Miko Go，可靠地使用最佳开源模型，每月 $5 起。",
+  "dialog.usageExceeded.freeTier.description": "订阅以可靠地使用最佳开源模型，每月 $5 起。",
   "dialog.usageExceeded.freeTier.actionLabel": "订阅",
   "dialog.usageExceeded.accountRateLimit.title": "Go 额度已用完",
   "dialog.usageExceeded.accountRateLimit.description":

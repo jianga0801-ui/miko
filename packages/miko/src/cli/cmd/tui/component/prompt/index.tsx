@@ -1807,7 +1807,7 @@ export function Prompt(props: PromptProps) {
                           <Show when={showVariant()}>
                             <text fg={fadeColor(theme.textMuted, variantMetaAlpha())}>·</text>
                             <text>
-                              <span style={{ fg: fadeColor(theme.info, variantMetaAlpha()), bold: true }}>
+                              <span style={{ fg: fadeColor(theme.secondary, variantMetaAlpha()), bold: true }}>
                                 {i18n.t("model.thinkingMode")}
                               </span>
                             </text>

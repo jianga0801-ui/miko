@@ -5,6 +5,7 @@ import { useDialog } from "@tui/ui/dialog"
 import { useSync } from "@tui/context/sync"
 import { For, Match, Switch, Show, createMemo } from "solid-js"
 import { useTuiI18n } from "../context/i18n"
+import { formatMcpConnectionError } from "../i18n"
 
 export type DialogStatusProps = {}
 
@@ -79,13 +80,15 @@ export function DialogStatus() {
                   <span style={{ fg: theme.textMuted }}>
                     <Switch fallback={item.status}>
                       <Match when={item.status === "connected"}>{i18n.t("status.connected")}</Match>
-                      <Match when={item.status === "failed" && item}>{(val) => val().error}</Match>
+                      <Match when={item.status === "failed" && item}>
+                        {(val) => formatMcpConnectionError(val().error, i18n)}
+                      </Match>
                       <Match when={item.status === "disabled"}>{i18n.t("status.disabledInConfig")}</Match>
                       <Match when={(item.status as string) === "needs_auth"}>
                         {i18n.t("status.needsAuth", { key })}
                       </Match>
                       <Match when={(item.status as string) === "needs_client_registration" && item}>
-                        {(val) => (val() as { error: string }).error}
+                        {i18n.t("sidebar.mcp.needsClientId")}
                       </Match>
                     </Switch>
                   </span>

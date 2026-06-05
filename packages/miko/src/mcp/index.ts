@@ -298,9 +298,21 @@ export const layer = Layer.effect(
             catch: (e) => (e instanceof Error ? e : new Error(String(e))),
           }),
         (t, exit) => (Exit.isFailure(exit) ? Effect.tryPromise(() => t.close()).pipe(Effect.ignore) : Effect.void),
-      )
+    )
 
     const DISABLED_RESULT: CreateResult = { status: { status: "disabled" } }
+
+    function preferStreamableHttpFailure(last: Status | undefined, streamableHttp: Status | undefined) {
+      if (
+        last?.status === "failed" &&
+        streamableHttp?.status === "failed" &&
+        last.error.includes("SSE error") &&
+        last.error.includes("405")
+      ) {
+        return streamableHttp
+      }
+      return last
+    }
 
     const connectRemote = Effect.fn("MCP.connectRemote")(function* (
       key: string,
@@ -356,6 +368,7 @@ export const layer = Layer.effect(
 
       const connectTimeout = mcp.timeout ?? DEFAULT_TIMEOUT
       let lastStatus: Status | undefined
+      let streamableHttpFailure: Status | undefined
 
       for (const { name, transport } of transports) {
         const result = yield* connectTransport(transport, connectTimeout).pipe(
@@ -401,7 +414,9 @@ export const layer = Layer.effect(
               url: mcp.url,
               error: lastError.message,
             })
-            lastStatus = { status: "failed" as const, error: lastError.message }
+            const failure = { status: "failed" as const, error: lastError.message }
+            if (name === "StreamableHTTP") streamableHttpFailure = failure
+            lastStatus = failure
             return Effect.succeed(undefined)
           }),
         )
@@ -415,7 +430,10 @@ export const layer = Layer.effect(
 
       return {
         client: undefined as MCPClient | undefined,
-        status: (lastStatus ?? { status: "failed", error: "Unknown error" }) as Status,
+        status: (preferStreamableHttpFailure(lastStatus, streamableHttpFailure) ?? {
+          status: "failed",
+          error: "Unknown error",
+        }) as Status,
       }
     })
 

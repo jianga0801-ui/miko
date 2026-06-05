@@ -293,7 +293,6 @@ const TIPS: Tip[] = [
       ? `Toggle username display in chat via the command palette (${shortcutText(shortcuts.commandList())})`
       : "Toggle username display in chat via the command palette",
   "Run {highlight}docker run -it --rm ghcr.io/jianga0801-ui/miko{/highlight} for containerized use",
-  "Use {highlight}/connect{/highlight} with Miko Zen for curated, tested models",
   "Commit your project's {highlight}AGENTS.md{/highlight} file to Git for team sharing",
   "Use {highlight}/review{/highlight} to review uncommitted changes, branches, or PRs",
   (shortcuts) => `Use ${commandText("/help", shortcuts.helpShow())} to show the help dialog`,
@@ -419,7 +418,6 @@ const TIPS_ZH: Tip[] = [
       ? `通过选项面板切换聊天中的用户名显示（${shortcutText(shortcuts.commandList())}）`
       : "通过选项面板切换聊天中的用户名显示",
   "运行 {highlight}docker run -it --rm ghcr.io/jianga0801-ui/miko{/highlight} 以容器方式使用",
-  "搭配 Miko Zen 使用 {highlight}/connect{/highlight} 获取精选且经过测试的模型",
   "将项目的 {highlight}AGENTS.md{/highlight} 文件提交到 Git 以便团队共享",
   "使用 {highlight}/review{/highlight} 审查未提交的改动、分支或 PR",
   (shortcuts) => `使用 ${commandTextZh("/help", shortcuts.helpShow())} 显示帮助对话框`,

@@ -195,10 +195,24 @@ const en = {
   "sidebar.mcp.summaryWithErrors": "{active} active, {errors} errors",
   "sidebar.mcp.connected": "Connected",
   "sidebar.mcp.disabled": "Disabled",
+  "sidebar.mcp.failed": "Failed: {reason}",
+  "sidebar.mcp.error.sse405": "SSE transport was rejected by the server (405)",
+  "sidebar.mcp.error.socketClosed": "HTTP connection closed unexpectedly",
+  "sidebar.mcp.error.unknown": "Unknown error",
   "sidebar.mcp.needsAuth": "Needs auth",
   "sidebar.mcp.needsClientId": "Needs client ID",
   "sidebar.lsp.disabled": "LSPs are disabled",
   "sidebar.lsp.pending": "LSPs will activate as files are read",
+  "messageActions.title": "Message Actions",
+  "messageActions.revert.title": "Revert",
+  "messageActions.revert.description": "undo messages and file changes",
+  "messageActions.copy.title": "Copy",
+  "messageActions.copy.description": "message text to clipboard",
+  "messageActions.fork.title": "Fork",
+  "messageActions.fork.description": "create a new session",
+  "subagentActions.title": "Subagent Actions",
+  "subagentActions.open.title": "Open",
+  "subagentActions.open.description": "the subagent's session",
 } as const
 
 type TuiMessageKey = keyof typeof en
@@ -395,10 +409,24 @@ const zhCN: Record<TuiMessageKey, string> = {
   "sidebar.mcp.summaryWithErrors": "{active} 已连接，{errors} 个错误",
   "sidebar.mcp.connected": "已连接",
   "sidebar.mcp.disabled": "已禁用",
+  "sidebar.mcp.failed": "连接失败：{reason}",
+  "sidebar.mcp.error.sse405": "服务端拒绝 SSE 连接（405）",
+  "sidebar.mcp.error.socketClosed": "HTTP 连接意外断开",
+  "sidebar.mcp.error.unknown": "未知错误",
   "sidebar.mcp.needsAuth": "需要认证",
   "sidebar.mcp.needsClientId": "需要客户端 ID",
   "sidebar.lsp.disabled": "LSP 已禁用",
   "sidebar.lsp.pending": "读取文件时将自动启用 LSP",
+  "messageActions.title": "消息操作",
+  "messageActions.revert.title": "还原",
+  "messageActions.revert.description": "撤销消息和文件改动",
+  "messageActions.copy.title": "复制",
+  "messageActions.copy.description": "将消息文本复制到剪贴板",
+  "messageActions.fork.title": "复刻",
+  "messageActions.fork.description": "创建一个新会话",
+  "subagentActions.title": "子智能体操作",
+  "subagentActions.open.title": "打开",
+  "subagentActions.open.description": "子智能体会话",
 }
 
 // Translations for command-palette / slash-command entries (titles, descriptions, categories).
@@ -572,6 +600,7 @@ const commandTextZhCN: Record<string, string> = {
   "Move to start of visual line in input": "移到可视行首",
   "Move word backward in input": "向前移动一个单词",
   "Move word forward in input": "向后移动一个单词",
+  "New line": "换行",
   "Paste from clipboard": "从剪贴板粘贴",
   "Redo in input": "重做输入",
   "Select all in input": "全选输入",
@@ -584,11 +613,18 @@ const commandTextZhCN: Record<string, string> = {
   "Select to start of buffer in input": "选择到输入缓冲区开头",
   "Select to start of line in input": "选择到行首",
   "Select to start of visual line in input": "选择到可视行首",
+  "Select to buffer end": "选择到输入缓冲区末尾",
+  "Select to buffer start": "选择到输入缓冲区开头",
+  "Select to visual line end": "选择到可视行尾",
+  "Select to visual line start": "选择到可视行首",
   "Select up in input": "向上选择",
   "Select word backward in input": "向前选择一个单词",
   "Select word forward in input": "向后选择一个单词",
+  Submit: "提交",
   "Submit input": "提交输入",
   "Undo in input": "撤销输入",
+  "Visual line end": "可视行尾",
+  "Visual line start": "可视行首",
   // Titles — Permission / Question
   "Reject permission": "拒绝权限",
   "Cancel permission rejection": "取消拒绝权限",
@@ -642,6 +678,7 @@ const commandTextZhCN: Record<string, string> = {
   Copy: "复制",
   delete: "删除",
   install: "安装",
+  leader: "前导键",
   switch: "切换",
   rename: "重命名",
   toggle: "切换",
@@ -720,4 +757,19 @@ export function createTuiI18n(language: TuiLanguage) {
       return text
     },
   }
+}
+
+export function formatMcpConnectionError(
+  error: string | undefined,
+  i18n: Pick<ReturnType<typeof createTuiI18n>, "t">,
+) {
+  let reason = i18n.t("sidebar.mcp.error.unknown")
+  if (error?.includes("SSE error") && error.includes("405")) {
+    reason = i18n.t("sidebar.mcp.error.sse405")
+  } else if (error?.includes("socket connection was closed unexpectedly")) {
+    reason = i18n.t("sidebar.mcp.error.socketClosed")
+  } else if (error) {
+    reason = error
+  }
+  return i18n.t("sidebar.mcp.failed", { reason })
 }

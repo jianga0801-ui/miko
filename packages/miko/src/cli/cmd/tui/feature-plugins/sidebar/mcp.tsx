@@ -1,14 +1,24 @@
 import type { TuiPlugin, TuiPluginApi } from "@miko-ai/plugin/tui"
 import type { InternalTuiPlugin } from "../../plugin/internal"
 import { createMemo, For, Match, Show, Switch, createSignal } from "solid-js"
-import { createTuiI18n, resolveTuiLanguage, TuiLanguageKVKey, type TuiLanguageConfig } from "../../i18n"
+import {
+  createTuiI18n,
+  formatMcpConnectionError,
+  resolveTuiLanguage,
+  TuiLanguageKVKey,
+  type TuiLanguageConfig,
+} from "../../i18n"
 
 const id = "internal:sidebar-mcp"
 
-function tr(api: TuiPluginApi, ...args: Parameters<ReturnType<typeof createTuiI18n>["t"]>) {
+function i18n(api: TuiPluginApi) {
   return createTuiI18n(
     resolveTuiLanguage(api.kv.get(TuiLanguageKVKey, api.tuiConfig.language) as TuiLanguageConfig | undefined),
-  ).t(...args)
+  )
+}
+
+function tr(api: TuiPluginApi, ...args: Parameters<ReturnType<typeof createTuiI18n>["t"]>) {
+  return i18n(api).t(...args)
 }
 
 function View(props: { api: TuiPluginApi }) {
@@ -71,7 +81,7 @@ function View(props: { api: TuiPluginApi }) {
                     <Switch fallback={item.status}>
                       <Match when={item.status === "connected"}>{tr(props.api, "sidebar.mcp.connected")}</Match>
                       <Match when={item.status === "failed"}>
-                        <i>{item.error}</i>
+                        <i>{formatMcpConnectionError(item.error, i18n(props.api))}</i>
                       </Match>
                       <Match when={item.status === "disabled"}>{tr(props.api, "sidebar.mcp.disabled")}</Match>
                       <Match when={item.status === "needs_auth"}>{tr(props.api, "sidebar.mcp.needsAuth")}</Match>

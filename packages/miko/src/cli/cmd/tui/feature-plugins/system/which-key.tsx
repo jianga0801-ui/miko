@@ -522,13 +522,13 @@ function WhichKeyPanel(props: {
             <box>
               <text fg={look().text} wrapMode="none">
                 {t(props.api, "whichKey.toggle")}{" "}
-                <span style={{ fg: look().subtle }}>{trigger() || command.toggle}</span>
+                <span style={{ fg: look().muted }}>{trigger() || command.toggle}</span>
               </text>
             </box>
             <box>
               <text fg={look().text} wrapMode="none">
                 {nextMode() === "dock" ? t(props.api, "whichKey.dock") : t(props.api, "whichKey.overlay")}{" "}
-                <span style={{ fg: look().subtle }}>{modeTrigger() || command.toggleLayout}</span>
+                <span style={{ fg: look().muted }}>{modeTrigger() || command.toggleLayout}</span>
               </text>
             </box>
           </box>
