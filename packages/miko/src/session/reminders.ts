@@ -12,6 +12,8 @@ import PROMPT_PLAN from "./prompt/plan.txt"
 import BUILD_SWITCH from "./prompt/build-switch.txt"
 import PLAN_MODE from "./prompt/plan-mode.txt"
 
+const ENV_REMINDER_HEADER = "Here is some useful information about the environment you are running in:"
+
 export const apply = Effect.fn("SessionReminders.apply")(function* (input: {
   messages: SessionLegacy.WithParts[]
   agent: Agent.Info
@@ -24,26 +26,35 @@ export const apply = Effect.fn("SessionReminders.apply")(function* (input: {
   if (!userMessage) return input.messages
 
   const ctx = yield* InstanceState.context
-  const envReminder = [
-    `Here is some useful information about the environment you are running in:`,
-    `<env>`,
-    `  Working directory: ${ctx.directory}`,
-    `  Workspace root folder: ${ctx.worktree}`,
-    `  Is directory a git repo: ${ctx.project.vcs === "git" ? "yes" : "no"}`,
-    `  Platform: ${process.platform}`,
-    `  Today's date: ${new Date().toDateString()}`,
-    `</env>`,
-  ].join("\n")
+  // apply() runs on every agentic loop step, so inject the env block at most
+  // once per user message. Without this guard each step appends another
+  // identical <env> part (persisted via the projector and re-read next step),
+  // bloating the user turn and drifting the cached prefix for implicit caching.
+  const alreadyHasEnv = userMessage.parts.some(
+    (p) => p.type === "text" && p.synthetic === true && p.text.startsWith(ENV_REMINDER_HEADER),
+  )
+  if (!alreadyHasEnv) {
+    const envReminder = [
+      ENV_REMINDER_HEADER,
+      `<env>`,
+      `  Working directory: ${ctx.directory}`,
+      `  Workspace root folder: ${ctx.worktree}`,
+      `  Is directory a git repo: ${ctx.project.vcs === "git" ? "yes" : "no"}`,
+      `  Platform: ${process.platform}`,
+      `  Today's date: ${new Date().toDateString()}`,
+      `</env>`,
+    ].join("\n")
 
-  const envPart = yield* sessions.updatePart({
-    id: PartID.ascending(),
-    messageID: userMessage.info.id,
-    sessionID: userMessage.info.sessionID,
-    type: "text",
-    text: envReminder,
-    synthetic: true,
-  })
-  userMessage.parts.push(envPart)
+    const envPart = yield* sessions.updatePart({
+      id: PartID.ascending(),
+      messageID: userMessage.info.id,
+      sessionID: userMessage.info.sessionID,
+      type: "text",
+      text: envReminder,
+      synthetic: true,
+    })
+    userMessage.parts.push(envPart)
+  }
 
   if (!flags.experimentalPlanMode) {
     if (input.agent.name === "plan") {
