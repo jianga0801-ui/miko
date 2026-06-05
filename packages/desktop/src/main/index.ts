@@ -1,20 +1,24 @@
-import { app, BrowserWindow, ipcMain } from "electron"
+import { app, BrowserWindow, dialog, ipcMain } from "electron"
 import { join } from "node:path"
 import { createMikoServer } from "@miko-ai/sdk"
 
 let server: { url: string; close(): void } | undefined
 
 async function bootstrap() {
-  server = await createMikoServer({ hostname: "127.0.0.1" })
-
   ipcMain.on("miko:server-url", (event) => {
-    event.returnValue = server!.url
+    event.returnValue = server?.url ?? ""
   })
+
+  server = await createMikoServer({ hostname: "127.0.0.1" })
 
   const win = new BrowserWindow({
     width: 1280,
     height: 832,
-    webPreferences: { preload: join(__dirname, "../preload/index.js") },
+    webPreferences: {
+      preload: join(__dirname, "../preload/index.js"),
+      contextIsolation: true,
+      sandbox: true,
+    },
   })
 
   if (process.env["ELECTRON_RENDERER_URL"]) {
@@ -24,7 +28,10 @@ async function bootstrap() {
   }
 }
 
-app.whenReady().then(bootstrap)
+app.whenReady().then(bootstrap).catch((err) => {
+  dialog.showErrorBox("Failed to start miko server", String(err))
+  app.quit()
+})
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit()
