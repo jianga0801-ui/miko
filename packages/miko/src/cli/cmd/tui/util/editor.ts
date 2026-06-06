@@ -7,7 +7,9 @@ import { Filesystem } from "@/util/filesystem"
 import { Process } from "@/util/process"
 
 export async function open(opts: { value: string; renderer: CliRenderer; cwd?: string }): Promise<string | undefined> {
-  const editor = process.env["VISUAL"] || process.env["EDITOR"]
+  // VISUAL/EDITOR are usually unset on Windows, so fall back to Notepad there
+  // instead of silently doing nothing when "Open editor" is triggered.
+  const editor = process.env["VISUAL"] || process.env["EDITOR"] || (process.platform === "win32" ? "notepad" : undefined)
   if (!editor) return
 
   const filepath = join(tmpdir(), `${Date.now()}.md`)
