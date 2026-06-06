@@ -9,7 +9,7 @@ import {
 import type { Binding } from "@opentui/keymap"
 import { useTheme, selectedForeground } from "@tui/context/theme"
 import { entries, filter, flatMap, groupBy, pipe } from "remeda"
-import { batch, createEffect, createMemo, For, Show, type JSX, on } from "solid-js"
+import { batch, createEffect, createMemo, For, Show, type Accessor, type JSX, on, untrack } from "solid-js"
 import { createStore } from "solid-js/store"
 import { useTerminalDimensions } from "@opentui/solid"
 import * as fuzzysort from "fuzzysort"
@@ -69,6 +69,21 @@ export type DialogSelectRef<T> = {
   selected: DialogSelectOption<T> | undefined
 }
 
+export function syncCurrentOption<T>(input: {
+  options: Accessor<DialogSelectOption<T>[]>
+  current: Accessor<T | undefined>
+  selected: Accessor<number>
+  select: (index: number) => void
+}) {
+  createEffect(() => {
+    const current = input.current()
+    if (current === undefined) return
+    const index = input.options().findIndex((option) => isDeepEqual(option.value, current))
+    if (index < 0 || index === untrack(input.selected)) return
+    input.select(index)
+  })
+}
+
 export function DialogSelect<T>(props: DialogSelectProps<T>) {
   const dialog = useDialog()
   const { theme } = useTheme()
@@ -81,20 +96,6 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
     filter: "",
     input: "keyboard" as "keyboard" | "mouse",
   })
-
-  createEffect(
-    on(
-      () => props.current,
-      (current) => {
-        if (current) {
-          const currentIndex = flat().findIndex((opt) => isDeepEqual(opt.value, current))
-          if (currentIndex >= 0) {
-            setStore("selected", currentIndex)
-          }
-        }
-      },
-    ),
-  )
 
   let input: InputRenderable
 
@@ -164,6 +165,13 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
       grouped(),
       flatMap(([_, options]) => options),
     )
+  })
+
+  syncCurrentOption({
+    options: flat,
+    current: () => props.current,
+    selected: () => store.selected,
+    select: (index) => setStore("selected", index),
   })
 
   const rows = createMemo(() => {

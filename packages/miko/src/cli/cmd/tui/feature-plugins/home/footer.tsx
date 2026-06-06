@@ -2,12 +2,7 @@ import type { TuiPlugin, TuiPluginApi } from "@miko-ai/plugin/tui"
 import type { InternalTuiPlugin } from "../../plugin/internal"
 import { createMemo, Match, Show, Switch } from "solid-js"
 import { Global } from "@miko-ai/core/global"
-import {
-  createTuiI18n,
-  resolveTuiLanguage,
-  TuiLanguageKVKey,
-  type TuiLanguageConfig,
-} from "../../i18n"
+import { createTuiI18n, resolveTuiLanguage, TuiLanguageKVKey, type TuiLanguageConfig } from "../../i18n"
 
 const id = "internal:home-footer"
 
@@ -77,16 +72,18 @@ function ShortcutHint(props: { api: TuiPluginApi }) {
   const label = createMemo(() => createTuiI18n(language(props.api)).t("whichKey.homeHint"))
 
   return (
-    <box flexDirection="row" gap={1} flexShrink={0}>
-      <text fg={theme().textMuted}>{label()}</text>
-      <text>
-        <span style={{ fg: theme().primary, bold: true }}>{trigger() || "f1"}</span>
-      </text>
-    </box>
+    <Show when={trigger()}>
+      <box flexDirection="row" gap={1} flexShrink={0}>
+        <text fg={theme().textMuted}>{label()}</text>
+        <text>
+          <span style={{ fg: theme().primary, bold: true }}>{trigger()}</span>
+        </text>
+      </box>
+    </Show>
   )
 }
 
-function View(props: { api: TuiPluginApi }) {
+export function View(props: { api: TuiPluginApi }) {
   return (
     <box
       width="100%"

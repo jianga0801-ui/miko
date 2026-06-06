@@ -665,11 +665,13 @@ function DiffViewer(props: { api: TuiPluginApi }) {
     <box position="absolute" zIndex={2500} left={0} top={0} width={dimensions().width} height={dimensions().height}>
       <PanelGroup axis="y" width="100%" height="100%">
         <Panel border="none" flexShrink={0} padding={0} paddingLeft={1}>
-          <text fg={theme().text}>Diff </text>
-          <text fg={theme().textMuted}>{mode() === "last-turn" ? "last turn" : "working tree"}</text>
+          <text fg={theme().text}>{i18n.t("diff.title")} </text>
+          <text fg={theme().textMuted}>
+            {mode() === "last-turn" ? i18n.t("diff.source.lastTurn") : i18n.t("diff.source.workingTree")}
+          </text>
           <box flexGrow={1} />
           <text fg={theme().textMuted}>
-            {files().length} {files().length === 1 ? "file" : "files"}
+            {i18n.t(files().length === 1 ? "diff.fileCountOne" : "diff.fileCount", { count: files().length })}
           </text>
         </Panel>
 
@@ -678,19 +680,19 @@ function DiffViewer(props: { api: TuiPluginApi }) {
             <Match when={diff.loading}>
               <Separator axis="x" />
               <box flexGrow={1} paddingLeft={1}>
-                <text fg={theme().textMuted}>Loading diff...</text>
+                <text fg={theme().textMuted}>{i18n.t("diff.loading")}</text>
               </box>
             </Match>
             <Match when={!diff.loading && files().length === 0}>
               <Separator axis="x" />
               <box flexGrow={1} paddingLeft={1}>
-                <text fg={theme().textMuted}>No diff!</text>
+                <text fg={theme().textMuted}>{i18n.t("diff.empty")}</text>
               </box>
             </Match>
             <Match when={!diff.loading && diff.error}>
               <Separator axis="x" />
               <box flexGrow={1} paddingLeft={1}>
-                <text fg={theme().error}>Failed to load diff</text>
+                <text fg={theme().error}>{i18n.t("diff.loadFailed")}</text>
               </box>
             </Match>
             <Match when={!diff.loading}>

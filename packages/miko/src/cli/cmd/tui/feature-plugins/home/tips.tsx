@@ -7,12 +7,16 @@ import { createTuiI18n, resolveTuiLanguage, TuiLanguageKVKey, type TuiLanguageCo
 
 const id = "internal:home-tips"
 
+export function tipsVisible(hidden: boolean) {
+  return !hidden
+}
+
 function View(props: { api: TuiPluginApi; hidden: boolean; show: boolean; connected: boolean }) {
   const t = (...args: Parameters<ReturnType<typeof createTuiI18n>["t"]>) =>
     createTuiI18n(
-      resolveTuiLanguage(props.api.kv.get(TuiLanguageKVKey, props.api.tuiConfig.language) as
-        | TuiLanguageConfig
-        | undefined),
+      resolveTuiLanguage(
+        props.api.kv.get(TuiLanguageKVKey, props.api.tuiConfig.language) as TuiLanguageConfig | undefined,
+      ),
     ).t(...args)
 
   useBindings(() => ({
@@ -46,13 +50,12 @@ const tui: TuiPlugin = async (api) => {
     slots: {
       home_bottom() {
         const hidden = createMemo(() => api.kv.get("tips_hidden", false))
-        const first = createMemo(() => api.state.session.count() === 0)
         const connected = createMemo(() =>
           api.state.provider.some(
             (item) => item.id !== "miko" || Object.values(item.models).some((model) => model.cost?.input !== 0),
           ),
         )
-        const show = createMemo(() => (!first() || !connected()) && !hidden())
+        const show = createMemo(() => tipsVisible(hidden()))
         return <View api={api} hidden={hidden()} show={show()} connected={connected()} />
       },
     },

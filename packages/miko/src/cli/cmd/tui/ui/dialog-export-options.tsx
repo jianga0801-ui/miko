@@ -4,6 +4,7 @@ import { useDialog, type DialogContext } from "./dialog"
 import { createStore } from "solid-js/store"
 import { onMount, Show } from "solid-js"
 import { useBindings } from "../keymap"
+import { useTuiI18n } from "../context/i18n"
 
 export type DialogExportOptionsProps = {
   defaultFilename: string
@@ -24,6 +25,7 @@ export type DialogExportOptionsProps = {
 export function DialogExportOptions(props: DialogExportOptionsProps) {
   const dialog = useDialog()
   const { theme } = useTheme()
+  const i18n = useTuiI18n()
   let textarea: TextareaRenderable
   const [store, setStore] = createStore({
     thinking: props.defaultThinking,
@@ -37,8 +39,8 @@ export function DialogExportOptions(props: DialogExportOptionsProps) {
     bindings: [
       {
         key: "tab",
-        desc: "Next export option",
-        group: "Dialog",
+        desc: i18n.command("Next export option"),
+        group: i18n.t("dialog.category"),
         cmd: () => {
           const order: Array<"filename" | "thinking" | "toolDetails" | "assistantMetadata" | "openWithoutSaving"> = [
             "filename",
@@ -60,8 +62,8 @@ export function DialogExportOptions(props: DialogExportOptionsProps) {
     bindings: [
       {
         key: "space",
-        desc: "Toggle export option",
-        group: "Dialog",
+        desc: i18n.command("Toggle export option"),
+        group: i18n.t("dialog.category"),
         cmd: () => {
           if (store.active === "thinking") setStore("thinking", !store.thinking)
           if (store.active === "toolDetails") setStore("toolDetails", !store.toolDetails)
@@ -85,7 +87,7 @@ export function DialogExportOptions(props: DialogExportOptionsProps) {
     <box paddingLeft={2} paddingRight={2} gap={1}>
       <box flexDirection="row" justifyContent="space-between">
         <text attributes={TextAttributes.BOLD} fg={theme.text}>
-          Export Options
+          {i18n.t("export.title")}
         </text>
         <text fg={theme.textMuted} onMouseUp={() => dialog.clear()}>
           esc
@@ -93,7 +95,7 @@ export function DialogExportOptions(props: DialogExportOptionsProps) {
       </box>
       <box gap={1}>
         <box>
-          <text fg={theme.text}>Filename:</text>
+          <text fg={theme.text}>{i18n.t("export.filename")}</text>
         </box>
         <textarea
           onSubmit={() => {
@@ -111,7 +113,7 @@ export function DialogExportOptions(props: DialogExportOptionsProps) {
             val.traits = { status: "FILENAME" }
           }}
           initialValue={props.defaultFilename}
-          placeholder="Enter filename"
+          placeholder={i18n.t("export.filenamePlaceholder")}
           placeholderColor={theme.textMuted}
           textColor={theme.text}
           focusedTextColor={theme.text}
@@ -129,7 +131,7 @@ export function DialogExportOptions(props: DialogExportOptionsProps) {
           <text fg={store.active === "thinking" ? theme.primary : theme.textMuted}>
             {store.thinking ? "[x]" : "[ ]"}
           </text>
-          <text fg={store.active === "thinking" ? theme.primary : theme.text}>Include thinking</text>
+          <text fg={store.active === "thinking" ? theme.primary : theme.text}>{i18n.t("export.includeThinking")}</text>
         </box>
         <box
           flexDirection="row"
@@ -141,7 +143,9 @@ export function DialogExportOptions(props: DialogExportOptionsProps) {
           <text fg={store.active === "toolDetails" ? theme.primary : theme.textMuted}>
             {store.toolDetails ? "[x]" : "[ ]"}
           </text>
-          <text fg={store.active === "toolDetails" ? theme.primary : theme.text}>Include tool details</text>
+          <text fg={store.active === "toolDetails" ? theme.primary : theme.text}>
+            {i18n.t("export.includeToolDetails")}
+          </text>
         </box>
         <box
           flexDirection="row"
@@ -153,7 +157,9 @@ export function DialogExportOptions(props: DialogExportOptionsProps) {
           <text fg={store.active === "assistantMetadata" ? theme.primary : theme.textMuted}>
             {store.assistantMetadata ? "[x]" : "[ ]"}
           </text>
-          <text fg={store.active === "assistantMetadata" ? theme.primary : theme.text}>Include assistant metadata</text>
+          <text fg={store.active === "assistantMetadata" ? theme.primary : theme.text}>
+            {i18n.t("export.includeAssistantMetadata")}
+          </text>
         </box>
         <box
           flexDirection="row"
@@ -165,19 +171,19 @@ export function DialogExportOptions(props: DialogExportOptionsProps) {
           <text fg={store.active === "openWithoutSaving" ? theme.primary : theme.textMuted}>
             {store.openWithoutSaving ? "[x]" : "[ ]"}
           </text>
-          <text fg={store.active === "openWithoutSaving" ? theme.primary : theme.text}>Open without saving</text>
+          <text fg={store.active === "openWithoutSaving" ? theme.primary : theme.text}>
+            {i18n.t("export.openWithoutSaving")}
+          </text>
         </box>
       </box>
       <Show when={store.active !== "filename"}>
         <text fg={theme.textMuted} paddingBottom={1}>
-          Press <span style={{ fg: theme.text }}>space</span> to toggle, <span style={{ fg: theme.text }}>return</span>{" "}
-          to confirm
+          {i18n.t("export.toggleHint")}
         </text>
       </Show>
       <Show when={store.active === "filename"}>
         <text fg={theme.textMuted} paddingBottom={1}>
-          Press <span style={{ fg: theme.text }}>return</span> to confirm, <span style={{ fg: theme.text }}>tab</span>{" "}
-          for options
+          {i18n.t("export.optionsHint")}
         </text>
       </Show>
     </box>

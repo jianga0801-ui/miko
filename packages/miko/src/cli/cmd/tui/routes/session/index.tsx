@@ -24,15 +24,7 @@ import { Spinner } from "@tui/component/spinner"
 import { generateSubtleSyntax, selectedForeground, useTheme } from "@tui/context/theme"
 import { BoxRenderable, ScrollBoxRenderable, addDefaultParsers, TextAttributes, RGBA } from "@opentui/core"
 import { Prompt, type PromptRef } from "@tui/component/prompt"
-import type {
-  AssistantMessage,
-  Part,
-  Provider,
-  ToolPart,
-  UserMessage,
-  TextPart,
-  ReasoningPart,
-} from "@miko-ai/sdk/v2"
+import type { AssistantMessage, Part, Provider, ToolPart, UserMessage, TextPart, ReasoningPart } from "@miko-ai/sdk/v2"
 import { useLocal } from "@tui/context/local"
 import { Locale } from "@/util/locale"
 import type { Tool } from "@/tool/tool"
@@ -345,7 +337,13 @@ export function Session() {
 
   createEffect(() => {
     const title = Locale.truncate(session()?.title ?? "", 50)
-    const pad = (text: string) => text.padEnd(10, " ")
+    const labelSession = i18n.t("session.exit.session")
+    const labelContinue = i18n.t("session.exit.continue")
+    // Align the two labels to their own widest label (by display width — CJK
+    // glyphs are 2 cells), then a fixed 2-cell gap. This keeps the gap tight and
+    // identical across languages instead of padding to a hardcoded column.
+    const labelCol = Math.max(Bun.stringWidth(labelSession), Bun.stringWidth(labelContinue))
+    const pad = (text: string) => text + " ".repeat(labelCol - Bun.stringWidth(text) + 2)
     const weak = (text: string) => UI.Style.TEXT_DIM + pad(text) + UI.Style.TEXT_NORMAL
     const logo = UI.logo("  ").split(/\r?\n/)
     return exit.message.set(
@@ -355,8 +353,8 @@ export function Session() {
         `${logo[2] ?? ""}`,
         `${logo[3] ?? ""}`,
         ``,
-        `  ${weak("Session")}${UI.Style.TEXT_NORMAL_BOLD}${title}${UI.Style.TEXT_NORMAL}`,
-        `  ${weak("Continue")}${UI.Style.TEXT_NORMAL_BOLD}miko -s ${session()?.id}${UI.Style.TEXT_NORMAL}`,
+        `  ${weak(labelSession)}${UI.Style.TEXT_NORMAL_BOLD}${title}${UI.Style.TEXT_NORMAL}`,
+        `  ${weak(labelContinue)}${UI.Style.TEXT_NORMAL_BOLD}miko -s ${session()?.id}${UI.Style.TEXT_NORMAL}`,
         ``,
       ].join("\n"),
     )
@@ -452,7 +450,7 @@ export function Session() {
 
   const sessionCommandList = createMemo(() => [
     {
-      title: session()?.share?.url ? "Copy share link" : "Share session",
+      title: i18n.command(session()?.share?.url ? "Copy share link" : "Share session"),
       value: "session.share",
       suggested: route.type === "session",
       category: "Session",
@@ -463,8 +461,8 @@ export function Session() {
       run: async () => {
         const copy = (url: string) =>
           Clipboard.copy(url)
-            .then(() => toast.show({ message: "Share URL copied to clipboard!", variant: "success" }))
-            .catch(() => toast.show({ message: "Failed to copy URL to clipboard", variant: "error" }))
+            .then(() => toast.show({ message: i18n.t("session.share.copySuccess"), variant: "success" }))
+            .catch(() => toast.show({ message: i18n.t("session.share.copyFailed"), variant: "error" }))
         const url = session()?.share?.url
         if (url) {
           await copy(url)
@@ -472,7 +470,11 @@ export function Session() {
           return
         }
         if (!kv.get("share_consent", false)) {
-          const ok = await DialogConfirm.show(dialog, "Share Session", "Are you sure you want to share it?")
+          const ok = await DialogConfirm.show(
+            dialog,
+            i18n.t("session.shareConfirm.title"),
+            i18n.t("session.shareConfirm.message"),
+          )
           if (ok !== true) return
           kv.set("share_consent", true)
         }
@@ -483,7 +485,7 @@ export function Session() {
           .then((res) => copy(res.data!.share!.url))
           .catch((error) => {
             toast.show({
-              message: error instanceof Error ? error.message : "Failed to share session",
+              message: error instanceof Error ? error.message : i18n.t("session.share.failed"),
               variant: "error",
             })
           })
@@ -491,7 +493,7 @@ export function Session() {
       },
     },
     {
-      title: "Rename session",
+      title: i18n.command("Rename session"),
       value: "session.rename",
       category: "Session",
       slash: {
@@ -502,7 +504,7 @@ export function Session() {
       },
     },
     {
-      title: "Jump to message",
+      title: i18n.command("Jump to message"),
       value: "session.timeline",
       category: "Session",
       slash: {
@@ -524,7 +526,7 @@ export function Session() {
       },
     },
     {
-      title: "Fork session",
+      title: i18n.command("Fork session"),
       value: "session.fork",
       category: "Session",
       slash: {
@@ -546,7 +548,7 @@ export function Session() {
       },
     },
     {
-      title: "Compact session",
+      title: i18n.command("Compact session"),
       value: "session.compact",
       category: "Session",
       slash: {
@@ -558,7 +560,7 @@ export function Session() {
         if (!selectedModel) {
           toast.show({
             variant: "warning",
-            message: "Connect a provider to summarize this session",
+            message: i18n.t("session.compact.noProvider"),
             duration: 3000,
           })
           return
@@ -584,10 +586,10 @@ export function Session() {
           .unshare({
             sessionID: route.sessionID,
           })
-          .then(() => toast.show({ message: "Session unshared successfully", variant: "success" }))
+          .then(() => toast.show({ message: i18n.t("session.unshare.success"), variant: "success" }))
           .catch((error) => {
             toast.show({
-              message: error instanceof Error ? error.message : "Failed to unshare session",
+              message: error instanceof Error ? error.message : i18n.t("session.unshare.failed"),
               variant: "error",
             })
           })
@@ -871,7 +873,7 @@ export function Session() {
           (msg) => msg.role === "assistant" && (!revertID || msg.id < revertID),
         )
         if (!lastAssistantMessage) {
-          toast.show({ message: "No assistant messages found", variant: "error" })
+          toast.show({ message: i18n.t("session.messageCopy.noAssistant"), variant: "error" })
           dialog.clear()
           return
         }
@@ -879,7 +881,7 @@ export function Session() {
         const parts = sync.data.part[lastAssistantMessage.id] ?? []
         const textParts = parts.filter((part) => part.type === "text")
         if (textParts.length === 0) {
-          toast.show({ message: "No text parts found in last assistant message", variant: "error" })
+          toast.show({ message: i18n.t("session.messageCopy.noTextParts"), variant: "error" })
           dialog.clear()
           return
         }
@@ -890,7 +892,7 @@ export function Session() {
           .trim()
         if (!text) {
           toast.show({
-            message: "No text content found in last assistant message",
+            message: i18n.t("session.messageCopy.noText"),
             variant: "error",
           })
           dialog.clear()
@@ -898,13 +900,13 @@ export function Session() {
         }
 
         Clipboard.copy(text)
-          .then(() => toast.show({ message: "Message copied to clipboard!", variant: "success" }))
-          .catch(() => toast.show({ message: "Failed to copy to clipboard", variant: "error" }))
+          .then(() => toast.show({ message: i18n.t("session.messageCopy.success"), variant: "success" }))
+          .catch(() => toast.show({ message: i18n.t("session.messageCopy.failed"), variant: "error" }))
         dialog.clear()
       },
     },
     {
-      title: "Copy session transcript",
+      title: i18n.command("Copy session transcript"),
       value: "session.copy",
       category: "Session",
       slash: {
@@ -926,9 +928,9 @@ export function Session() {
             },
           )
           await Clipboard.copy(transcript)
-          toast.show({ message: "Session transcript copied to clipboard!", variant: "success" })
+          toast.show({ message: i18n.t("session.copy.success"), variant: "success" })
         } catch {
-          toast.show({ message: "Failed to copy session transcript", variant: "error" })
+          toast.show({ message: i18n.t("session.copy.failed"), variant: "error" })
         }
         dialog.clear()
       },
@@ -1000,10 +1002,10 @@ export function Session() {
               await Filesystem.write(filepath, result)
             }
 
-            toast.show({ message: `Session exported to ${filename}`, variant: "success" })
+            toast.show({ message: i18n.t("session.export.success", { filename }), variant: "success" })
           }
         } catch {
-          toast.show({ message: "Failed to export session", variant: "error" })
+          toast.show({ message: i18n.t("session.export.failed"), variant: "error" })
         }
         dialog.clear()
       },
@@ -1067,6 +1069,8 @@ export function Session() {
       slashName: "slash" in command ? command.slash?.name : undefined,
       slashAliases: "slash" in command ? command.slash?.aliases : undefined,
       ...command,
+      title: i18n.command(command.title) ?? command.title,
+      category: i18n.command(command.category) ?? command.category,
     })),
   )
 
@@ -1168,8 +1172,8 @@ export function Session() {
                           const handleUnrevert = async () => {
                             const confirmed = await DialogConfirm.show(
                               dialog,
-                              "Confirm Redo",
-                              "Are you sure you want to restore the reverted messages?",
+                              i18n.t("session.redoConfirm.title"),
+                              i18n.t("session.redoConfirm.message"),
                             )
                             if (confirmed) {
                               keymap.dispatchCommand("session.redo")
@@ -1345,6 +1349,7 @@ function UserMessage(props: {
   })
   const files = createMemo(() => props.parts.flatMap((x) => (x.type === "file" ? [x] : [])))
   const { theme } = useTheme()
+  const i18n = useTuiI18n()
   const [hover, setHover] = createSignal(false)
   const queued = createMemo(() => props.pending && props.message.id > props.pending)
   const color = createMemo(() => local.agent.color(props.message.agent))
@@ -1420,7 +1425,7 @@ function UserMessage(props: {
         <box
           marginTop={1}
           border={["top"]}
-          title=" Compaction "
+          title={` ${i18n.t("session.compaction")} `}
           titleAlignment="center"
           borderColor={theme.borderActive}
         />
@@ -1505,7 +1510,11 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
               >
                 ▣{" "}
               </span>{" "}
-              <span style={{ fg: theme.text }}>{Locale.titlecase(props.message.mode)}</span>
+              <span style={{ fg: theme.text }}>
+                {props.message.mode === "compaction"
+                  ? i18n.t("session.compaction")
+                  : Locale.titlecase(props.message.mode)}
+              </span>
               <span style={{ fg: theme.textMuted }}> · {model()}</span>
               <Show when={duration()}>
                 <span style={{ fg: theme.textMuted }}> · {Locale.duration(duration())}</span>

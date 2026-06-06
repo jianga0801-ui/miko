@@ -73,6 +73,7 @@ const SUMMARY_TEMPLATE = `Output exactly the Markdown structure shown inside <te
 
 Rules:
 - Keep every section, even when empty.
+- Write headings and bullet content in the predominant language used by the user's recent messages, translating the template labels while preserving their meaning and order.
 - Use terse bullets, not prose paragraphs.
 - Preserve exact file paths, commands, error strings, and identifiers when known.
 - Do not mention the summary process or that context was compacted.`
@@ -121,7 +122,7 @@ function completedCompactions(messages: SessionLegacy.WithParts[]) {
   })
 }
 
-function buildPrompt(input: { previousSummary?: string; context: string[] }) {
+export function buildPrompt(input: { previousSummary?: string; context: string[] }) {
   const anchor = input.previousSummary
     ? [
         "Update the anchored summary below using the conversation history above.",

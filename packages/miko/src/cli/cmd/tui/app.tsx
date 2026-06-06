@@ -3,7 +3,14 @@ import { createDefaultOpenTuiKeymap } from "@opentui/keymap/opentui"
 import * as Clipboard from "@tui/util/clipboard"
 import * as Selection from "@tui/util/selection"
 import * as TuiAudio from "@tui/util/audio"
-import { createCliRenderer, MouseButton, type CliRenderer, type CliRendererConfig } from "@opentui/core"
+import {
+  createCliRenderer,
+  MouseButton,
+  type CliRenderer,
+  type CliRendererConfig,
+  type CliRendererStats,
+  type RGBA,
+} from "@opentui/core"
 import { RouteProvider, useRoute } from "@tui/context/route"
 import {
   Switch,
@@ -179,6 +186,161 @@ type TuiLifecycle = {
   exit: Exit
   exited: Promise<void>
   fail(error: unknown): Promise<never>
+}
+
+type ConsoleInternals = {
+  options: Record<string, unknown>
+  _rgbaInfo: RGBA
+  _rgbaWarn: RGBA
+  _rgbaError: RGBA
+  _rgbaDebug: RGBA
+  _rgbaDefault: RGBA
+  backgroundColor: RGBA
+  _rgbaTitleBar: RGBA
+  _rgbaTitleBarText: RGBA
+  _title: string
+  _rgbaCursor: RGBA
+  _rgbaSelection: RGBA
+  _rgbaCopyButton: RGBA
+  _needsFrameBufferUpdate: boolean
+  frameBuffer: {
+    fillRect(x: number, y: number, width: number, height: number, color: RGBA): void
+    drawText(text: string, x: number, y: number, fg: RGBA, bg?: RGBA): void
+  } | null
+  consoleWidth: number
+  isFocused: boolean
+  _copyButtonBounds: { x: number; y: number; width: number; height: number }
+  getCopyButtonLabel(): string
+  hasSelection(): boolean
+  updateFrameBuffer(): void
+  _mikoOriginalUpdateFrameBuffer?: () => void
+  _mikoLabels?: { title: string; focusedTitle: string; copy: string }
+}
+
+function configureConsole(
+  renderer: CliRenderer,
+  theme: ReturnType<typeof useTheme>["theme"],
+  i18n: ReturnType<typeof useTuiI18n>,
+) {
+  const console = renderer.console as unknown as ConsoleInternals
+  const title = i18n.t("console.title")
+  const copy = i18n.t("console.copy")
+  console._mikoLabels = {
+    title,
+    focusedTitle: i18n.t("console.focused", { title }),
+    copy,
+  }
+
+  console._rgbaInfo = theme.info
+  console._rgbaWarn = theme.warning
+  console._rgbaError = theme.error
+  console._rgbaDebug = theme.textMuted
+  console._rgbaDefault = theme.text
+  console.backgroundColor = theme.backgroundPanel
+  console._rgbaTitleBar = theme.backgroundElement
+  console._rgbaTitleBarText = theme.text
+  console._title = title
+  console._rgbaCursor = theme.primary
+  console._rgbaSelection = theme.backgroundElement
+  console._rgbaCopyButton = theme.primary
+  console.getCopyButtonLabel = () => `[${copy} (ctrl+y)]`
+  if (!console._mikoOriginalUpdateFrameBuffer) {
+    console._mikoOriginalUpdateFrameBuffer = console.updateFrameBuffer.bind(console)
+    console.updateFrameBuffer = () => {
+      console._mikoOriginalUpdateFrameBuffer?.()
+      if (!console.frameBuffer || !console._mikoLabels) return
+      console.frameBuffer.fillRect(0, 0, console.consoleWidth, 1, console._rgbaTitleBar)
+      const dynamicTitle = console.isFocused ? console._mikoLabels.focusedTitle : console._mikoLabels.title
+      const titleX = Math.max(0, Math.floor((console.consoleWidth - dynamicTitle.length) / 2))
+      console.frameBuffer.drawText(dynamicTitle, titleX, 0, console._rgbaTitleBarText, console._rgbaTitleBar)
+      const copyLabel = `[${console._mikoLabels.copy} (ctrl+y)]`
+      const copyButtonX = console.consoleWidth - copyLabel.length - 1
+      if (copyButtonX < 0) {
+        console._copyButtonBounds = { x: -1, y: -1, width: 0, height: 0 }
+        return
+      }
+      const copyColor = console.hasSelection() ? console._rgbaCopyButton : console._rgbaDebug
+      console.frameBuffer.drawText(copyLabel, copyButtonX, 0, copyColor, console._rgbaTitleBar)
+      console._copyButtonBounds = { x: copyButtonX, y: 0, width: copyLabel.length, height: 1 }
+    }
+  }
+  console.options = {
+    ...console.options,
+    title,
+    colorInfo: theme.info,
+    colorWarn: theme.warning,
+    colorError: theme.error,
+    colorDebug: theme.textMuted,
+    colorDefault: theme.text,
+    backgroundColor: theme.backgroundPanel,
+    titleBarColor: theme.backgroundElement,
+    titleBarTextColor: theme.text,
+    cursorColor: theme.primary,
+    selectionColor: theme.backgroundElement,
+    copyButtonColor: theme.primary,
+  }
+  console._needsFrameBufferUpdate = true
+  renderer.requestRender()
+}
+
+function formatDebugMs(value: number | undefined) {
+  return `${(value ?? 0).toFixed(3)}ms`
+}
+
+function DebugPanel(props: { renderer: CliRenderer; visible: boolean }) {
+  const { theme } = useTheme()
+  const i18n = useTuiI18n()
+  const [stats, setStats] = createSignal<CliRendererStats>(props.renderer.getStats())
+
+  createEffect(() => {
+    if (!props.visible) return
+    props.renderer.resetStats()
+    props.renderer.setGatherStats(true)
+    setStats(props.renderer.getStats())
+    const timer = setInterval(() => setStats(props.renderer.getStats()), 250)
+    onCleanup(() => {
+      clearInterval(timer)
+      props.renderer.setGatherStats(false)
+    })
+  })
+
+  const row = (label: string, value: string) => (
+    <text fg={theme.text}>
+      <span style={{ fg: theme.textMuted }}>{label}: </span>
+      {value}
+    </text>
+  )
+
+  return (
+    <Show when={props.visible}>
+      <box
+        position="absolute"
+        zIndex={5000}
+        top={1}
+        right={1}
+        width={44}
+        paddingLeft={1}
+        paddingRight={1}
+        backgroundColor={theme.backgroundPanel}
+      >
+        <text fg={theme.primary}>{i18n.t("debug.title")}</text>
+        {row("FPS", String(stats().fps))}
+        {row(
+          i18n.t("debug.frame"),
+          `${formatDebugMs(stats().nativeLastFrameTime)} (${i18n.t("debug.average")}: ${formatDebugMs(stats().nativeAverageFrameTime)})`,
+        )}
+        {row(i18n.t("debug.frameCallback"), formatDebugMs(stats().frameCallbackTime))}
+        {row(i18n.t("debug.overall"), formatDebugMs(stats().averageFrameTime))}
+        {row(i18n.t("debug.render"), formatDebugMs(stats().nativeRenderTime))}
+        {row(i18n.t("debug.stdout"), formatDebugMs(stats().nativeStdoutWriteTime))}
+        {row(
+          i18n.t("debug.cells"),
+          `${stats().cellsUpdated} (${i18n.t("debug.average")}: ${Math.round(stats().averageCellsUpdated)})`,
+        )}
+        {row(i18n.t("debug.threaded"), props.renderer.useThread ? i18n.t("debug.yes") : i18n.t("debug.no"))}
+      </box>
+    </Show>
+  )
 }
 
 function errorMessage(error: unknown) {
@@ -390,6 +552,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
   const promptRef = usePromptRef()
   const routes: RouteMap = new Map()
   const [routeRev, setRouteRev] = createSignal(0)
+  const [debugVisible, setDebugVisible] = createSignal(false)
   const routeView = (name: string) => {
     routeRev()
     return routes.get(name)?.at(-1)?.render
@@ -449,6 +612,14 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
 
     renderer.clearSelection()
   }
+  createEffect(() => {
+    configureConsole(renderer, theme, i18n)
+  })
+  onMount(() => {
+    if (!renderer.debugOverlay.enabled) return
+    setDebugVisible(true)
+    renderer.toggleDebugOverlay()
+  })
   const [terminalTitleEnabled, setTerminalTitleEnabled] = createSignal(kv.get("terminal_title_enabled", true))
   const [pasteSummaryEnabled, setPasteSummaryEnabled] = createSignal(
     kv.get("paste_summary_enabled", !sync.data.config.experimental?.disable_paste_summary),
@@ -849,31 +1020,32 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       },
       {
         name: "app.debug",
-        title: "Toggle debug panel",
-        category: "System",
+        title: i18n.command("Toggle debug panel"),
+        category: i18n.t("system.category"),
         run: () => {
-          renderer.toggleDebugOverlay()
+          setDebugVisible((visible) => !visible)
           dialog.clear()
         },
       },
       {
         name: "app.console",
-        title: "Toggle console",
-        category: "System",
+        title: i18n.command("Toggle console"),
+        category: i18n.t("system.category"),
         run: () => {
+          configureConsole(renderer, theme, i18n)
           renderer.console.toggle()
           dialog.clear()
         },
       },
       {
         name: "app.heap_snapshot",
-        title: "Write heap snapshot",
-        category: "System",
+        title: i18n.command("Write heap snapshot"),
+        category: i18n.t("system.category"),
         run: async () => {
           const files = await props.onSnapshot?.()
           toast.show({
             variant: "info",
-            message: `Heap snapshot written to ${files?.join(", ")}`,
+            message: i18n.t("system.heapSnapshotWritten", { files: files?.join(", ") ?? "" }),
             duration: 5000,
           })
           dialog.clear()
@@ -1155,6 +1327,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
         <TuiPluginRuntime.Slot name="app" />
       </Show>
       <StartupLoading ready={ready} />
+      <DebugPanel renderer={renderer} visible={debugVisible()} />
     </box>
   )
 }

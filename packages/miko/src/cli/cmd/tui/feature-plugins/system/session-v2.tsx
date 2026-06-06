@@ -30,6 +30,7 @@ import type {
 } from "@miko-ai/sdk/v2"
 import { createEffect, createMemo, createSignal, For, Match, Show, Switch } from "solid-js"
 import { collapseToolOutput } from "../../util/collapse-tool-output"
+import { createTuiI18n, resolveTuiLanguage, TuiLanguageKVKey, type TuiLanguageConfig } from "../../i18n"
 
 const id = "internal:session-v2-debug"
 const route = "session.v2.messages"
@@ -39,6 +40,12 @@ function currentSessionID(api: TuiPluginApi) {
   if (current.name !== "session") return
   const sessionID = current.params?.sessionID
   return typeof sessionID === "string" ? sessionID : undefined
+}
+
+function tr(api: TuiPluginApi, ...args: Parameters<ReturnType<typeof createTuiI18n>["t"]>) {
+  return createTuiI18n(
+    resolveTuiLanguage(api.kv.get(TuiLanguageKVKey, api.tuiConfig.language) as TuiLanguageConfig | undefined),
+  ).t(...args)
 }
 
 function View(props: { api: TuiPluginApi; sessionID: string }) {
@@ -93,6 +100,7 @@ function View(props: { api: TuiPluginApi; sessionID: string }) {
                   </Match>
                   <Match when={message.type === "assistant"}>
                     <AssistantMessage
+                      api={props.api}
                       message={message as SessionMessageAssistant}
                       sessionID={props.sessionID}
                       last={lastAssistant()?.id === message.id}
@@ -108,7 +116,7 @@ function View(props: { api: TuiPluginApi; sessionID: string }) {
                     <ShellMessage message={message as SessionMessageShell} />
                   </Match>
                   <Match when={message.type === "compaction"}>
-                    <CompactionMessage message={message as SessionMessageCompaction} />
+                    <CompactionMessage api={props.api} message={message as SessionMessageCompaction} />
                   </Match>
                   <Match when={message.type === "agent-switched"}>
                     <AgentSwitchedMessage message={message as SessionMessageAgentSwitched} />
@@ -227,13 +235,13 @@ function ShellMessage(props: { message: SessionMessageShell }) {
   )
 }
 
-function CompactionMessage(props: { message: SessionMessageCompaction }) {
+function CompactionMessage(props: { api: TuiPluginApi; message: SessionMessageCompaction }) {
   const { theme, syntax } = useTheme()
   return (
     <box
       marginTop={1}
       border={["top"]}
-      title={props.message.reason === "auto" ? " Auto Compaction " : " Compaction "}
+      title={` ${tr(props.api, props.message.reason === "auto" ? "session.compaction.auto" : "session.compaction")} `}
       titleAlignment="center"
       borderColor={theme.borderActive}
       flexShrink={0}
@@ -293,6 +301,7 @@ function UnknownMessage(props: { message: SessionMessage }) {
 }
 
 function AssistantMessage(props: {
+  api: TuiPluginApi
   message: SessionMessageAssistant
   sessionID: string
   last: boolean
@@ -306,6 +315,11 @@ function AssistantMessage(props: {
     if (!props.message.time.completed) return 0
     return props.message.time.completed - (props.start ?? props.message.time.created)
   })
+  const label = createMemo(() =>
+    props.message.agent === "compaction"
+      ? tr(props.api, "session.compaction")
+      : Locale.titlecase(props.message.agent),
+  )
   const model = createMemo(() => {
     const variant = props.message.model.variant ? `/${props.message.model.variant}` : ""
     return `${props.message.model.providerID}/${props.message.model.id}${variant}`
@@ -354,7 +368,7 @@ function AssistantMessage(props: {
         <box paddingLeft={3} flexShrink={0}>
           <text marginTop={1}>
             <span style={{ fg: local.agent.color(props.message.agent) }}>▣ </span>
-            <span style={{ fg: theme.text }}>{Locale.titlecase(props.message.agent)}</span>
+            <span style={{ fg: theme.text }}>{label()}</span>
             <span style={{ fg: theme.textMuted }}> · {model()}</span>
             <Show when={duration()}>
               <span style={{ fg: theme.textMuted }}> · {Locale.duration(duration())}</span>
