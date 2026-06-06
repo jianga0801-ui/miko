@@ -1,0 +1,7 @@
+Quickly analyze attached images, audio, or video with MiMo's official multimodal model.
+
+Use this tool when the user asks about attached media, screenshots, clipboard images, audio, or video and the current chat model cannot directly inspect that media. The tool reads media attachments from the current conversation and returns a text understanding that you can use to answer the user.
+
+Keep the prompt short and specific to the user's question. Do not ask for a detailed general description unless the user explicitly requested detail, OCR, transcript, or exhaustive analysis.
+
+Prefer calling this tool instead of telling the user to describe the media.
