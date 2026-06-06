@@ -2,6 +2,7 @@ import type { TuiPlugin, TuiPluginApi } from "@miko-ai/plugin/tui"
 import type { InternalTuiPlugin } from "../../plugin/internal"
 import { createMemo, Match, Show, Switch } from "solid-js"
 import { Global } from "@miko-ai/core/global"
+import { useKeymapSelector } from "../../keymap"
 import { createTuiI18n, resolveTuiLanguage, TuiLanguageKVKey, type TuiLanguageConfig } from "../../i18n"
 
 const id = "internal:home-footer"
@@ -62,11 +63,13 @@ function language(api: TuiPluginApi) {
 
 function ShortcutHint(props: { api: TuiPluginApi }) {
   const theme = () => props.api.theme.current
-  const trigger = createMemo(() =>
+  // Use a keymap selector (not a plain memo) so the hint reacts to the which-key
+  // plugin being enabled/disabled: its binding is only registered while the
+  // plugin is active, so trigger() goes empty when which-key is turned off.
+  const trigger = useKeymapSelector((keymap) =>
     props.api.keys.formatSequence(
-      props.api.keymap
-        .getCommandBindings({ visibility: "registered", commands: ["which-key.toggle"] })
-        .get("which-key.toggle")?.[0]?.sequence,
+      keymap.getCommandBindings({ visibility: "registered", commands: ["which-key.toggle"] }).get("which-key.toggle")?.[0]
+        ?.sequence,
     ),
   )
   const label = createMemo(() => createTuiI18n(language(props.api)).t("whichKey.homeHint"))
