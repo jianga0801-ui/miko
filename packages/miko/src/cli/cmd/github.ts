@@ -239,7 +239,7 @@ export const GithubInstallCommand = effectCmd({
               `    1. Commit the \`${WORKFLOW_FILE}\` file and push`,
               step2,
               "",
-              "    3. Go to a GitHub issue and comment `/oc summarize` to see the agent in action",
+              "    3. Go to a GitHub issue and comment `/miko summarize` to see the agent in action",
               "",
               "   Learn more about the GitHub agent - https://miko.dev/docs/github/#usage-examples",
             ].join("\n"),
