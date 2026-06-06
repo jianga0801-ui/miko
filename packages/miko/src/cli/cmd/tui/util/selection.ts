@@ -23,7 +23,7 @@ type SelectionKeyEvent = {
   stopPropagation: () => void
 }
 
-export function copy(renderer: Renderer, toast: Toast): boolean {
+export function copy(renderer: Renderer, toast: Toast, copyMessage?: string): boolean {
   const selection = renderer.getSelection()
   if (!selection) return false
 
@@ -35,19 +35,24 @@ export function copy(renderer: Renderer, toast: Toast): boolean {
     focus?.getClipboardText && selection.selectedRenderables.includes(focus) ? focus.getClipboardText(text) : text
 
   Clipboard.copy(clipboardText)
-    .then(() => toast.show({ message: "Copied to clipboard", variant: "info" }))
+    .then(() => toast.show({ message: copyMessage ?? "Copied to clipboard", variant: "info" }))
     .catch(toast.error)
 
   renderer.clearSelection()
   return true
 }
 
-export function handleSelectionKey(renderer: Renderer, toast: Toast, event: SelectionKeyEvent) {
+export function handleSelectionKey(
+  renderer: Renderer,
+  toast: Toast,
+  event: SelectionKeyEvent,
+  copyMessage?: string,
+) {
   const selection = renderer.getSelection()
   if (!selection) return
 
   if (event.ctrl && event.name === "c") {
-    if (!copy(renderer, toast)) {
+    if (!copy(renderer, toast, copyMessage)) {
       renderer.clearSelection()
       return
     }

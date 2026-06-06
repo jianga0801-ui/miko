@@ -593,7 +593,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     "key",
     ({ event }) => {
       if (!Flag.MIKO_EXPERIMENTAL_DISABLE_COPY_ON_SELECT) return
-      Selection.handleSelectionKey(renderer, toast, event)
+      Selection.handleSelectionKey(renderer, toast, event, i18n.t("provider.copied"))
     },
     { priority: 1 },
   )
@@ -607,7 +607,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     if (!text || text.length === 0) return
 
     await Clipboard.copy(text)
-      .then(() => toast.show({ message: "Copied to clipboard", variant: "info" }))
+      .then(() => toast.show({ message: i18n.t("provider.copied"), variant: "info" }))
       .catch(toast.error)
 
     renderer.clearSelection()
@@ -789,7 +789,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
           const workspace = currentWorktreeWorkspace()
           if (!workspace?.directory) return
           await Clipboard.copy(workspace.directory)
-            .then(() => toast.show({ message: "Copied worktree path", variant: "info" }))
+            .then(() => toast.show({ message: i18n.t("workspace.copySuccess"), variant: "info" }))
             .catch(toast.error)
           dialog.clear()
         },
