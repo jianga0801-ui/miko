@@ -12,6 +12,7 @@ import { serviceUse } from "@opencode-ai/core/effect/service-use"
 import { type LanguageModelV3 } from "@ai-sdk/provider"
 import { ModelsDev } from "@opencode-ai/core/models-dev"
 import { Auth } from "../auth"
+import { isMimoProviderID, isSupportedMimoModelID } from "./mimo-setup"
 import { Env } from "../env"
 import { InstallationVersion } from "@opencode-ai/core/installation/version"
 import { iife } from "@/util/iife"
@@ -1171,6 +1172,14 @@ function cost(c: ModelsDev.Model["cost"]): Model["cost"] {
   return result
 }
 
+function isMimoNativeMediaModel(modelID: string) {
+  return modelID === "mimo-v2.5"
+}
+
+function isAllowedProviderModel(providerID: string, modelID: string) {
+  return !isMimoProviderID(providerID) || isSupportedMimoModelID(modelID)
+}
+
 function fromModelsDevModel(provider: ModelsDev.Provider, model: ModelsDev.Model): Model {
   const base: Model = {
     id: ModelV2.ID.make(model.id),
@@ -1198,10 +1207,16 @@ function fromModelsDevModel(provider: ModelsDev.Provider, model: ModelsDev.Model
       toolcall: model.tool_call ?? true,
       input: {
         text: model.modalities?.input?.includes("text") ?? false,
-        audio: model.modalities?.input?.includes("audio") ?? false,
+        // MiMo audio/video are native to mimo-v2.5, but need
+        // provider-transform sentinel encoding before the AI SDK sees them.
+        audio: isMimoProviderID(provider.id)
+          ? isMimoNativeMediaModel(model.id)
+          : (model.modalities?.input?.includes("audio") ?? false),
         image: model.modalities?.input?.includes("image") ?? false,
-        video: model.modalities?.input?.includes("video") ?? false,
-        pdf: model.modalities?.input?.includes("pdf") ?? false,
+        video: isMimoProviderID(provider.id)
+          ? isMimoNativeMediaModel(model.id)
+          : (model.modalities?.input?.includes("video") ?? false),
+        pdf: isMimoProviderID(provider.id) ? false : (model.modalities?.input?.includes("pdf") ?? false),
       },
       output: {
         text: model.modalities?.output?.includes("text") ?? false,
@@ -1216,6 +1231,12 @@ function fromModelsDevModel(provider: ModelsDev.Provider, model: ModelsDev.Model
     variants: {},
   }
 
+  if (isMimoProviderID(provider.id)) {
+    base.capabilities.reasoning = true
+    base.capabilities.temperature = true
+    base.capabilities.interleaved = { field: "reasoning_content" }
+  }
+
   return {
     ...base,
     variants: mapValues(ProviderTransform.variants(base), (v) => v),
@@ -1225,6 +1246,7 @@ function fromModelsDevModel(provider: ModelsDev.Provider, model: ModelsDev.Model
 export function fromModelsDevProvider(provider: ModelsDev.Provider): Info {
   const models: Record<string, Model> = {}
   for (const [key, model] of Object.entries(provider.models)) {
+    if (!isAllowedProviderModel(provider.id, model.id)) continue
     models[key] = fromModelsDevModel(provider, model)
     for (const [mode, opts] of Object.entries(model.experimental?.modes ?? {})) {
       const id = `${model.id}-${mode}`
