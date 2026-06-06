@@ -124,6 +124,41 @@ bun dev serve --port 8080
 > [!NOTE]
 > If you make changes to the API or SDK (e.g. `packages/miko/src/server/server.ts`), run `./script/generate.ts` to regenerate the SDK and related files.
 
+### Local Release Process (For Fork Repositories)
+
+Since the GHA workflow `publish.yml` is restricted to run only on the upstream repository (`anomalyco/opencode`), fork repositories need to be built and released manually from a local machine or WSL environment.
+
+#### 1. Version Upgrades (Bump Version)
+First, update the version field in `package.json` in the root directory. Then run the version synchronization script to propagate this version to all workspace packages:
+```bash
+bun ./script/publish.ts
+```
+*Note: This script updates all nested package.json files and runs `bun install` to reconcile workspace locks.*
+
+#### 2. Prepare Release Notes (Bilingual Structure)
+Create a release notes file (e.g. `packages/miko/dist/notes.md`) containing bilingual logs following the `v2026.6.7` template structure (Chinese section first, followed by the English `Changelog`).
+
+#### 3. Create a Draft Release on GitHub
+Use the GitHub CLI (`gh`) to create a draft release with the specified notes file:
+```bash
+gh release create v<VERSION> -d --title "v<VERSION>" --notes-file packages/miko/dist/notes.md --repo <your-username>/miko
+```
+*Note: The `-d` flag creates a **draft** release, which is necessary so we can upload binary assets before making it public.*
+
+#### 4. Build and Upload Multi-Platform Binaries
+Run the build script with `OPENCODE_RELEASE=true` and specify your repository in `GH_REPO`:
+```bash
+cd packages/opencode
+OPENCODE_RELEASE=true GH_REPO="<your-username>/miko" bun ./script/build.ts
+```
+*This script will compile binaries for all 12 supported platform/architecture targets, compress them into `.zip` or `.tar.gz`, and automatically upload them to the GitHub release draft.*
+
+#### 5. Publish the Release
+Once all 12 assets are uploaded, publish the release:
+```bash
+gh release edit v<VERSION> --draft=false --repo <your-username>/miko
+```
+
 Please try to follow the [style guide](./AGENTS.md)
 
 ### Setting up a Debugger
