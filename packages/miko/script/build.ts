@@ -266,7 +266,7 @@ if (archiveFlag) {
     if (key.includes("linux")) {
       await $`tar -czf ../../${key}.tar.gz *`.cwd(`dist/${key}/bin`)
     } else {
-      await $`zip -r ../../${key}.zip *`.cwd(`dist/${key}/bin`)
+      await $`python3 -m zipfile -c ../../${key}.zip *`.cwd(`dist/${key}/bin`)
     }
   }
   if (Script.release) {
