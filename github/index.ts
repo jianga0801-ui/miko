@@ -244,8 +244,8 @@ function createMiko() {
 function assertPayloadKeyword() {
   const payload = useContext().payload as IssueCommentEvent | PullRequestReviewCommentEvent
   const body = payload.comment.body.trim()
-  if (!body.match(/(?:^|\s)(?:\/miko|\/oc)(?=$|\s)/)) {
-    throw new Error("Comments must mention `/miko` or `/oc`")
+  if (!body.match(/(?:^|\s)(?:\/ob|\/miko|\/oc)(?=$|\s)/)) {
+    throw new Error("Comments must mention `/ob`, `/miko` or `/oc`")
   }
 }
 
@@ -418,19 +418,19 @@ async function getUserPrompt() {
 
   let prompt = (() => {
     const body = payload.comment.body.trim()
-    if (body === "/miko" || body === "/oc") {
+    if (body === "/ob" || body === "/miko" || body === "/oc") {
       if (reviewContext) {
         return `Review this code change and suggest improvements for the commented lines:\n\nFile: ${reviewContext.file}\nLines: ${reviewContext.line}\n\n${reviewContext.diffHunk}`
       }
       return "Summarize this thread"
     }
-    if (body.includes("/miko") || body.includes("/oc")) {
+    if (body.includes("/ob") || body.includes("/miko") || body.includes("/oc")) {
       if (reviewContext) {
         return `${body}\n\nContext: You are reviewing a comment on file "${reviewContext.file}" at line ${reviewContext.line}.\n\nDiff context:\n${reviewContext.diffHunk}`
       }
       return body
     }
-    throw new Error("Comments must mention `/miko` or `/oc`")
+    throw new Error("Comments must mention `/ob`, `/miko` or `/oc`")
   })()
 
   // Handle images

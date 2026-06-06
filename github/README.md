@@ -2,7 +2,7 @@
 
 A GitHub Action that integrates [miko](https://miko.dev) directly into your GitHub workflow.
 
-Mention `/miko` in your comment, and miko will execute tasks within your GitHub Actions runner.
+Mention `/ob` in your comment, and miko will execute tasks within your GitHub Actions runner.
 
 ## Features
 
@@ -11,7 +11,7 @@ Mention `/miko` in your comment, and miko will execute tasks within your GitHub 
 Leave the following comment on a GitHub issue. `miko` will read the entire thread, including all comments, and reply with a clear explanation.
 
 ```
-/miko explain this issue
+/ob explain this issue
 ```
 
 #### Fix an issue
@@ -19,7 +19,7 @@ Leave the following comment on a GitHub issue. `miko` will read the entire threa
 Leave the following comment on a GitHub issue. miko will create a new branch, implement the changes, and open a PR with the changes.
 
 ```
-/miko fix this
+/ob fix this
 ```
 
 #### Review PRs and make changes
@@ -27,7 +27,7 @@ Leave the following comment on a GitHub issue. miko will create a new branch, im
 Leave the following comment on a GitHub PR. miko will implement the requested change and commit it to the same PR.
 
 ```
-Delete the attachment from S3 when the note is removed /oc
+Delete the attachment from S3 when the note is removed /ob
 ```
 
 #### Review specific code lines
@@ -36,7 +36,7 @@ Leave a comment directly on code lines in the PR's "Files" tab. miko will automa
 
 ```
 [Comment on specific lines in Files tab]
-/oc add error handling here
+/ob add error handling here
 ```
 
 When commenting on specific lines, miko receives:
@@ -75,6 +75,7 @@ This will walk you through installing the GitHub app, creating the workflow, and
    jobs:
      miko:
        if: |
+         contains(github.event.comment.body, '/ob') ||
          contains(github.event.comment.body, '/oc') ||
          contains(github.event.comment.body, '/miko')
        runs-on: ubuntu-latest

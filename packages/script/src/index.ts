@@ -34,17 +34,42 @@ const IS_PREVIEW = CHANNEL !== "latest"
 const VERSION = await (async () => {
   if (env.MIKO_VERSION) return env.MIKO_VERSION
   if (IS_PREVIEW) return `0.0.0-${CHANNEL}-${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "")}`
-  const version = await fetch("https://registry.npmjs.org/miko-ai/latest")
-    .then((res) => {
-      if (!res.ok) throw new Error(res.statusText)
-      return res.json()
-    })
-    .then((data: any) => data.version)
-  const [major, minor, patch] = version.split(".").map((x: string) => Number(x) || 0)
-  const t = env.MIKO_BUMP?.toLowerCase()
-  if (t === "major") return `${major + 1}.0.0`
-  if (t === "minor") return `${major}.${minor + 1}.0`
-  return `${major}.${minor}.${patch + 1}`
+
+  // Get current date in UTC+8 timezone
+  const d = new Date()
+  const offsetMs = 8 * 60 * 60 * 1000
+  const localTime = new Date(d.getTime() + offsetMs)
+  const year = localTime.getUTCFullYear()
+  const month = localTime.getUTCMonth() + 1
+  const date = localTime.getUTCDate()
+  const dateStr = `${year}.${month}.${date}`
+
+  try {
+    const tagsText = await $`git tag -l`.text()
+    const tags = tagsText.split(/\r?\n/).map(t => t.trim()).filter(Boolean)
+    const todayTags = tags.filter(tag => tag.startsWith(`v${dateStr}`))
+    if (todayTags.length === 0) {
+      return dateStr
+    }
+
+    let maxSuffix = 1
+    for (const tag of todayTags) {
+      const escapedDateStr = dateStr.split(".").join("\\\\.")
+      const match = tag.match(new RegExp(`^v${escapedDateStr}(?:-(\\d+))?$`))
+      if (match) {
+        const suffixStr = match[1]
+        if (suffixStr) {
+          const suffixNum = parseInt(suffixStr, 10)
+          if (suffixNum > maxSuffix) {
+            maxSuffix = suffixNum
+          }
+        }
+      }
+    }
+    return `${dateStr}-${maxSuffix + 1}`
+  } catch (e) {
+    return dateStr
+  }
 })()
 
 const bot = ["actions-user", "miko", "miko-agent[bot]"]

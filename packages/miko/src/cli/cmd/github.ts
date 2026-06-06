@@ -388,6 +388,8 @@ on:
 jobs:
   miko:
     if: |
+      contains(github.event.comment.body, ' /ob') ||
+      startsWith(github.event.comment.body, '/ob') ||
       contains(github.event.comment.body, ' /oc') ||
       startsWith(github.event.comment.body, '/oc') ||
       contains(github.event.comment.body, ' /miko') ||
@@ -793,7 +795,7 @@ export const GithubRunCommand = effectCmd({
         }
 
         const reviewContext = getReviewCommentContext()
-        const mentions = (process.env["MENTIONS"] || "/miko,/oc")
+        const mentions = (process.env["MENTIONS"] || "/ob,/miko,/oc")
           .split(",")
           .map((m) => m.trim().toLowerCase())
           .filter(Boolean)
