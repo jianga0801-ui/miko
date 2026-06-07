@@ -1415,7 +1415,7 @@ function UserMessage(props: {
               }
             >
               <text fg={theme.textMuted}>
-                <span style={{ bg: color(), fg: queuedFg(), bold: true }}> QUEUED </span>
+                <span style={{ bg: color(), fg: queuedFg(), bold: true }}> {i18n.t("session.queued")} </span>
               </text>
             </Show>
           </box>

@@ -26,6 +26,7 @@ import {
   on,
 } from "solid-js"
 import { win32DisableProcessedInput, win32FlushInputBuffer, win32InstallCtrlCGuard } from "./win32"
+import { posixFlushInputBuffer } from "./posix"
 import { Flag } from "@miko-ai/core/flag/flag"
 import semver from "semver"
 import { DialogProvider, useDialog } from "@tui/ui/dialog"
@@ -492,6 +493,7 @@ function createTuiLifecycle(input: {
       input.renderer.destroy()
     }
     win32FlushInputBuffer()
+    posixFlushInputBuffer()
     if (reason) {
       const formatted = FormatError(reason) ?? FormatUnknownError(reason)
       if (formatted) process.stderr.write(formatted + "\n")
@@ -508,6 +510,7 @@ function createTuiLifecycle(input: {
     if (exiting) return
     void cleanup().finally(() => {
       win32FlushInputBuffer()
+      posixFlushInputBuffer()
       completeExit()
     })
   })

@@ -93,8 +93,6 @@ workflows when appropriate:
 | `code-review` | Four-layer review process: correctness, security, performance, maintainability. | Miko builtin, this repository. |
 | `plan-protocol` | Implementation-plan format, citations, and progress tracking. | Miko builtin, this repository. |
 | `plan-review` | Quality checks for implementation plans. | Miko builtin, this repository. |
-| `impeccable` | Production-grade frontend design, critique, polish, adaptation, animation, and live variant workflows. | [pbakaus/impeccable](https://github.com/pbakaus/impeccable). |
-| `kami` | Professional document, landing page, one-pager, resume, report, PDF, and slide typesetting. | [tw93/kami](https://github.com/tw93/kami). |
 | `effect` | Effect v4 / effect-smol coding guidance for this repo. | Local project skill; API reference source is [Effect-TS/effect-smol](https://github.com/Effect-TS/effect-smol). |
 
 
@@ -243,7 +241,5 @@ The same workflow also runs when a `v*` tag is pushed.
 | Historical package metadata still visible in some files | [anomalyco/miko](https://github.com/anomalyco/miko) |
 | Model catalog | [models.dev](https://models.dev) |
 | Built-in agent workspace references | [kdcokenny/opencode-workspace](https://github.com/kdcokenny/opencode-workspace) |
-| Impeccable design skill | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) |
-| Kami bundled skill | [tw93/kami](https://github.com/tw93/kami) |
 | Effect reference used by local `effect` skill | [Effect-TS/effect-smol](https://github.com/Effect-TS/effect-smol) |
 
