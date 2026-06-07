@@ -74,7 +74,7 @@ function loaded(filepath: string): SessionLegacy.WithParts[] {
         sessionID,
         role: "user",
         time: { created: 0 },
-        agent: "build",
+        agent: "miko",
         model: {
           providerID: ProviderV2.ID.make("anthropic"),
           modelID: ProviderV2.ModelID.make("claude-sonnet-4-20250514"),

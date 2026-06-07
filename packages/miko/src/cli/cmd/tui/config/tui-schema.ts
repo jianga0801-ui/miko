@@ -91,4 +91,7 @@ export const TuiInfo = Schema.Struct({
   scroll_acceleration: Schema.optional(ScrollAcceleration),
   diff_style: Schema.optional(DiffStyle),
   mouse: Schema.optional(Schema.Boolean).annotate({ description: "Enable or disable mouse capture (default: true)" }),
+  mouse_movement: Schema.optional(Schema.Boolean).annotate({
+    description: "Enable or disable mouse movement/motion tracking (default: false)",
+  }),
 })

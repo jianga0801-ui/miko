@@ -87,7 +87,7 @@ function createTextMessage(sessionID: SessionIDType, text: string) {
       id: MessageID.ascending(),
       role: "user",
       sessionID,
-      agent: "build",
+      agent: "miko",
       model: { providerID: ProviderV2.ID.make("test"), modelID: ProviderV2.ModelID.make("test") },
       time: { created: Date.now() },
     })
@@ -134,7 +134,7 @@ const insertLegacyAssistantMessage = (sessionID: SessionIDType, time = 1) =>
     const message = new SessionMessage.Assistant({
       id: SessionMessage.ID.create(),
       type: "assistant",
-      agent: "build",
+      agent: "miko",
       model: {
         id: ModelV2.ID.make("model"),
         providerID: ProviderV2.ID.make("provider"),
@@ -297,7 +297,7 @@ describe("session HttpApi", () => {
         const prompt = yield* request(pathFor(SessionPaths.prompt, { sessionID: missingSession }), {
           headers: { ...headers, "content-type": "application/json" },
           method: "POST",
-          body: JSON.stringify({ agent: "build", noReply: true, parts: [{ type: "text", text: "hello" }] }),
+          body: JSON.stringify({ agent: "miko", noReply: true, parts: [{ type: "text", text: "hello" }] }),
         })
         expect(prompt.status).toBe(404)
         expect(yield* responseJson(prompt)).toEqual(missingSessionBody)
@@ -413,7 +413,7 @@ describe("session HttpApi", () => {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            agent: "build",
+            agent: "miko",
             model: { providerID: "test", modelID: "test-model" },
             parts: [{ type: "text", text: "which directory?" }],
           }),

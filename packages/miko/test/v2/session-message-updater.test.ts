@@ -19,7 +19,7 @@ test.skip("step snapshots carry over to assistant messages", () => {
       data: {
         sessionID,
         timestamp: DateTime.makeUnsafe(1),
-        agent: "build",
+        agent: "miko",
         model: {
           id: ModelV2.ID.make("model"),
           providerID: ProviderV2.ID.make("provider"),
@@ -67,7 +67,7 @@ test.skip("text ended populates assistant text content", () => {
       data: {
         sessionID,
         timestamp: DateTime.makeUnsafe(1),
-        agent: "build",
+        agent: "miko",
         model: {
           id: ModelV2.ID.make("model"),
           providerID: ProviderV2.ID.make("provider"),
@@ -117,7 +117,7 @@ test.skip("tool completion stores completed timestamp", () => {
       data: {
         sessionID,
         timestamp: DateTime.makeUnsafe(1),
-        agent: "build",
+        agent: "miko",
         model: {
           id: ModelV2.ID.make("model"),
           providerID: ProviderV2.ID.make("provider"),

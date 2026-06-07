@@ -49,7 +49,8 @@ const BaseParameters = Schema.Struct(BaseParameterFields)
 export const Parameters = Schema.Struct({
   ...BaseParameterFields,
   background: Schema.optional(Schema.Boolean).annotate({
-    description: "Run the agent in the background. You will be notified when it completes.",
+    description:
+      "Run the agent in the background. You will be notified when it completes. DO NOT sleep, poll, or proactively check on its progress",
   }),
 })
 
@@ -62,7 +63,7 @@ function backgroundOutput(sessionID: SessionID) {
     `<task id="${sessionID}" state="running">`,
     "<summary>Background task started</summary>",
     "<task_result>",
-    "Background task started. You will be notified automatically when it finishes; do not poll for progress.",
+    "Background task started. You will be notified automatically when it finishes; DO NOT sleep, poll, or check progress.",
     "Do not duplicate its work. Continue only with non-overlapping work, or stop if there is nothing else useful to do.",
     "</task_result>",
     "</task>",

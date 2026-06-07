@@ -117,9 +117,9 @@ describe("acp config options", () => {
   test("builds the mode select option with descriptions when present", () => {
     expect(
       buildModeSelectOption({
-        currentModeId: "build",
+        currentModeId: "miko",
         modes: [
-          { id: "build", name: "Build", description: "Make code changes" },
+          { id: "miko", name: "Miko", description: "Make code changes" },
           { id: "plan", name: "Plan" },
         ],
       }),
@@ -128,9 +128,9 @@ describe("acp config options", () => {
       name: "Session Mode",
       category: "mode",
       type: "select",
-      currentValue: "build",
+      currentValue: "miko",
       options: [
-        { value: "build", name: "Build", description: "Make code changes" },
+        { value: "miko", name: "Miko", description: "Make code changes" },
         { value: "plan", name: "Plan" },
       ],
     })
@@ -142,7 +142,7 @@ describe("acp config options", () => {
       currentModel: { providerID: "anthropic", modelID: "claude/sonnet-4" },
       currentVariant: "very-high",
       modes: [
-        { id: "build", name: "Build" },
+        { id: "miko", name: "Miko" },
         { id: "plan", name: "Plan" },
       ],
       currentModeId: "plan",

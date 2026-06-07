@@ -27,4 +27,15 @@ describe("providerOptions", () => {
     ]).map((option) => option.value)
     expect(values).toEqual(["xiaomi-token-plan-cn", "xiaomi", "xiaomi-token-plan-ams"])
   })
+
+  test("keeps popular providers first and sorts the rest alphabetically", () => {
+    const values = providerOptions([
+      { id: "openai", name: "OpenAI" },
+      { id: "custom-z", name: "Zebra Provider" },
+      { id: "xiaomi", name: "Xiaomi" },
+      { id: "anthropic", name: "Anthropic" },
+      { id: "xiaomi-token-plan-cn", name: "Xiaomi Token Plan (China)" },
+    ]).map((option) => option.value)
+    expect(values).toEqual(["xiaomi-token-plan-cn", "xiaomi", "anthropic", "openai", "custom-z"])
+  })
 })

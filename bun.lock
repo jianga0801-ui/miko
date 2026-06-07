@@ -200,7 +200,7 @@
     },
     "packages/miko": {
       "name": "miko",
-      "version": "2026.6.7",
+      "version": "2026.6.7-3",
       "bin": {
         "miko": "./bin/miko",
       },

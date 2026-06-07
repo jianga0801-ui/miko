@@ -7,6 +7,7 @@ import { useToast } from "./toast"
 import { Flag } from "@miko-ai/core/flag/flag"
 import * as Selection from "@tui/util/selection"
 import { useBindings, useMikoModeStack } from "../keymap"
+import { useTuiI18n } from "../context/i18n"
 
 export function Dialog(
   props: ParentProps<{
@@ -180,6 +181,7 @@ export function DialogProvider(props: ParentProps) {
   const value = init()
   const renderer = useRenderer()
   const toast = useToast()
+  const i18n = useTuiI18n()
 
   return (
     <ctx.Provider value={value}>
@@ -191,12 +193,14 @@ export function DialogProvider(props: ParentProps) {
           if (!Flag.MIKO_EXPERIMENTAL_DISABLE_COPY_ON_SELECT) return
           if (evt.button !== MouseButton.RIGHT) return
 
-          if (!Selection.copy(renderer, toast)) return
+          if (!Selection.copy(renderer, toast, i18n.t("provider.copied"))) return
           evt.preventDefault()
           evt.stopPropagation()
         }}
         onMouseUp={
-          !Flag.MIKO_EXPERIMENTAL_DISABLE_COPY_ON_SELECT ? () => Selection.copy(renderer, toast) : undefined
+          !Flag.MIKO_EXPERIMENTAL_DISABLE_COPY_ON_SELECT
+            ? () => Selection.copy(renderer, toast, i18n.t("provider.copied"))
+            : undefined
         }
       >
         <Show when={value.stack.length}>

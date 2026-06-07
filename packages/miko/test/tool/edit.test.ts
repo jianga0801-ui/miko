@@ -19,7 +19,7 @@ const ctx = {
   sessionID: SessionID.make("ses_test-edit-session"),
   messageID: MessageID.make("msg_test"),
   callID: "",
-  agent: "build",
+  agent: "miko",
   abort: AbortSignal.any([]),
   messages: [],
   metadata: () => Effect.void,
@@ -106,21 +106,20 @@ describe("tool.edit", () => {
       }),
     )
 
-    it.instance("preserves BOM when oldString is empty on existing files", () =>
+    it.instance("rejects empty oldString on existing files and leaves content unchanged", () =>
       Effect.gen(function* () {
         const test = yield* TestInstance
         const filepath = path.join(test.directory, "existing.cs")
         const bom = String.fromCharCode(0xfeff)
-        yield* put(filepath, `${bom}using System;\n`)
+        const original = `${bom}using System;\n`
+        yield* put(filepath, original)
 
-        const result = yield* run({ filePath: filepath, oldString: "", newString: "using Up;\n" })
-
-        expect(result.metadata.diff).toContain("-using System;")
-        expect(result.metadata.diff).toContain("+using Up;")
+        expect((yield* fail({ filePath: filepath, oldString: "", newString: "using Up;\n" })).message).toContain(
+          "oldString cannot be empty",
+        )
 
         const content = yield* loadRaw(filepath)
-        expect(content.charCodeAt(0)).toBe(0xfeff)
-        expect(content.slice(1)).toBe("using Up;\n")
+        expect(content).toBe(original)
       }),
     )
 
@@ -212,7 +211,52 @@ describe("tool.edit", () => {
         )
       }),
     )
+    it.instance("rejects loose block-anchor matches and leaves content unchanged", () =>
+      Effect.gen(function* () {
+        const test = yield* TestInstance
+        const filepath = path.join(test.directory, "file.ts")
+        const original = [
+          "function configure() {",
+          "  keepImportantState()",
+          "  removeAllUserData()",
+          "  archiveBackups()",
+          "  auditLog()",
+          "}",
+        ].join("\n")
+        yield* put(filepath, original)
 
+        expect(
+          (
+            yield* fail({
+              filePath: filepath,
+              oldString: ["function configure() {", "  const enabled = true", "}"].join("\n"),
+              newString: ["function configure() {", "  const enabled = false", "}"].join("\n"),
+            })
+          ).message,
+        ).toContain("Could not find oldString")
+        expect(yield* load(filepath)).toBe(original)
+      }),
+    )
+
+    it.instance("rejects block-anchor matches with unrelated middle content", () =>
+      Effect.gen(function* () {
+        const test = yield* TestInstance
+        const filepath = path.join(test.directory, "file.ts")
+        const original = ["function configure() {", "  removeAllUserData()", "}"].join("\n")
+        yield* put(filepath, original)
+
+        expect(
+          (
+            yield* fail({
+              filePath: filepath,
+              oldString: ["function configure() {", "  const enabled = true", "}"].join("\n"),
+              newString: ["function configure() {", "  const enabled = false", "}"].join("\n"),
+            })
+          ).message,
+        ).toContain("Could not find oldString")
+        expect(yield* load(filepath)).toBe(original)
+      }),
+    )
     it.instance("replaces all occurrences with replaceAll option", () =>
       Effect.gen(function* () {
         const test = yield* TestInstance

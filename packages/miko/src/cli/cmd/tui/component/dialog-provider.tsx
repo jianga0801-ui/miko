@@ -43,7 +43,11 @@ export function providerOptions(
 ): ProviderOption[] {
   return pipe(
     list,
-    sortBy((x) => PROVIDER_PRIORITY[x.id] ?? 99),
+    sortBy(
+      (x) => PROVIDER_PRIORITY[x.id] ?? 99,
+      (x) => x.name.toLowerCase(),
+      (x) => x.id,
+    ),
     map((provider) => ({
       type: "provider" as const,
       title: provider.name,

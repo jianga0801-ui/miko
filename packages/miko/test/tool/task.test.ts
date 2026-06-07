@@ -65,7 +65,7 @@ const seed = Effect.fn("TaskToolTest.seed")(function* (title = "Pinned") {
     id: MessageID.ascending(),
     role: "user",
     sessionID: chat.id,
-    agent: "build",
+    agent: "miko",
     model: ref,
     time: { created: Date.now() },
   })
@@ -74,8 +74,8 @@ const seed = Effect.fn("TaskToolTest.seed")(function* (title = "Pinned") {
     role: "assistant",
     parentID: user.id,
     sessionID: chat.id,
-    mode: "build",
-    agent: "build",
+    mode: "miko",
+    agent: "miko",
     cost: 0,
     path: { cwd: "/tmp", root: "/tmp" },
     tokens: { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } },
@@ -227,7 +227,7 @@ describe("tool.task", () => {
         {
           sessionID: chat.id,
           messageID: assistant.id,
-          agent: "build",
+          agent: "miko",
           abort: new AbortController().signal,
           extra: { promptOps },
           messages: [],
@@ -263,7 +263,7 @@ describe("tool.task", () => {
           {
             sessionID: chat.id,
             messageID: assistant.id,
-            agent: "build",
+            agent: "miko",
             abort: new AbortController().signal,
             extra: { promptOps, ...extra },
             messages: [],
@@ -322,7 +322,7 @@ describe("tool.task", () => {
           {
             sessionID: chat.id,
             messageID: assistant.id,
-            agent: "build",
+            agent: "miko",
             abort: abort.signal,
             extra: { promptOps },
             messages: [],
@@ -360,7 +360,7 @@ describe("tool.task", () => {
         {
           sessionID: chat.id,
           messageID: assistant.id,
-          agent: "build",
+          agent: "miko",
           abort: new AbortController().signal,
           extra: { promptOps },
           messages: [],
@@ -398,7 +398,7 @@ describe("tool.task", () => {
           {
             sessionID: chat.id,
             messageID: assistant.id,
-            agent: "build",
+            agent: "miko",
             abort: new AbortController().signal,
             extra: { promptOps },
             messages: [],
@@ -466,7 +466,7 @@ describe("tool.task", () => {
           {
             sessionID: chat.id,
             messageID: assistant.id,
-            agent: "build",
+            agent: "miko",
             abort: new AbortController().signal,
             extra: { promptOps: stubOps() },
             messages: [],
@@ -497,7 +497,7 @@ describe("tool.task", () => {
         {
           sessionID: chat.id,
           messageID: assistant.id,
-          agent: "build",
+          agent: "miko",
           abort: new AbortController().signal,
           extra: {
             promptOps: {
@@ -535,7 +535,7 @@ describe("tool.task", () => {
         {
           sessionID: chat.id,
           messageID: assistant.id,
-          agent: "build",
+          agent: "miko",
           abort: new AbortController().signal,
           extra: { promptOps: stubOps({ text: "background done" }) },
           messages: [],
@@ -568,7 +568,7 @@ describe("tool.task", () => {
         {
           sessionID: chat.id,
           messageID: assistant.id,
-          agent: "build",
+          agent: "miko",
           abort: new AbortController().signal,
           extra: {
             promptOps: {
@@ -607,7 +607,7 @@ describe("tool.task", () => {
         {
           sessionID: chat.id,
           messageID: assistant.id,
-          agent: "build",
+          agent: "miko",
           abort: new AbortController().signal,
           extra: {
             promptOps: {
@@ -646,7 +646,7 @@ describe("tool.task", () => {
         {
           sessionID: chat.id,
           messageID: assistant.id,
-          agent: "build",
+          agent: "miko",
           abort: new AbortController().signal,
           extra: {
             promptOps: {
@@ -685,7 +685,7 @@ describe("tool.task", () => {
         {
           sessionID: chat.id,
           messageID: assistant.id,
-          agent: "build",
+          agent: "miko",
           abort: new AbortController().signal,
           extra: {
             promptOps: {

@@ -140,6 +140,7 @@ const appBindingCommands = [
 
 export function tuiRendererConfig(_config: TuiConfig.Resolved): CliRendererConfig {
   const mouseEnabled = !Flag.MIKO_DISABLE_MOUSE && (_config.mouse ?? true)
+  const mouseMovementEnabled = _config.mouse_movement ?? false
 
   return {
     externalOutputMode: "passthrough",
@@ -150,6 +151,7 @@ export function tuiRendererConfig(_config: TuiConfig.Resolved): CliRendererConfi
     autoFocus: false,
     openConsoleOnError: false,
     useMouse: mouseEnabled,
+    enableMouseMovement: mouseMovementEnabled,
     consoleOptions: {
       keyBindings: [{ name: "y", ctrl: true, action: "copy-selection" }],
       onCopySelection: (text) => {
@@ -1301,11 +1303,15 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
         if (!Flag.MIKO_EXPERIMENTAL_DISABLE_COPY_ON_SELECT) return
         if (evt.button !== MouseButton.RIGHT) return
 
-        if (!Selection.copy(renderer, toast)) return
+        if (!Selection.copy(renderer, toast, i18n.t("provider.copied"))) return
         evt.preventDefault()
         evt.stopPropagation()
       }}
-      onMouseUp={Flag.MIKO_EXPERIMENTAL_DISABLE_COPY_ON_SELECT ? undefined : () => Selection.copy(renderer, toast)}
+      onMouseUp={
+        Flag.MIKO_EXPERIMENTAL_DISABLE_COPY_ON_SELECT
+          ? undefined
+          : () => Selection.copy(renderer, toast, i18n.t("provider.copied"))
+      }
     >
       <Show when={Flag.MIKO_SHOW_TTFD}>
         <TimeToFirstDraw />

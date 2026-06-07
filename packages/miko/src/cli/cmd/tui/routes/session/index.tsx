@@ -1760,6 +1760,7 @@ type ToolProps<T> = {
 function GenericTool(props: ToolProps<any>) {
   const { theme } = useTheme()
   const ctx = use()
+  const i18n = useTuiI18n()
   const output = createMemo(() => props.output?.trim() ?? "")
   const [expanded, setExpanded] = createSignal(false)
   const maxLines = 3
@@ -1787,7 +1788,7 @@ function GenericTool(props: ToolProps<any>) {
         <box gap={1}>
           <text fg={theme.text}>{limited()}</text>
           <Show when={collapsed().overflow}>
-            <text fg={theme.textMuted}>{expanded() ? "Click to collapse" : "Click to expand"}</text>
+            <text fg={theme.textMuted}>{expanded() ? i18n.t("session.clickToCollapse") : i18n.t("session.clickToExpand")}</text>
           </Show>
         </box>
       </BlockTool>
@@ -2023,6 +2024,7 @@ function Shell(props: ToolProps<typeof ShellTool>) {
   const { theme } = useTheme()
   const pathFormatter = usePathFormatter()
   const ctx = use()
+  const i18n = useTuiI18n()
   const isRunning = createMemo(() => props.part.state.status === "running")
   const output = createMemo(() => stripAnsi(props.metadata.output?.trim() ?? ""))
   const [expanded, setExpanded] = createSignal(false)
@@ -2063,7 +2065,7 @@ function Shell(props: ToolProps<typeof ShellTool>) {
               <text fg={theme.text}>{limited()}</text>
             </Show>
             <Show when={collapsed().overflow}>
-              <text fg={theme.textMuted}>{expanded() ? "Click to collapse" : "Click to expand"}</text>
+              <text fg={theme.textMuted}>{expanded() ? i18n.t("session.clickToCollapse") : i18n.t("session.clickToExpand")}</text>
             </Show>
           </box>
         </BlockTool>

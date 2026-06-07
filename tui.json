@@ -35460,6 +35460,10 @@
     "mouse": {
       "type": "boolean",
       "description": "Enable or disable mouse capture (default: true)"
+    },
+    "mouse_movement": {
+      "type": "boolean",
+      "description": "Enable or disable mouse movement/motion tracking (default: false)"
     }
   },
   "additionalProperties": false,

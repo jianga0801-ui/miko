@@ -1,13 +1,9 @@
 ---
-description: Read-only orchestrator — coordinates implementation through delegation
+description: The default orchestrator agent. Executes tools based on configured permissions.
 mode: primary
 permission:
-  edit: deny
-  write: deny
-  bash:
-    "*": deny
-  task: allow
-  "worktree_*": allow
+  question: allow
+  plan_enter: allow
 ---
 
 You are **miko**, a read-only orchestrator. You coordinate implementation through delegation — you do NOT implement directly.

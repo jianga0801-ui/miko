@@ -166,7 +166,7 @@ describe("ACP service sessions", () => {
         agents: () =>
           Promise.resolve({
             data: [
-              { name: "build", mode: "primary", permission: [], options: {} },
+              { name: "miko", mode: "primary", permission: [], options: {} },
               { name: "plan", mode: "primary", description: "Plan first", permission: [], options: {} },
               { name: "hidden", mode: "primary", hidden: true, permission: [], options: {} },
             ],
@@ -392,7 +392,7 @@ describe("ACP service sessions", () => {
         get: () => Promise.resolve({ data: {} }),
       },
       app: {
-        agents: () => Promise.resolve({ data: [{ name: "build", mode: "primary", permission: [], options: {} }] }),
+        agents: () => Promise.resolve({ data: [{ name: "miko", mode: "primary", permission: [], options: {} }] }),
         skills: () => Promise.resolve({ data: [] }),
       },
       command: {
@@ -445,7 +445,7 @@ describe("ACP service sessions", () => {
         info: {
           role: "user",
           model: { providerID: "test", modelID: "test-model", variant: "default" },
-          agent: "build",
+          agent: "miko",
         },
         parts: [],
       },
@@ -505,7 +505,7 @@ describe("ACP service sessions", () => {
         get: () => Promise.resolve({ data: {} }),
       },
       app: {
-        agents: () => Promise.resolve({ data: [{ name: "build", mode: "primary", permission: [], options: {} }] }),
+        agents: () => Promise.resolve({ data: [{ name: "miko", mode: "primary", permission: [], options: {} }] }),
         skills: () => Promise.resolve({ data: [] }),
       },
       command: {
@@ -542,7 +542,7 @@ describe("ACP service sessions", () => {
         get: () => Promise.resolve({ data: {} }),
       },
       app: {
-        agents: () => Promise.resolve({ data: [{ name: "build", mode: "primary", permission: [], options: {} }] }),
+        agents: () => Promise.resolve({ data: [{ name: "miko", mode: "primary", permission: [], options: {} }] }),
         skills: () => Promise.resolve({ data: [] }),
       },
       command: {
@@ -589,7 +589,7 @@ describe("ACP service sessions", () => {
         get: () => Promise.resolve({ data: { model: "test/configured-model" } }),
       },
       app: {
-        agents: () => Promise.resolve({ data: [{ name: "build", mode: "primary", permission: [], options: {} }] }),
+        agents: () => Promise.resolve({ data: [{ name: "miko", mode: "primary", permission: [], options: {} }] }),
         skills: () => Promise.resolve({ data: [] }),
       },
       command: {
@@ -619,7 +619,7 @@ describe("ACP service sessions", () => {
         get: () => Promise.resolve({ data: {} }),
       },
       app: {
-        agents: () => Promise.resolve({ data: [{ name: "build", mode: "primary", permission: [], options: {} }] }),
+        agents: () => Promise.resolve({ data: [{ name: "miko", mode: "primary", permission: [], options: {} }] }),
         skills: () => Promise.resolve({ data: [] }),
       },
       command: {
@@ -735,7 +735,7 @@ describe("ACP service sessions", () => {
       app: {
         agents: () => {
           calls.agents++
-          return Promise.resolve({ data: [{ name: "build", mode: "primary", permission: [], options: {} }] })
+          return Promise.resolve({ data: [{ name: "miko", mode: "primary", permission: [], options: {} }] })
         },
         skills: () => {
           calls.skills++
@@ -793,7 +793,7 @@ describe("ACP service sessions", () => {
       app: {
         agents: () => {
           calls.agents++
-          return Promise.resolve({ data: [{ name: "build", mode: "primary", permission: [], options: {} }] })
+          return Promise.resolve({ data: [{ name: "miko", mode: "primary", permission: [], options: {} }] })
         },
         skills: () => {
           calls.skills++
@@ -853,7 +853,7 @@ describe("ACP service sessions", () => {
       app: {
         agents: () => {
           calls.agents++
-          return Promise.resolve({ data: [{ name: "build", mode: "primary", permission: [], options: {} }] })
+          return Promise.resolve({ data: [{ name: "miko", mode: "primary", permission: [], options: {} }] })
         },
         skills: () => {
           calls.skills++
@@ -977,7 +977,7 @@ describe("ACP service sessions", () => {
         { type: "text", text: "assistant context", synthetic: true },
         { type: "text", text: "user context", ignored: true },
       ],
-      agent: "build",
+      agent: "miko",
       directory: "/workspace",
     })
   })
@@ -1035,7 +1035,7 @@ describe("ACP service sessions", () => {
         arguments: "now",
         model: "test/test-model",
         variant: "default",
-        agent: "build",
+        agent: "miko",
         directory: "/workspace",
       },
     ])
@@ -1072,7 +1072,7 @@ describe("ACP service sessions", () => {
           get: () => Promise.resolve({ data: {} }),
         },
         app: {
-          agents: () => Promise.resolve({ data: [{ name: "build", mode: "primary", permission: [], options: {} }] }),
+          agents: () => Promise.resolve({ data: [{ name: "miko", mode: "primary", permission: [], options: {} }] }),
           skills: () => Promise.resolve({ data: [] }),
         },
         command: {

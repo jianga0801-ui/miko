@@ -9,6 +9,7 @@ import { reasoningSummary, useThinkingMode } from "@tui/context/thinking"
 import { useRenderer, useTerminalDimensions, type JSX } from "@opentui/solid"
 import { RGBA, TextAttributes, type BoxRenderable, type SyntaxStyle } from "@opentui/core"
 import { useBindings } from "../../keymap"
+import { useTuiI18n } from "@tui/context/i18n"
 import { Locale } from "@/util/locale"
 import { LANGUAGE_EXTENSIONS } from "@/lsp/language"
 import { webSearchProviderLabel } from "@/tool/websearch"
@@ -206,6 +207,7 @@ function UserMessage(props: { message: SessionMessageUser; index: number }) {
 
 function ShellMessage(props: { message: SessionMessageShell }) {
   const { theme } = useTheme()
+  const i18n = useTuiI18n()
   const dimensions = useTerminalDimensions()
   const output = createMemo(() => stripAnsi(props.message.output.trim()))
   const [expanded, setExpanded] = createSignal(false)
@@ -228,7 +230,7 @@ function ShellMessage(props: { message: SessionMessageShell }) {
           <text fg={theme.text}>{limited()}</text>
         </Show>
         <Show when={collapsed().overflow}>
-          <text fg={theme.textMuted}>{expanded() ? "Click to collapse" : "Click to expand"}</text>
+          <text fg={theme.textMuted}>{expanded() ? i18n.t("session.clickToCollapse") : i18n.t("session.clickToExpand")}</text>
         </Show>
       </box>
     </BlockTool>
@@ -551,6 +553,7 @@ type ToolProps = {
 
 function GenericTool(props: ToolProps) {
   const { theme } = useTheme()
+  const i18n = useTuiI18n()
   const dimensions = useTerminalDimensions()
   const output = createMemo(() => props.output?.trim() ?? "")
   const [expanded, setExpanded] = createSignal(false)
@@ -578,7 +581,7 @@ function GenericTool(props: ToolProps) {
         <box gap={1}>
           <text fg={theme.text}>{limited()}</text>
           <Show when={collapsed().overflow}>
-            <text fg={theme.textMuted}>{expanded() ? "Click to collapse" : "Click to expand"}</text>
+            <text fg={theme.textMuted}>{expanded() ? i18n.t("session.clickToCollapse") : i18n.t("session.clickToExpand")}</text>
           </Show>
         </box>
       </BlockTool>
@@ -736,6 +739,7 @@ function BlockTool(props: {
 
 function Bash(props: ToolProps) {
   const { theme } = useTheme()
+  const i18n = useTuiI18n()
   const dimensions = useTerminalDimensions()
   const output = createMemo(() => stripAnsi((stringValue(props.metadata.output) ?? props.output ?? "").trim()))
   const command = createMemo(() => stringValue(props.input.command) ?? pendingInput(props.part))
@@ -761,7 +765,7 @@ function Bash(props: ToolProps) {
             <text fg={theme.text}>$ {command()}</text>
             <text fg={theme.text}>{limited()}</text>
             <Show when={collapsed().overflow}>
-              <text fg={theme.textMuted}>{expanded() ? "Click to collapse" : "Click to expand"}</text>
+              <text fg={theme.textMuted}>{expanded() ? i18n.t("session.clickToCollapse") : i18n.t("session.clickToExpand")}</text>
             </Show>
           </box>
         </BlockTool>

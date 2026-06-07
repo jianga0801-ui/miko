@@ -50,6 +50,14 @@ const cacheDir = path.join(dir, "cache", "miko")
 await fs.mkdir(cacheDir, { recursive: true })
 await fs.writeFile(path.join(cacheDir, "version"), "14")
 
+// Write a test config override in the XDG config directory to ensure clean defaults
+const configDir = path.join(dir, "config", "miko")
+await fs.mkdir(configDir, { recursive: true })
+await fs.writeFile(
+  path.join(configDir, "miko.json"),
+  JSON.stringify({}),
+)
+
 // Clear provider and server auth env vars to ensure clean test state
 delete process.env["ANTHROPIC_API_KEY"]
 delete process.env["OPENAI_API_KEY"]

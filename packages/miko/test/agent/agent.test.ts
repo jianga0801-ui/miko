@@ -684,8 +684,10 @@ it.instance(
   () => expectDefaultAgentError("no primary visible agent found"),
   {
     config: {
+      default_agent: "",
       agent: {
         miko: { disable: true },
+        plan: { disable: true },
       },
     },
   },

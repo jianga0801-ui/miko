@@ -205,7 +205,7 @@ export const layer = Layer.effect(
           event.location?.directory === location.directory && event.location.workspaceID === location.workspaceID,
       ),
       Stream.runForEach((event) =>
-        state.update((catalog) => plugin.triggerFor(event.data.id, "catalog.transform", catalog, {}), "plugin.added"),
+        state.mutate((catalog) => plugin.triggerFor(event.data.id, "catalog.transform", catalog, {}), "plugin.added"),
       ),
       Effect.forkIn(scope, { startImmediately: true }),
     )

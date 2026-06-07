@@ -34,7 +34,7 @@ const skills: Skill.Info[] = [
 ]
 
 const build: Agent.Info = {
-  name: "build",
+  name: "miko",
   mode: "primary",
   permission: Permission.fromConfig({ "*": "allow" }),
   options: {},
