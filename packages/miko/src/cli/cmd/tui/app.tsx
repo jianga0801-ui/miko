@@ -625,6 +625,17 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     setDebugVisible(true)
     renderer.toggleDebugOverlay()
   })
+  // Sync permission mode from kv store to server on startup
+  onMount(() => {
+    const mode = kv.get("permission_mode", "normal")
+    if (mode === "auto-approve") {
+      void sdk.fetch(`${sdk.url}/permission/mode`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "auto-approve" }),
+      }).catch(() => {})
+    }
+  })
   const [terminalTitleEnabled, setTerminalTitleEnabled] = createSignal(kv.get("terminal_title_enabled", true))
   const [pasteSummaryEnabled, setPasteSummaryEnabled] = createSignal(
     kv.get("paste_summary_enabled", !sync.data.config.experimental?.disable_paste_summary),
@@ -924,7 +935,13 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
         category: "Agent",
         run: () => {
           const current = kv.get("permission_mode", "normal")
-          kv.set("permission_mode", current === "auto-approve" ? "normal" : "auto-approve")
+          const newMode = current === "auto-approve" ? "normal" : "auto-approve"
+          kv.set("permission_mode", newMode)
+          void sdk.fetch(`${sdk.url}/permission/mode`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mode: newMode }),
+          }).catch(() => {})
           dialog.clear()
         },
       },

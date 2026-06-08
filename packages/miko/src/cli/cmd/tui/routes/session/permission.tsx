@@ -17,6 +17,7 @@ import { getScrollAcceleration } from "../../util/scroll"
 import { useTuiConfig } from "../../context/tui-config"
 import { MIKO_BASE_MODE, useBindings, useCommandShortcut } from "../../keymap"
 import { usePathFormatter } from "../../context/path-format"
+import { useTuiI18n } from "../../context/i18n"
 
 type PermissionStage = "permission" | "always" | "reject"
 
@@ -115,6 +116,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
   const sdk = useSDK()
   const project = useProject()
   const sync = useSync()
+  const i18n = useTuiI18n()
   const [store, setStore] = createStore({
     stage: "permission" as PermissionStage,
   })
@@ -202,7 +204,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
               const filepath = typeof raw === "string" ? raw : ""
               return {
                 icon: "→",
-                title: `Edit ${pathFormatter.format(filepath)}`,
+                title: i18n.t("permission.edit", { path: pathFormatter.format(filepath) }),
                 body: <EditBody request={props.request} />,
               }
             }
@@ -212,7 +214,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
               const filePath = typeof raw === "string" ? raw : ""
               return {
                 icon: "→",
-                title: `Read ${pathFormatter.format(filePath)}`,
+                title: i18n.t("permission.read", { path: pathFormatter.format(filePath) }),
                 body: (
                   <Show when={filePath}>
                     <box paddingLeft={1}>
@@ -227,7 +229,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
               const pattern = typeof data.pattern === "string" ? data.pattern : ""
               return {
                 icon: "✱",
-                title: `Glob "${pattern}"`,
+                title: i18n.t("permission.glob", { pattern }),
                 body: (
                   <Show when={pattern}>
                     <box paddingLeft={1}>
@@ -242,7 +244,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
               const pattern = typeof data.pattern === "string" ? data.pattern : ""
               return {
                 icon: "✱",
-                title: `Grep "${pattern}"`,
+                title: i18n.t("permission.grep", { pattern }),
                 body: (
                   <Show when={pattern}>
                     <box paddingLeft={1}>
@@ -258,7 +260,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
               const dir = typeof raw === "string" ? raw : ""
               return {
                 icon: "→",
-                title: `List ${pathFormatter.format(dir)}`,
+                title: i18n.t("permission.list", { path: pathFormatter.format(dir) }),
                 body: (
                   <Show when={dir}>
                     <box paddingLeft={1}>
@@ -291,7 +293,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
               const desc = typeof data.description === "string" ? data.description : ""
               return {
                 icon: "#",
-                title: `${Locale.titlecase(type)} Task`,
+                title: i18n.t("permission.task", { type: Locale.titlecase(type) }),
                 body: (
                   <Show when={desc}>
                     <box paddingLeft={1}>
@@ -306,7 +308,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
               const url = typeof data.url === "string" ? data.url : ""
               return {
                 icon: "%",
-                title: `WebFetch ${url}`,
+                title: i18n.t("permission.webFetch", { url }),
                 body: (
                   <Show when={url}>
                     <box paddingLeft={1}>
@@ -346,7 +348,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
 
               return {
                 icon: "←",
-                title: `Access external directory ${dir}`,
+                title: i18n.t("permission.externalDirectory", { dir }),
                 body: (
                   <Show when={patterns.length > 0}>
                     <box paddingLeft={1} gap={1}>
@@ -363,7 +365,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
             if (permission === "doom_loop") {
               return {
                 icon: "⟳",
-                title: "Continue after repeated failures",
+                title: i18n.t("permission.doomLoop"),
                 body: (
                   <box paddingLeft={1}>
                     <text fg={theme.textMuted}>This keeps the session running despite repeated failures.</text>
@@ -374,7 +376,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
 
             return {
               icon: "⚙",
-              title: `Call tool ${permission}`,
+              title: i18n.t("permission.callTool", { permission }),
               body: (
                 <box paddingLeft={1}>
                   <text fg={theme.textMuted}>{"Tool: " + permission}</text>

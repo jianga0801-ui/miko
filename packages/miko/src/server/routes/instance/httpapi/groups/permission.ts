@@ -14,6 +14,10 @@ const ReplyPayload = Schema.Struct({
   message: Schema.optional(Schema.String),
 })
 
+const ModePayload = Schema.Struct({
+  mode: Permission.Mode,
+})
+
 export const PermissionApi = HttpApi.make("permission")
   .add(
     HttpApiGroup.make("permission")
@@ -39,6 +43,18 @@ export const PermissionApi = HttpApi.make("permission")
             identifier: "permission.reply",
             summary: "Respond to permission request",
             description: "Approve or deny a permission request from the AI assistant.",
+          }),
+        ),
+        HttpApiEndpoint.post("setMode", `${root}/mode`, {
+          query: WorkspaceRoutingQuery,
+          payload: ModePayload,
+          success: described(Schema.Boolean, "Mode updated successfully"),
+          error: [HttpApiError.BadRequest],
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "permission.setMode",
+            summary: "Set permission mode",
+            description: "Set the permission evaluation mode (normal or auto-approve).",
           }),
         ),
       )

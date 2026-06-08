@@ -2043,7 +2043,7 @@ function Shell(props: ToolProps<typeof ShellTool>) {
   })
 
   const title = createMemo(() => {
-    const desc = props.input.description ?? "Shell"
+    const desc = props.input.description ?? i18n.t("tool.shell")
     const wd = workdirDisplay()
     if (!wd) return `# ${desc}`
     if (desc.includes(wd)) return `# ${desc}`
@@ -2071,7 +2071,7 @@ function Shell(props: ToolProps<typeof ShellTool>) {
         </BlockTool>
       </Match>
       <Match when={true}>
-        <InlineTool icon="$" pending="Writing command..." complete={props.input.command} part={props.part}>
+        <InlineTool icon="$" pending={i18n.t("tool.pending.writingCommand")} complete={props.input.command} part={props.part}>
           {props.input.command}
         </InlineTool>
       </Match>
@@ -2082,6 +2082,7 @@ function Shell(props: ToolProps<typeof ShellTool>) {
 function Write(props: ToolProps<typeof WriteTool>) {
   const { theme, syntax } = useTheme()
   const pathFormatter = usePathFormatter()
+  const i18n = useTuiI18n()
   const code = createMemo(() => {
     if (!props.input.content) return ""
     return props.input.content
@@ -2090,7 +2091,7 @@ function Write(props: ToolProps<typeof WriteTool>) {
   return (
     <Switch>
       <Match when={props.metadata.diagnostics !== undefined}>
-        <BlockTool title={"# Wrote " + pathFormatter.format(props.input.filePath)} part={props.part}>
+        <BlockTool title={"# " + i18n.t("tool.status.wrote") + " " + pathFormatter.format(props.input.filePath)} part={props.part}>
           <line_number fg={theme.textMuted} minWidth={3} paddingRight={1}>
             <code
               conceal={false}
@@ -2104,8 +2105,8 @@ function Write(props: ToolProps<typeof WriteTool>) {
         </BlockTool>
       </Match>
       <Match when={true}>
-        <InlineTool icon="←" pending="Preparing write..." complete={props.input.filePath} part={props.part}>
-          Write {pathFormatter.format(props.input.filePath)}
+        <InlineTool icon="←" pending={i18n.t("tool.pending.preparingWrite")} complete={props.input.filePath} part={props.part}>
+          {i18n.t("tool.write")} {pathFormatter.format(props.input.filePath)}
         </InlineTool>
       </Match>
     </Switch>
@@ -2114,11 +2115,12 @@ function Write(props: ToolProps<typeof WriteTool>) {
 
 function Glob(props: ToolProps<typeof GlobTool>) {
   const pathFormatter = usePathFormatter()
+  const i18n = useTuiI18n()
   return (
-    <InlineTool icon="✱" pending="Finding files..." complete={props.input.pattern} part={props.part}>
-      Glob "{props.input.pattern}" <Show when={props.input.path}>in {pathFormatter.format(props.input.path)} </Show>
+    <InlineTool icon="✱" pending={i18n.t("tool.pending.findingFiles")} complete={props.input.pattern} part={props.part}>
+      {i18n.t("tool.glob")} "{props.input.pattern}" <Show when={props.input.path}>in {pathFormatter.format(props.input.path)} </Show>
       <Show when={props.metadata.count}>
-        ({props.metadata.count} {props.metadata.count === 1 ? "match" : "matches"})
+        ({props.metadata.count} {props.metadata.count === 1 ? i18n.t("tool.status.match") : i18n.t("tool.status.matches")})
       </Show>
     </InlineTool>
   )
@@ -2127,6 +2129,7 @@ function Glob(props: ToolProps<typeof GlobTool>) {
 function Read(props: ToolProps<typeof ReadTool>) {
   const { theme } = useTheme()
   const pathFormatter = usePathFormatter()
+  const i18n = useTuiI18n()
   const isRunning = createMemo(() => props.part.state.status === "running")
   const loaded = createMemo(() => {
     if (props.part.state.status !== "completed") return []
@@ -2139,18 +2142,18 @@ function Read(props: ToolProps<typeof ReadTool>) {
     <>
       <InlineTool
         icon="→"
-        pending="Reading file..."
+        pending={i18n.t("tool.pending.readingFile")}
         complete={props.input.filePath}
         spinner={isRunning()}
         part={props.part}
       >
-        Read {pathFormatter.format(props.input.filePath)} {input(props.input, ["filePath"])}
+        {i18n.t("tool.read")} {pathFormatter.format(props.input.filePath)} {input(props.input, ["filePath"])}
       </InlineTool>
       <For each={loaded()}>
         {(filepath, index) => (
           <box id={`tool-inline-loaded-${props.part.id}-${index()}`} paddingLeft={3}>
             <text paddingLeft={3} fg={theme.textMuted}>
-              ↳ Loaded {pathFormatter.format(filepath)}
+              ↳ {i18n.t("tool.status.loaded")} {pathFormatter.format(filepath)}
             </text>
           </box>
         )}
@@ -2161,30 +2164,33 @@ function Read(props: ToolProps<typeof ReadTool>) {
 
 function Grep(props: ToolProps<typeof GrepTool>) {
   const pathFormatter = usePathFormatter()
+  const i18n = useTuiI18n()
   return (
-    <InlineTool icon="✱" pending="Searching content..." complete={props.input.pattern} part={props.part}>
-      Grep "{props.input.pattern}" <Show when={props.input.path}>in {pathFormatter.format(props.input.path)} </Show>
+    <InlineTool icon="✱" pending={i18n.t("tool.pending.searchingContent")} complete={props.input.pattern} part={props.part}>
+      {i18n.t("tool.grep")} "{props.input.pattern}" <Show when={props.input.path}>in {pathFormatter.format(props.input.path)} </Show>
       <Show when={props.metadata.matches}>
-        ({props.metadata.matches} {props.metadata.matches === 1 ? "match" : "matches"})
+        ({props.metadata.matches} {props.metadata.matches === 1 ? i18n.t("tool.status.match") : i18n.t("tool.status.matches")})
       </Show>
     </InlineTool>
   )
 }
 
 function WebFetch(props: ToolProps<typeof WebFetchTool>) {
+  const i18n = useTuiI18n()
   return (
-    <InlineTool icon="%" pending="Fetching from the web..." complete={props.input.url} part={props.part}>
-      WebFetch {props.input.url}
+    <InlineTool icon="%" pending={i18n.t("tool.pending.fetchingWeb")} complete={props.input.url} part={props.part}>
+      {i18n.t("tool.webFetch")} {props.input.url}
     </InlineTool>
   )
 }
 
 function WebSearch(props: ToolProps<typeof WebSearchTool>) {
   const metadata = () => props.metadata as { numResults?: number; provider?: unknown }
+  const i18n = useTuiI18n()
   return (
-    <InlineTool icon="◈" pending="Searching web..." complete={props.input.query} part={props.part}>
+    <InlineTool icon="◈" pending={i18n.t("tool.pending.searchingWeb")} complete={props.input.query} part={props.part}>
       {webSearchProviderLabel(metadata().provider)} "{props.input.query}"{" "}
-      <Show when={metadata().numResults}>({metadata().numResults} results)</Show>
+      <Show when={metadata().numResults}>({metadata().numResults} {i18n.t("tool.status.results")})</Show>
     </InlineTool>
   )
 }
@@ -2239,6 +2245,7 @@ function Task(props: ToolProps<typeof TaskTool>) {
         Locale.titlecase(props.input.subagent_type ?? "General"),
         props.input.description,
         props.metadata.background === true,
+        i18n,
       ),
     ]
 
@@ -2250,11 +2257,11 @@ function Task(props: ToolProps<typeof TaskTool>) {
         const state = current()!.state
         const title = state.status === "running" || state.status === "completed" ? state.title : undefined
         content.push(`↳ ${Locale.titlecase(current()!.tool)} ${title}`)
-      } else content.push(`↳ ${formatSubagentToolcalls(tools().length)}`)
+      } else content.push(`↳ ${formatSubagentToolcalls(tools().length, i18n)}`)
     }
 
     if (!isRunning() && props.part.state.status === "completed") {
-      content.push(`↳ ${formatCompletedSubagentDetail(tools().length, Locale.duration(duration()))}`)
+      content.push(`↳ ${formatCompletedSubagentDetail(tools().length, Locale.duration(duration()), i18n)}`)
     }
 
     return content.join("\n")
@@ -2267,7 +2274,7 @@ function Task(props: ToolProps<typeof TaskTool>) {
       color={retry() ? theme.error : undefined}
       spinner={isRunning()}
       complete={props.input.description}
-      pending="Delegating..."
+      pending={i18n.t("tool.pending.delegating")}
       part={props.part}
       onClick={() => {
         if (props.metadata.sessionId) {
@@ -2282,27 +2289,30 @@ function Task(props: ToolProps<typeof TaskTool>) {
   )
 }
 
-export function formatSubagentToolcalls(count: number) {
-  return `${count} toolcall${count === 1 ? "" : "s"}`
+export function formatSubagentToolcalls(count: number, i18n?: ReturnType<typeof useTuiI18n>) {
+  const label = i18n ? i18n.t("tool.status.toolcalls") : "toolcalls"
+  return `${count} ${count === 1 ? (i18n ? i18n.t("tool.status.toolcall") : "toolcall") : label}`
 }
 
-export function formatSubagentTitle(agent: string, description: string, background: boolean) {
-  return `${agent} Task${background ? " (background)" : ""} — ${description}`
+export function formatSubagentTitle(agent: string, description: string, background: boolean, i18n?: ReturnType<typeof useTuiI18n>) {
+  const bgLabel = i18n ? i18n.t("tool.status.background") : "background"
+  return `${agent} ${i18n ? i18n.t("tool.task") : "Task"}${background ? ` (${bgLabel})` : ""} — ${description}`
 }
 
 export function formatSubagentRetry(attempt: number, message: string) {
   return `Retrying (attempt ${attempt}) · ${message}`
 }
 
-export function formatCompletedSubagentDetail(toolcalls: number, duration: string) {
+export function formatCompletedSubagentDetail(toolcalls: number, duration: string, i18n?: ReturnType<typeof useTuiI18n>) {
   if (toolcalls === 0) return duration
-  return `${formatSubagentToolcalls(toolcalls)} · ${duration}`
+  return `${formatSubagentToolcalls(toolcalls, i18n)} · ${duration}`
 }
 
 function Edit(props: ToolProps<typeof EditTool>) {
   const ctx = use()
   const { theme, syntax } = useTheme()
   const pathFormatter = usePathFormatter()
+  const i18n = useTuiI18n()
 
   const view = createMemo(() => {
     const diffStyle = ctx.tui.diff_style
@@ -2318,7 +2328,7 @@ function Edit(props: ToolProps<typeof EditTool>) {
   return (
     <Switch>
       <Match when={props.metadata.diff !== undefined}>
-        <BlockTool title={"← Edit " + pathFormatter.format(props.input.filePath)} part={props.part}>
+        <BlockTool title={"← " + i18n.t("tool.edit") + " " + pathFormatter.format(props.input.filePath)} part={props.part}>
           <box paddingLeft={1}>
             <diff
               diff={diffContent()}
@@ -2344,8 +2354,8 @@ function Edit(props: ToolProps<typeof EditTool>) {
         </BlockTool>
       </Match>
       <Match when={true}>
-        <InlineTool icon="←" pending="Preparing edit..." complete={props.input.filePath} part={props.part}>
-          Edit {pathFormatter.format(props.input.filePath)} {input({ replaceAll: props.input.replaceAll })}
+        <InlineTool icon="←" pending={i18n.t("tool.pending.preparingEdit")} complete={props.input.filePath} part={props.part}>
+          {i18n.t("tool.edit")} {pathFormatter.format(props.input.filePath)} {input({ replaceAll: props.input.replaceAll })}
         </InlineTool>
       </Match>
     </Switch>
@@ -2356,6 +2366,7 @@ function ApplyPatch(props: ToolProps<typeof ApplyPatchTool>) {
   const ctx = use()
   const { theme, syntax } = useTheme()
   const pathFormatter = usePathFormatter()
+  const i18n = useTuiI18n()
 
   const files = createMemo(() => props.metadata.files ?? [])
 
@@ -2392,10 +2403,10 @@ function ApplyPatch(props: ToolProps<typeof ApplyPatchTool>) {
   }
 
   function title(file: { type: string; relativePath: string; filePath: string; deletions: number }) {
-    if (file.type === "delete") return "# Deleted " + file.relativePath
-    if (file.type === "add") return "# Created " + file.relativePath
-    if (file.type === "move") return "# Moved " + pathFormatter.format(file.filePath) + " → " + file.relativePath
-    return "← Patched " + file.relativePath
+    if (file.type === "delete") return "# " + i18n.t("tool.status.deleted") + " " + file.relativePath
+    if (file.type === "add") return "# " + i18n.t("tool.status.created") + " " + file.relativePath
+    if (file.type === "move") return "# " + i18n.t("tool.status.moved") + " " + pathFormatter.format(file.filePath) + " → " + file.relativePath
+    return "← " + i18n.t("tool.status.patched") + " " + file.relativePath
   }
 
   return (
@@ -2420,8 +2431,8 @@ function ApplyPatch(props: ToolProps<typeof ApplyPatchTool>) {
         </For>
       </Match>
       <Match when={true}>
-        <InlineTool icon="%" pending="Preparing patch..." complete={false} part={props.part}>
-          Patch
+        <InlineTool icon="%" pending={i18n.t("tool.pending.preparingPatch")} complete={false} part={props.part}>
+          {i18n.t("tool.patch")}
         </InlineTool>
       </Match>
     </Switch>
@@ -2429,10 +2440,11 @@ function ApplyPatch(props: ToolProps<typeof ApplyPatchTool>) {
 }
 
 function TodoWrite(props: ToolProps<typeof TodoWriteTool>) {
+  const i18n = useTuiI18n()
   return (
     <Switch>
       <Match when={props.metadata.todos?.length}>
-        <BlockTool title="# Todos" part={props.part}>
+        <BlockTool title={"# " + i18n.t("tool.todos")} part={props.part}>
           <box>
             <For each={props.input.todos ?? []}>
               {(todo) => <TodoItem status={todo.status} content={todo.content} />}
@@ -2441,8 +2453,8 @@ function TodoWrite(props: ToolProps<typeof TodoWriteTool>) {
         </BlockTool>
       </Match>
       <Match when={true}>
-        <InlineTool icon="⚙" pending="Updating todos..." complete={false} part={props.part}>
-          Updating todos...
+        <InlineTool icon="⚙" pending={i18n.t("tool.pending.updatingTodos")} complete={false} part={props.part}>
+          {i18n.t("tool.pending.updatingTodos")}
         </InlineTool>
       </Match>
     </Switch>
@@ -2451,17 +2463,18 @@ function TodoWrite(props: ToolProps<typeof TodoWriteTool>) {
 
 function Question(props: ToolProps<typeof QuestionTool>) {
   const { theme } = useTheme()
+  const i18n = useTuiI18n()
   const count = createMemo(() => props.input.questions?.length ?? 0)
 
   function format(answer?: ReadonlyArray<string>) {
-    if (!answer?.length) return "(no answer)"
+    if (!answer?.length) return i18n.t("tool.status.noAnswer")
     return answer.join(", ")
   }
 
   return (
     <Switch>
       <Match when={props.metadata.answers}>
-        <BlockTool title="# Questions" part={props.part}>
+        <BlockTool title={"# " + i18n.t("tool.questions")} part={props.part}>
           <box gap={1}>
             <For each={props.input.questions ?? []}>
               {(q, i) => (
@@ -2475,8 +2488,8 @@ function Question(props: ToolProps<typeof QuestionTool>) {
         </BlockTool>
       </Match>
       <Match when={true}>
-        <InlineTool icon="→" pending="Asking questions..." complete={count()} part={props.part}>
-          Asked {count()} question{count() !== 1 ? "s" : ""}
+        <InlineTool icon="→" pending={i18n.t("tool.pending.askingQuestions")} complete={count()} part={props.part}>
+          {count()} {i18n.t("tool.questions")}
         </InlineTool>
       </Match>
     </Switch>
@@ -2484,9 +2497,10 @@ function Question(props: ToolProps<typeof QuestionTool>) {
 }
 
 function Skill(props: ToolProps<typeof SkillTool>) {
+  const i18n = useTuiI18n()
   return (
-    <InlineTool icon="→" pending="Loading skill..." complete={props.input.name} part={props.part}>
-      Skill "{props.input.name}"
+    <InlineTool icon="→" pending={i18n.t("tool.pending.loadingSkill")} complete={props.input.name} part={props.part}>
+      {i18n.t("tool.skill")} "{props.input.name}"
     </InlineTool>
   )
 }

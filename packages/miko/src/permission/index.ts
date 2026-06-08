@@ -119,10 +119,14 @@ export const ReplyInput = Schema.Struct({
 }).annotate({ identifier: "PermissionReplyInput" })
 export type ReplyInput = Schema.Schema.Type<typeof ReplyInput>
 
+export const Mode = Schema.Literals(["normal", "auto-approve"])
+export type Mode = Schema.Schema.Type<typeof Mode>
+
 export interface Interface {
   readonly ask: (input: AskInput) => Effect.Effect<void, Error>
   readonly reply: (input: ReplyInput) => Effect.Effect<void, NotFoundError>
   readonly list: () => Effect.Effect<ReadonlyArray<Request>>
+  readonly setMode: (mode: Mode) => Effect.Effect<void>
 }
 
 interface PendingEntry {
@@ -133,6 +137,7 @@ interface PendingEntry {
 interface State {
   pending: Map<PermissionID, PendingEntry>
   approved: Rule[]
+  mode: Mode
 }
 
 export function evaluate(permission: string, pattern: string, ...rulesets: Ruleset[]): Rule {
@@ -157,6 +162,7 @@ export const layer = Layer.effect(
         const state = {
           pending: new Map<PermissionID, PendingEntry>(),
           approved: [...(row?.data ?? [])],
+          mode: "normal" as Mode,
         }
 
         yield* Effect.addFinalizer(() =>
@@ -173,7 +179,7 @@ export const layer = Layer.effect(
     )
 
     const ask = Effect.fn("Permission.ask")(function* (input: AskInput) {
-      const { approved, pending } = yield* InstanceState.get(state)
+      const { approved, pending, mode } = yield* InstanceState.get(state)
       const { ruleset, ...request } = input
       let needsAsk = false
 
@@ -190,6 +196,7 @@ export const layer = Layer.effect(
       }
 
       if (!needsAsk) return
+      if (mode === "auto-approve") return
 
       const id = request.id ?? PermissionID.ascending()
       const info: Request = {
@@ -292,7 +299,13 @@ export const layer = Layer.effect(
       return Array.from(pending.values(), (item) => item.info)
     })
 
-    return Service.of({ ask, reply, list })
+    const setMode = Effect.fn("Permission.setMode")(function* (mode: Mode) {
+      const s = yield* InstanceState.get(state)
+      log.info("setMode", { mode })
+      s.mode = mode
+    })
+
+    return Service.of({ ask, reply, list, setMode })
   }),
 )
 

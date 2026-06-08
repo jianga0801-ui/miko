@@ -36,6 +36,13 @@ export const permissionHandlers = HttpApiBuilder.group(InstanceHttpApi, "permiss
       return true
     })
 
-    return handlers.handle("list", list).handle("reply", reply)
+    const setMode = Effect.fn("PermissionHttpApi.setMode")(function* (ctx: {
+      payload: { mode: Permission.Mode }
+    }) {
+      yield* svc.setMode(ctx.payload.mode)
+      return true
+    })
+
+    return handlers.handle("list", list).handle("reply", reply).handle("setMode", setMode)
   }),
 )
