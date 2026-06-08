@@ -106,6 +106,30 @@ try {
 
   & (Join-Path $InstallDir "miko.exe") --version
   Write-Host "Miko installed to $InstallDir"
+
+  $e = [char]27
+  $Muted = "$e[0;2m"
+  $Gray = "$e[90m"
+  $Mask1 = "$e[48;5;235m" # shadow block inside M
+  $Mask2 = "$e[48;5;238m" # shadow block inside O
+  $Nc = "$e[0m"
+  $Bar = "$Muted$('░' * 48)$Nc"
+
+  Write-Host ""
+  Write-Host $Bar
+  Write-Host " ${Gray}█▀▄▀█${Nc} █ ${Gray}█ █ ${Nc}█▀▀█ "
+  Write-Host " ${Gray}█${Mask1} ${Nc}${Gray}▀${Mask1} ${Nc}${Gray}█${Nc} █ ${Gray}█▀▄${Nc} █${Mask2}  ${Nc}█ "
+  Write-Host " ${Gray}▀   ▀${Nc} ▀ ${Gray}▀  ▀${Nc}▀▀▀▀ "
+  Write-Host $Bar
+  Write-Host ""
+  Write-Host ""
+  Write-Host "${Muted}Miko includes free models, to start:${Nc}"
+  Write-Host ""
+  Write-Host "cd <project>  ${Muted}# Open directory${Nc}"
+  Write-Host "miko          ${Muted}# Run command${Nc}"
+  Write-Host ""
+  Write-Host "${Muted}For more information visit ${Nc}https://github.com/$Repo"
+  Write-Host ""
 } finally {
   if (Test-Path $Archive) { Remove-Item $Archive }
   if (Test-Path $Checksums) { Remove-Item $Checksums }

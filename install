@@ -6,6 +6,9 @@ REPO=${MIKO_INSTALL_REPO:-jianga0801-ui/miko}
 MUTED='\033[0;2m'
 RED='\033[0;31m'
 ORANGE='\033[38;5;214m'
+GRAY='\033[90m'
+MASK1='\033[48;5;235m' # shadow block inside M
+MASK2='\033[48;5;238m' # shadow block inside O
 NC='\033[0m' # No Color
 
 usage() {
@@ -471,9 +474,9 @@ fi
 
 echo -e ""
 echo -e "${MUTED}░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░${NC}"
-echo -e "${ORANGE} █▀▄▀█ █ █ █ █ █▀▀█ ${NC}"
-echo -e "${ORANGE} █ ▀ █ █ █▀▄ █ █  █ ${NC}"
-echo -e "${ORANGE} ▀   ▀ ▀ ▀ ▀ ▀ ▀▀▀▀ ${NC}"
+echo -e " ${GRAY}█▀▄▀█${NC} █ ${GRAY}█ █ ${NC}█▀▀█ "
+echo -e " ${GRAY}█${MASK1} ${NC}${GRAY}▀${MASK1} ${NC}${GRAY}█${NC} █ ${GRAY}█▀▄${NC} █${MASK2}  ${NC}█ "
+echo -e " ${GRAY}▀   ▀${NC} ▀ ${GRAY}▀  ▀${NC}▀▀▀▀ "
 echo -e "${MUTED}░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░${NC}"
 echo -e ""
 echo -e ""
